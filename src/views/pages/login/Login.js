@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import '../../../scss/common.css'
+import React from 'react'
+import { Link } from 'react-router-dom'
 import {
   CButton,
   CCard,
@@ -14,80 +12,27 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
-  CSpinner // Import CSpinner for the loader
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilUser } from '@coreui/icons';
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilLockLocked, cilUser } from '@coreui/icons'
 
-// Import your image here
-import logoImage from '../../../../public/logo.png'; // Replace with your actual image path
-
-const API_URL = 'http://3.111.163.2:8000/api/admin/login'; // Backend API URL
-
-const AdminLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // State to track loading
-  const navigate = useNavigate(); // Hook to navigate programmatically
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true); // Show loader when request starts
-    try {
-      const response = await axios.post(API_URL, { email, password });
-      if (response.status === 200) {
-        const { token } = response.data;
-        localStorage.setItem('token', token);
-
-        navigate('/Dashboard');
-      } else {
-        setError(response.data.message || 'Failed to login. Please check your credentials.');
-      }
-    } catch (error) {
-      if (error.response && error.response.data) {
-        setError(error.response.data.message);
-      } else {
-        setError('Failed to login. Please check your credentials.');
-      }
-      console.error('Admin Login Error:', error);
-    } finally {
-      setLoading(false); // Hide loader when request is complete
-    }
-
-    
-
-  };
-  
-
+const Login = () => {
   return (
-    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center ">
-      <CContainer >
-        <CRow className="justify-content-center" >
-          <CCol style={{maxWidth: '37%'}}>
+    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+      <CContainer>
+        <CRow className="justify-content-center">
+          <CCol md={8}>
             <CCardGroup>
-              <CCard className="p-4 bg-dark-gray">
-                <CCardBody className="text-center">
-                  {/* Insert image in the center */}
-                  <div className="mb-4">
-                    <img src={logoImage} alt="Logo" style={{ maxWidth: '45%', height: 'auto' }} />
-                  </div>
-                  <CForm onSubmit={handleSubmit}>
-                    <h1 className='text-dark'>Welcome!</h1>
-                    <p className="text-dark" >Admin Sign In</p>
-                    {error && <p className="text-danger">{error}</p>}
+              <CCard className="p-4">
+                <CCardBody>
+                  <CForm>
+                    <h1>Login</h1>
+                    <p className="text-body-secondary">Sign In to your account</p>
                     <CInputGroup className="mb-3">
                       <CInputGroupText>
                         <CIcon icon={cilUser} />
                       </CInputGroupText>
-                      <CFormInput
-                        type="email"
-                        placeholder="Email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
+                      <CFormInput placeholder="Username" autoComplete="username" />
                     </CInputGroup>
                     <CInputGroup className="mb-4">
                       <CInputGroupText>
@@ -97,31 +42,37 @@ const AdminLogin = () => {
                         type="password"
                         placeholder="Password"
                         autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
                       />
                     </CInputGroup>
-                    <CCol>
-                      <CCol>
-                      <CButton
-                          type="submit"
-                          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', color: 'white' }}
-                          className="px-4"
-                          disabled={loading} // Disable button while loading
-                        >
-                          {loading ? <CSpinner size="sm" /> : 'Login'} {/* Show loader in button */}
+                    <CRow>
+                      <CCol xs={6}>
+                        <CButton color="primary" className="px-4">
+                          Login
                         </CButton>
                       </CCol>
-                      {/* <CCol className="text-right">
-                        <Link to="/forgot-password">
-                          <CButton color="link" className="px-0">
-                            Forgot password?
-                          </CButton>
-                        </Link>
-                      </CCol> */}
-                    </CCol>
+                      <CCol xs={6} className="text-right">
+                        <CButton color="link" className="px-0">
+                          Forgot password?
+                        </CButton>
+                      </CCol>
+                    </CRow>
                   </CForm>
+                </CCardBody>
+              </CCard>
+              <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
+                <CCardBody className="text-center">
+                  <div>
+                    <h2>Sign up</h2>
+                    <p>
+                      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                      tempor incididunt ut labore et dolore magna aliqua.
+                    </p>
+                    <Link to="/register">
+                      <CButton color="primary" className="mt-3" active tabIndex={-1}>
+                        Register Now!
+                      </CButton>
+                    </Link>
+                  </div>
                 </CCardBody>
               </CCard>
             </CCardGroup>
@@ -129,7 +80,7 @@ const AdminLogin = () => {
         </CRow>
       </CContainer>
     </div>
-  );
-};
+  )
+}
 
-export default AdminLogin;
+export default Login

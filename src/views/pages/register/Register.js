@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react'
 import {
   CButton,
   CCard,
@@ -10,52 +10,11 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilUser } from '@coreui/icons';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://3.111.163.2:3002/api';
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilLockLocked, cilUser } from '@coreui/icons'
 
 const Register = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
-        email,
-        password,
-        confirmPassword,
-        name: username,
-      });
-
-      if (response.status === 200) {
-        navigate('/login'); // Redirect to login after successful registration
-      } else {
-        setError(response.data.message || 'Failed to register. Please try again.');
-      }
-    } catch (error) {
-      if (error.response && error.response.data) {
-        setError(error.response.data.message);
-      } else {
-        setError('Failed to register. Please try again.');
-      }
-      console.error('Registration Error:', error);
-    }
-  };
-
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -63,31 +22,18 @@ const Register = () => {
           <CCol md={9} lg={7} xl={6}>
             <CCard className="mx-4">
               <CCardBody className="p-4">
-                <CForm onSubmit={handleSubmit}>
+                <CForm>
                   <h1>Register</h1>
                   <p className="text-body-secondary">Create your account</p>
-                  {error && <p className="text-danger">{error}</p>}
                   <CInputGroup className="mb-3">
                     <CInputGroupText>
                       <CIcon icon={cilUser} />
                     </CInputGroupText>
-                    <CFormInput
-                      placeholder="Username"
-                      autoComplete="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
+                    <CFormInput placeholder="Username" autoComplete="username" />
                   </CInputGroup>
                   <CInputGroup className="mb-3">
                     <CInputGroupText>@</CInputGroupText>
-                    <CFormInput
-                      placeholder="Email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <CFormInput placeholder="Email" autoComplete="email" />
                   </CInputGroup>
                   <CInputGroup className="mb-3">
                     <CInputGroupText>
@@ -97,9 +43,6 @@ const Register = () => {
                       type="password"
                       placeholder="Password"
                       autoComplete="new-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
                     />
                   </CInputGroup>
                   <CInputGroup className="mb-4">
@@ -110,15 +53,10 @@ const Register = () => {
                       type="password"
                       placeholder="Repeat password"
                       autoComplete="new-password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
                     />
                   </CInputGroup>
                   <div className="d-grid">
-                    <CButton color="success" type="submit">
-                      Create Account
-                    </CButton>
+                    <CButton color="success">Create Account</CButton>
                   </div>
                 </CForm>
               </CCardBody>
@@ -127,7 +65,7 @@ const Register = () => {
         </CRow>
       </CContainer>
     </div>
-  );
-};
+  )
+}
 
-export default Register;
+export default Register
