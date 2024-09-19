@@ -1,0 +1,36 @@
+
+.header-image {
+    background: url('./img/header-bg.png') no-repeat center center;
+    background-size: cover;
+    height: 100px; /* Adjust as needed */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .logo {
+    height: 60px;
+  }
+  
+  .contact-info {
+    font-size: 1rem;
+  }
+  
+  .email, .phone {
+    color: #0066cc;
+    text-decoration: none;
+  }
+  
+  .email:hover, .phone:hover {
+    text-decoration: underline;
+  }
+  
+  .mt-4 {
+    margin-top: 1.5rem;
+  }
+  
+  .mx-3 {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+  
