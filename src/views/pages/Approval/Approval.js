@@ -45,12 +45,12 @@ const AccountEvaluation = () => {
 
                 {/* Contact Information */}
                 <div className="contact-info">
-                  <a href="mailto:hunt30@gmail.com" className="email">
-                    hunt30@gmail.com
+                  <a href="mailto:xyz@gmail.com" className="email">
+                    xyz@gmail.com
                   </a>
                   <span className="mx-3">|</span>
                   <a href="tel:+15026559867" className="phone">
-                    +1 (502) 655-9867
+                    +1 (348) 655-9867
                   </a>
                 </div>
               </CCardBody>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios'; // Import Axios for making HTTP requests
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; 
+import { toast, ToastContainer } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css';
 import {
   CButton,
   CCard,
@@ -30,14 +32,16 @@ const Register = () => {
     e.preventDefault();
     
     try {
-      // Make a POST request to your backend API to send OTP
       await axios.post('http://localhost:8000/vendor/sendOTP', { email });
-      alert('OTP has been sent to your email.');
-      navigate('/change-password')
+      
+      toast.success('OTP has been sent to your email.');
+      setTimeout(() => {
+        navigate('/change-password', { state: { email } });
+      }, 2000)
       
     } catch (error) {
-      console.error('Error sending OTP:', error);
-      alert('Failed to send OTP. Please try again.');
+      const errorMessage = error.response?.data?.message
+      toast.error(errorMessage);
     }
   };
 
@@ -82,6 +86,8 @@ const Register = () => {
           </CCol>
         </CRow>
       </CContainer>
+
+      <ToastContainer />
     </div>
   );
 };

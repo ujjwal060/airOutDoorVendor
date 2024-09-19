@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logo1 from './img/logo1.png';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import {
   CButton,
@@ -22,22 +24,25 @@ import { cilLockLocked, cilUser } from '@coreui/icons';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
       const response = await axios.post('http://localhost:8000/vendor/login', { email, password });
-      console.log('Login successful:', response.data);
-
       localStorage.setItem('token', response.data.token);
+      toast.success('Login successful!');
       navigate('/dashboard');
-      
     } catch (err) {
-      console.error('Login failed:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
+      if (err.response?.data?.isApproved === false) {
+        toast.error('Vendor is not approved yet. Please wait for approval.');
+        setTimeout(() => {
+          navigate('/approval');
+        }, 2000);
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -85,8 +90,6 @@ const Login = () => {
                       />
                     </CInputGroup>
 
-                    {error && <p className="text-danger">{error}</p>}
-
                     {/* Login button with proper action */}
                     <CButton type="submit" color="warning" className="px-4 mb-3">
                       Login
@@ -111,6 +114,7 @@ const Login = () => {
           </CCol>
         </CRow>
       </CContainer>
+      <ToastContainer />
     </div>
   );
 };

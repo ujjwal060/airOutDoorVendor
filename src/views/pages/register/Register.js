@@ -14,7 +14,9 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser, cilImage, cilPhone, cilHome } from '@coreui/icons';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 import logo1 from './img/logo1.png';
 
 const Register = () => {
@@ -28,11 +30,8 @@ const Register = () => {
     repeatPassword: '',
   });
 
-  const [error, setError] = useState(''); // State for storing error messages
+  const navigate = useNavigate(); 
 
-  const navigate = useNavigate(); // Initialize useNavigate
-
-  // Handle input change
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     setFormData({
@@ -41,13 +40,11 @@ const Register = () => {
     });
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check if passwords match
     if (formData.password !== formData.repeatPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -57,22 +54,18 @@ const Register = () => {
       phone: formData.mobile,
       address: formData.address,
       password: formData.password,
-      profileImage: formData.profileImage, // Send profile image as part of the object
+      profileImage: formData.profileImage,
     };
 
     try {
       const response = await axios.post('http://localhost:8000/vendor/signup', data, {
         headers: { 'Content-Type': 'application/json' }
       });
-      console.log(response.data);
-      alert("Registration successful");
-
-      // Navigate to approval page
+      toast.success("Registration successful");
       navigate('/approval');
     } catch (error) {
-      // Extract error message from the response
       const errorMessage = error.response?.data?.message || "Registration failed";
-      setError(errorMessage); // Set the error message to state
+      toast.error(errorMessage);
     }
   };
 
@@ -94,12 +87,6 @@ const Register = () => {
                   <p className="text-body-secondary text-center">
                     Create your account
                   </p>
-
-                  {error && (
-                    <div className="alert alert-danger">
-                      {error}
-                    </div>
-                  )}
 
                   <CInputGroup className="mb-3">
                     <CInputGroupText>
@@ -204,6 +191,8 @@ const Register = () => {
           </CCol>
         </CRow>
       </CContainer>
+
+      <ToastContainer />
     </div>
   );
 };

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo1 from './img/logo1.png';
 import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import {
   CButton,
@@ -17,71 +19,67 @@ import {
   CRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilCheckCircle } from '@coreui/icons'; // Add green tick icon
+import { cilLockLocked, cilCheckCircle } from '@coreui/icons';
 
 const Change = () => {
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [email, setEmail] = useState('');  // Add email state
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isOtpVerified, setIsOtpVerified] = useState(false);
   const [newPassword, setNewPassword] = useState('');
-  const navigate = useNavigate();
+  
+  const email = location.state?.email || localStorage.getItem('email');
 
-  // Handle OTP input change
+  useEffect(() => {
+    if (email) {
+      localStorage.setItem('email', email);
+    }
+  }, [email]);
+
   const handleOtpChange = (e, index) => {
     const value = e.target.value;
     if (value.length <= 1) {
       const updatedOtp = [...otp];
       updatedOtp[index] = value;
       setOtp(updatedOtp);
+
+      if (index < otp.length - 1 && value) {
+        document.getElementById(`otp-input-${index + 1}`).focus();
+      }
     }
   };
 
-  // Verify OTP
   const verifyOtp = async () => {
     try {
       const otpString = otp.join('');
       const response = await axios.post('http://localhost:8000/vendor/verifyOTP', { email, otp: otpString });
-      if (response.data.message === 'Verification success. You can now create a password.') {
+        toast.success('OTP verified successfully!');
         setIsOtpVerified(true);
-      } else {
-        alert('OTP verification failed');
-      }
     } catch (error) {
-      console.error('Error verifying OTP:', error);
-      alert('Error verifying OTP');
+      toast.error(error.response?.data?.message);
     }
   };
 
-  // Resend OTP
   const resendOtp = async () => {
     try {
-      const response = await axios.post('http://localhost:8000/vendor/resendOTP', { email });
-      if (response.data.success) {
-        alert('OTP has been resent to your email');
-      } else {
-        alert('Failed to resend OTP');
-      }
+      const response = await axios.post('http://localhost:8000/vendor/sendOTP', { email });
+        toast.success('OTP has been resent to your email.');
     } catch (error) {
-      console.error('Error resending OTP:', error);
-      alert('Error resending OTP');
+      toast.error(error.response?.data?.message);
     }
   };
 
-  // Handle password change
   const handlePasswordChange = async () => {
     try {
       const response = await axios.post('http://localhost:8000/vendor/forgate', { email, newPassword });
-      console.log('Password Reset Response:', response.data); // Log response
-      if (response.data.success) {
-        alert(response.data.message); 
-        navigate('/login'); // Navigate to login page
-      } 
+        toast.success('Password has been reset successfully!');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000)
     } catch (error) {
-      console.error('Error resetting password:', error);
-      alert('Error resetting password');
+      toast.error(error.response?.data?.message);
     }
   };
-  
 
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
@@ -102,21 +100,11 @@ const Change = () => {
                       Change Your Password!
                     </h3>
 
-                    {/* Email input */}
-                    <CInputGroup className="mb-4">
-                      <CFormInput
-                        type="email"
-                        placeholder="Enter Your Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </CInputGroup>
-
-                    {/* OTP input section */}
                     <div className="d-flex justify-content-center mb-4">
                       {otp.map((digit, index) => (
                         <CFormInput
                           key={index}
+                          id={`otp-input-${index}`}
                           type="text"
                           maxLength={1}
                           value={digit}
@@ -150,16 +138,14 @@ const Change = () => {
                           />
                         </CInputGroup>
 
-                        {/* Centered Change button */}
                         <CButton color="warning" className="px-4 mb-3" onClick={handlePasswordChange}>
                           Submit
                         </CButton>
                       </>
                     )}
 
-                    {/* Line and Resend OTP link */}
                     <div className="my-3">
-                      <Link to="#" onClick={resendOtp}>Resend OTP</Link> {/* Trigger resendOtp on click */}
+                      <Link to="#" onClick={resendOtp}>Resend OTP</Link>
                     </div>
                   </CForm>
                 </CCardBody>
@@ -168,6 +154,7 @@ const Change = () => {
           </CCol>
         </CRow>
       </CContainer>
+      <ToastContainer />
     </div>
   );
 };
