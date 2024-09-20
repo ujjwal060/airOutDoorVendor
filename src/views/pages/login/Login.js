@@ -29,7 +29,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://3.111.163.2:8000/vendor/login', { email, password });
+      const response = await axios.post('http://localhost:8000/vendor/login', { email, password });
       localStorage.setItem('token', response.data.token);
       toast.success('Login successful!');
       navigate('/dashboard');

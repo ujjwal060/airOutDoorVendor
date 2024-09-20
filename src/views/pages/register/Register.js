@@ -58,7 +58,7 @@ const Register = () => {
     };
 
     try {
-      const response = await axios.post('http://3.111.163.2:8000/vendor/signup', data, {
+      const response = await axios.post('http://localhost:8000/vendor/signup', data, {
         headers: { 'Content-Type': 'application/json' }
       });
       toast.success("Registration successful");
