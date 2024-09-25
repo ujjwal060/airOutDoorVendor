@@ -38,7 +38,11 @@ const App = () => {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+<<<<<<< HEAD
   <BrowserRouter>
+=======
+    <BrowserRouter>
+>>>>>>> 9d22a36e34b1651eef762602d9cf15a54e3e6c33
       <Suspense
         fallback={
           <div className="pt-3 text-center">

@@ -7,6 +7,7 @@ const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Mylisting = React.lazy(() => import('./views/base/tables/Mylisting'))
 const Mybooking = React.lazy(() => import('./views/base/Mybooking/Mybooking'))
 const Profile = React.lazy(() => import('./views/profile/Profile'))
+const Property= React.lazy(() => import('./views/base/PropertyManagement/Property'))
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
@@ -16,6 +17,7 @@ const routes = [
   { path: '/mylisting', name: 'Mylisting', element: Mylisting },
   { path: '/mybooking', name: 'Mybooking', element: Mybooking },
   { path: '/profile', name: 'Profile', element: Profile },
+  { path: '/property', name: 'Property', element: Property },
 
 ]
 
