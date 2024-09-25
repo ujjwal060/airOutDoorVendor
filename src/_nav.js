@@ -22,10 +22,16 @@ const _nav = [
     to: '/dashboard',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
   },
+  // {
+  //   component: CNavItem,
+  //   name: 'My listing',
+  //   to: '/mylisting',
+  //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
+  // },
   {
     component: CNavItem,
-    name: 'My listing',
-    to: '/mylisting',
+    name: 'Property Management',
+    to: '/property',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
 
