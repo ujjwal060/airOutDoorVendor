@@ -25,6 +25,8 @@ import {
 } from '@coreui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Tables = () => {
     const [properties, setProperties] = useState([]);
@@ -40,27 +42,22 @@ const Tables = () => {
         image: null,
     });
 
-    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // Fetch property data from backend
     useEffect(() => {
         fetchProperties();
     }, []);
 
-    // Logic to calculate the current properties to display
     const indexOfLastProperty = currentPage * itemsPerPage;
     const indexOfFirstProperty = indexOfLastProperty - itemsPerPage;
     const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
 
-    // Function to change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
-        // Automatically add $ sign to pricing
         if (name === 'pricing') {
             const updatedValue = value.startsWith('$') ? value : `$${value}`;
             setNewProperty((prev) => ({ ...prev, pricing: updatedValue }));
@@ -73,46 +70,50 @@ const Tables = () => {
         setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
     };
 
-
     const fetchProperties = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/property/get');
+            const vendorId = localStorage.getItem('vendorId');
+            const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`);
             setProperties(response.data);
-            console.log("111", response.data.image);
-            
         } catch (error) {
             console.error('Error fetching properties:', error);
         }
     };
 
-
-    // Function to handle adding or updating a property
     const addOrUpdateProperty = async () => {
         const formData = new FormData();
         Object.keys(newProperty).forEach((key) => {
             formData.append(key, newProperty[key]);
         });
 
+        const vendorId = localStorage.getItem('vendorId');
+        if (vendorId) {
+            formData.append('vendorId', vendorId);
+        } else {
+            toast.error('Vendor ID not found in local storage');
+            return;
+        }
+
         try {
             if (editMode) {
-                // Update the existing property
                 const response = await axios.put(`http://localhost:8000/property/update/${selectedPropertyId}`, formData);
-
-                // Update the state with the modified property
                 setProperties(
                     properties.map((property) =>
                         property._id === selectedPropertyId
-                            ? { ...property, ...response.data }  // Use _id to match with the backend
+                            ? { ...property, ...response.data }
                             : property
                     )
                 );
+                toast.success('Property updated successfully');
             } else {
-                // Add a new property
                 const response = await axios.post('http://localhost:8000/property/post', formData);
                 setProperties([...properties, response.data]);
+                toast.success('Property added successfully');
             }
         } catch (error) {
             console.error('Error adding/updating property:', error);
+            const errorMessage = error.response?.data?.message || "Error adding/updating property";
+            toast.error(errorMessage);
         }
 
         closeModal();
@@ -135,9 +136,10 @@ const Tables = () => {
     const deleteProperty = async (id) => {
         try {
             await axios.delete(`http://localhost:8000/property/delete/${id}`);
-            setProperties(properties.filter((property) => property._id !== id)); // Use _id here
+            setProperties(properties.filter((property) => property._id !== id));
+            toast.success('Property deleted successfully');
         } catch (error) {
-            console.error('Error deleting property:', error);
+            toast.error('Error deleting property');
         }
     };
 
@@ -150,7 +152,7 @@ const Tables = () => {
             availability: property.availability,
             image: property.image,
         });
-        setSelectedPropertyId(property._id); // Use _id here
+        setSelectedPropertyId(property._id);
         setEditMode(true);
         setModalVisible(true);
     };
@@ -170,7 +172,7 @@ const Tables = () => {
                             <CTable>
                                 <CTableHead color="dark">
                                     <CTableRow>
-                                        <CTableHeaderCell>#</CTableHeaderCell>
+                                        <CTableHeaderCell>S.No</CTableHeaderCell>
                                         <CTableHeaderCell>Image</CTableHeaderCell>
                                         <CTableHeaderCell>Property Name</CTableHeaderCell>
                                         <CTableHeaderCell>Description</CTableHeaderCell>
@@ -187,7 +189,7 @@ const Tables = () => {
                                                 {indexOfFirstProperty + index + 1} {/* Automatic numbering */}
                                             </CTableHeaderCell>
                                             <CTableDataCell>
-                                            <img src={`http://localhost:8000/${property.image}`} alt={property.name} width="50" />
+                                                <img src={property.imageUrl} alt={property.name} width="50" />
                                             </CTableDataCell>
                                             <CTableDataCell>{property.name}</CTableDataCell>
                                             <CTableDataCell>{property.description}</CTableDataCell>
@@ -255,46 +257,32 @@ const Tables = () => {
                             onChange={handleInputChange}
                             required
                         />
-                        <CFormInput
-                            type="file"
-                            label="Property Image"
-                            name="image"
-                            onChange={handleFileChange}
-                        />
+                        <CFormInput type="file" onChange={handleFileChange} />
                     </CForm>
                 </CModalBody>
                 <CModalFooter>
-                    <CButton color="secondary" onClick={closeModal}>Cancel</CButton>
-                    <CButton color="warning" onClick={addOrUpdateProperty}>
+                    <CButton color="secondary" onClick={closeModal}>
+                        Close
+                    </CButton>
+                    <CButton color="primary" onClick={addOrUpdateProperty}>
                         {editMode ? 'Update' : 'Add'}
                     </CButton>
                 </CModalFooter>
             </CModal>
 
             {/* Pagination */}
-            <CPagination aria-label="Page navigation example" style={{display:"flex",justifyContent:"center"}}>
-                <CPaginationItem
-                    disabled={currentPage === 1}
-                    onClick={() => paginate(currentPage - 1)}
-                >
-                    Previous
-                </CPaginationItem>
-                {Array.from({ length: Math.ceil(properties.length / itemsPerPage) }, (_, index) => (
-                    <CPaginationItem
-                        key={index + 1}
-                        active={currentPage === index + 1}
-                        onClick={() => paginate(index + 1)}
-                    >
-                        {index + 1}
-                    </CPaginationItem>
-                ))}
-                <CPaginationItem
-                    disabled={currentPage === Math.ceil(properties.length / itemsPerPage)}
-                    onClick={() => paginate(currentPage + 1)}
-                >
-                    Next
-                </CPaginationItem>
-            </CPagination>
+            <CPagination
+                aria-label="Page navigation"
+                align="end"
+                className="mt-3"
+                size="sm"
+                total={properties.length}
+                currentPage={currentPage}
+                onPageChange={paginate}
+                pages={Math.ceil(properties.length / itemsPerPage)}
+            />
+
+            <ToastContainer />
         </>
     );
 };
