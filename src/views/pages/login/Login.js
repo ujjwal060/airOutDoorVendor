@@ -31,6 +31,7 @@ const Login = () => {
     try {
       const response = await axios.post('http://localhost:8000/vendor/login', { email, password });
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('vendorId', response.data.vendor.id);
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (err) {
