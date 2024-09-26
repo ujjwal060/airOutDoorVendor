@@ -59,7 +59,7 @@ const Register = () => {
     formData.append('image', imageFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/vendor/signup', formData);
+      const response = await axios.post('http://44.196.192.232:8000/vendor/signup', formData);
       toast.success("Registration successful");
       navigate('/approval');
     } catch (error) {
