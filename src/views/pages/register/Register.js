@@ -48,17 +48,18 @@ const Register = () => {
       return;
     }
 
-    const data = {
-      name: formData.username,
-      email: formData.email,
-      phone: formData.mobile,
-      address: formData.address,
-      password: formData.password,
-      profileImage: formData.profileImage,
-    };
+    const formDataToSend = new FormData();
+    formDataToSend.append('name', formData.username);
+    formDataToSend.append('email', formData.email);
+    formDataToSend.append('phone', formData.mobile);
+    formDataToSend.append('address', formData.address);
+    formDataToSend.append('password', formData.password);
+    if (formData.profileImage) {
+      formDataToSend.append('image', formData.profileImage);
+    }
 
     try {
-      const response = await axios.post('http://localhost:8000/vendor/signup', data, {
+      const response = await axios.post('http://localhost:8000/vendor/signup', formDataToSend, {
         headers: { 'Content-Type': 'application/json' }
       });
       toast.success("Registration successful");
