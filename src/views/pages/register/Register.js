@@ -49,7 +49,6 @@ const Register = () => {
       toast.error("Passwords do not match");
       return;
     }
-console.log(imageFile);
 
     const formData = new FormData();
     formData.append('name', register.username);
