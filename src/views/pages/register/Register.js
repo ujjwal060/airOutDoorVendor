@@ -20,48 +20,47 @@ import { useNavigate } from 'react-router-dom';
 import logo1 from './img/logo1.png';
 
 const Register = () => {
-  const [formData, setFormData] = useState({
+  const [imageFile, setImageFile] = useState(null);
+  const [register, setRegister] = useState({
     username: '',
     email: '',
     mobile: '',
     address: '',
-    profileImage: null,
     password: '',
     repeatPassword: '',
   });
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'file' ? files[0] : value,
-    });
+    const { name, value } = e.target;
+    setRegister((prev) => ({ ...prev, [name]: value }))
+  };
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    setImageFile(file);
+    setRegister((prev) => ({ ...prev, image: URL.createObjectURL(file) }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.repeatPassword) {
+    if (register.password !== register.repeatPassword) {
       toast.error("Passwords do not match");
       return;
     }
+console.log(imageFile);
 
-    const formDataToSend = new FormData();
-    formDataToSend.append('name', formData.username);
-    formDataToSend.append('email', formData.email);
-    formDataToSend.append('phone', formData.mobile);
-    formDataToSend.append('address', formData.address);
-    formDataToSend.append('password', formData.password);
-    if (formData.profileImage) {
-      formDataToSend.append('image', formData.profileImage);
-    }
+    const formData = new FormData();
+    formData.append('name', register.username);
+    formData.append('email', register.email);
+    formData.append('phone', register.mobile);
+    formData.append('address', register.address);
+    formData.append('password', register.password);
+    formData.append('image', imageFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/vendor/signup', formDataToSend, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await axios.post('http://localhost:8000/vendor/signup', formData);
       toast.success("Registration successful");
       navigate('/approval');
     } catch (error) {
@@ -95,7 +94,7 @@ const Register = () => {
                     </CInputGroupText>
                     <CFormInput
                       name="username"
-                      value={formData.username}
+                      value={register.username}
                       onChange={handleChange}
                       placeholder="Username"
                       autoComplete="username"
@@ -106,7 +105,7 @@ const Register = () => {
                     <CInputGroupText>@</CInputGroupText>
                     <CFormInput
                       name="email"
-                      value={formData.email}
+                      value={register.email}
                       onChange={handleChange}
                       placeholder="Email"
                       autoComplete="email"
@@ -119,7 +118,7 @@ const Register = () => {
                     </CInputGroupText>
                     <CFormInput
                       name="mobile"
-                      value={formData.mobile}
+                      value={register.mobile}
                       onChange={handleChange}
                       placeholder="Mobile No."
                       autoComplete="mobile"
@@ -132,7 +131,7 @@ const Register = () => {
                     </CInputGroupText>
                     <CFormInput
                       name="address"
-                      value={formData.address}
+                      value={register.address}
                       onChange={handleChange}
                       placeholder="Address"
                       autoComplete="address"
@@ -145,10 +144,12 @@ const Register = () => {
                       <CIcon icon={cilImage} />
                     </CInputGroupText>
                     <CFormInput
-                      name="profileImage"
                       type="file"
-                      onChange={handleChange}
+                      name="image"
+                      accept="image/*"
                       placeholder="Upload Profile Image"
+                      onChange={handleImageUpload}
+                      required
                     />
                   </CInputGroup>
 
@@ -159,7 +160,7 @@ const Register = () => {
                     <CFormInput
                       name="password"
                       type="password"
-                      value={formData.password}
+                      value={register.password}
                       onChange={handleChange}
                       placeholder="Password"
                       autoComplete="new-password"
@@ -173,7 +174,7 @@ const Register = () => {
                     <CFormInput
                       name="repeatPassword"
                       type="password"
-                      value={formData.repeatPassword}
+                      value={register.repeatPassword}
                       onChange={handleChange}
                       placeholder="Repeat password"
                       autoComplete="new-password"
