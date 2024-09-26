@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   CCard,
   CCardBody,
@@ -6,65 +6,63 @@ import {
   CCol,
   CRow,
   CTable,
-  CTableBody,
   CTableHead,
-  CTableHeaderCell,
+  CTableBody,
   CTableRow,
+  CTableHeaderCell,
   CTableDataCell,
-  CButton,
-  CModal,
-  CModalHeader,
-  CModalBody,
-  CModalFooter,
-  CForm,
-  CFormInput,
-} from '@coreui/react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons'
+  CSpinner,
+  CPagination,
+  CPaginationItem,
+} from '@coreui/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
 
 const Tables = () => {
-  const [Bookings, setBookings] = useState([])
+  const [Bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage] = useState(10);
 
-  const [modalVisible, setModalVisible] = useState(false)
-  const [editMode, setEditMode] = useState(false)
-  const [selectedBookingId, setSelectedBookingId] = useState(null)
-  const [newBooking, setNewBooking] = useState({ name: '', email: '', phone: '' ,date: ''})
+  // Fetch bookings from the API on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const bookingsResponse = await axios.get('http://localhost:8000/booking/get');
+        setBookings(bookingsResponse.data || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setNewBooking((prev) => ({ ...prev, [name]: value }))
-  }
+    fetchData();
+  }, []);
 
-  const addBooking = () => {
-    if (editMode) {
-      setBookings(
-        Bookings.map((Booking) =>
-          Booking.id === selectedBookingId ? { id: Booking.id, ...newBooking } : Booking
-        )
-      )
-    } else {
-      setBookings([...Bookings, { id: Bookings.length + 1, ...newBooking }])
+  // Delete a booking by ID
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8000/booking/delete/${id}`); // Update with your delete endpoint
+      setBookings(Bookings.filter((booking) => booking._id !== id)); // Update state to remove the deleted booking
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      setError('Failed to delete booking');
     }
-    resetForm()
-  }
+  };
 
-  const resetForm = () => {
-    setModalVisible(false)
-    setEditMode(false)
-    setSelectedBookingId(null)
-    setNewBooking({ name: '', email: '', phone: '' ,date: ''}) // Reset the form
-  }
+  // Calculate current bookings for pagination
+  const indexOfLastBooking = currentPage * rowsPerPage;
+  const indexOfFirstBooking = indexOfLastBooking - rowsPerPage;
+  const currentBookings = Bookings.slice(indexOfFirstBooking, indexOfLastBooking);
 
-  const deleteBooking = (id) => {
-    setBookings(Bookings.filter((Booking) => Booking.id !== id))
-  }
-
-  const updateBooking = (Booking) => {
-    setNewBooking({ name: Booking.name, email: Booking.email, phone: Booking.phone, date: Booking.date })
-    setSelectedBookingId(Booking.id)
-    setEditMode(true)
-    setModalVisible(true)
-  }
+  // Pagination logic
+  const totalPages = Math.ceil(Bookings.length / rowsPerPage);
+  
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <CRow>
@@ -72,96 +70,81 @@ const Tables = () => {
         <CCard className="mb-4">
           <CCardHeader>
             <strong>Bookings</strong>
-            <CButton color="warning" className="float-end" onClick={() => setModalVisible(true)}>
-              {editMode ? 'Edit Booking' : 'Add Booking'}
-            </CButton>
           </CCardHeader>
           <CCardBody>
-            <CTable>
-              <CTableHead color="dark">
-                <CTableRow>
-                  <CTableHeaderCell>#</CTableHeaderCell>
-                  <CTableHeaderCell>Booking ID</CTableHeaderCell>
-                  <CTableHeaderCell>Date</CTableHeaderCell>
-                  <CTableHeaderCell>Email</CTableHeaderCell>
-                  <CTableHeaderCell>Phone No.</CTableHeaderCell>
-                  <CTableHeaderCell>Actions</CTableHeaderCell>
-                </CTableRow>
-              </CTableHead>
-              <CTableBody>
-                {Bookings.map((Booking) => (
-                  <CTableRow key={Booking.id}>
-                    <CTableHeaderCell scope="row">{Booking.id}</CTableHeaderCell>
-                    <CTableDataCell>{Booking.name}</CTableDataCell>
-                    <CTableDataCell>{Booking.email}</CTableDataCell>
-                    <CTableDataCell>{Booking.phone}</CTableDataCell>
-                    <CTableDataCell>{Booking.date}</CTableDataCell>
-                    <CTableDataCell>
-                      <FontAwesomeIcon
-                        icon={faEdit}
-                        onClick={() => updateBooking(Booking)}
-                        style={{ cursor: 'pointer', marginRight: '10px', color: 'blue' }}
-                      />
-                      <FontAwesomeIcon
-                        icon={faTrash}
-                        onClick={() => deleteBooking(Booking.id)}
-                        style={{ cursor: 'pointer', color: 'red' }}
-                      />
-                    </CTableDataCell>
+            {loading ? (
+              <CSpinner color="primary" />
+            ) : error ? (
+              <div className="text-danger">{error}</div>
+            ) : (
+              <CTable>
+                <CTableHead color="dark">
+                  <CTableRow>
+                    <CTableHeaderCell>#</CTableHeaderCell>
+                    <CTableHeaderCell>Check In</CTableHeaderCell>
+                    <CTableHeaderCell>Check Out</CTableHeaderCell>
+                    <CTableHeaderCell>Guests</CTableHeaderCell>
+                    <CTableHeaderCell>Camper</CTableHeaderCell>
+                    <CTableHeaderCell>Price</CTableHeaderCell> 
+                    <CTableHeaderCell>Action</CTableHeaderCell> 
                   </CTableRow>
-                ))}
-              </CTableBody>
-            </CTable>
+                </CTableHead>
+                <CTableBody>
+                  {currentBookings.length > 0 ? (
+                    currentBookings.map((Booking, index) => (
+                      <CTableRow key={Booking._id}>
+                        <CTableHeaderCell scope="row">{index + 1 + (currentPage - 1) * rowsPerPage}</CTableHeaderCell> {/* Serial Number */}
+                        <CTableDataCell>{new Date(Booking.checkIn).toLocaleDateString()}</CTableDataCell>
+                        <CTableDataCell>{new Date(Booking.checkOut).toLocaleDateString()}</CTableDataCell>
+                        <CTableDataCell>{Booking.guests}</CTableDataCell>
+                        <CTableDataCell>{Booking.camper ? 'Yes' : 'No'}</CTableDataCell>
+                        <CTableDataCell> $ {Booking.pricing}</CTableDataCell> {/* Displaying price */}
+                        <CTableDataCell>
+                          <FontAwesomeIcon 
+                            icon={faTrash} 
+                            onClick={() => handleDelete(Booking._id)} 
+                            style={{ cursor: 'pointer', color: 'red' }} 
+                          />
+                        </CTableDataCell>
+                      </CTableRow>
+                    ))
+                  ) : (
+                    <CTableRow>
+                      <CTableDataCell colSpan={7} className="text-center">No bookings found</CTableDataCell>
+                    </CTableRow>
+                  )}
+                </CTableBody>
+              </CTable>
+            )}
           </CCardBody>
+          {/* Pagination */}
+          <CPagination aria-label="Page navigation example" style={{display:"flex", justifyContent:"center"}}>
+            <CPaginationItem
+              disabled={currentPage === 1}
+              onClick={() => paginate(currentPage - 1)}
+            >
+              Previous
+            </CPaginationItem>
+            {Array.from({ length: totalPages }, (_, index) => (
+              <CPaginationItem
+                key={index + 1}
+                active={currentPage === index + 1}
+                onClick={() => paginate(index + 1)}
+              >
+                {index + 1}
+              </CPaginationItem>
+            ))}
+            <CPaginationItem
+              disabled={currentPage === totalPages}
+              onClick={() => paginate(currentPage + 1)}
+            >
+              Next
+            </CPaginationItem>
+          </CPagination>
         </CCard>
       </CCol>
-
-      {/* Modal for adding/updating a Booking */}
-      <CModal visible={modalVisible} onClose={resetForm}>
-        <CModalHeader>{editMode ? 'Update Booking' : 'Add Booking'}</CModalHeader>
-        <CModalBody>
-          <CForm>
-            <CFormInput
-              label="Booking Name"
-              name="name"
-              value={newBooking.name}
-              onChange={handleInputChange}
-              required
-            />
-            <CFormInput
-              label="Email"
-              name="email"
-              value={newBooking.email}
-              onChange={handleInputChange}
-              required
-            />
-            <CFormInput
-              label="Phone No."
-              name="phone"
-              value={newBooking.phone}
-              onChange={handleInputChange}
-              required
-            />
-            <CFormInput
-              label="Date"
-              name="date"
-              value={newBooking.date}
-              onChange={handleInputChange}
-              required
-            />
-          </CForm>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={resetForm}>
-            Cancel
-          </CButton>
-          <CButton color="warning" onClick={addBooking}>
-            {editMode ? 'Update Booking' : 'Add Booking'}
-          </CButton>
-        </CModalFooter>
-      </CModal>
     </CRow>
-  )
-}
+  );
+};
 
-export default Tables
+export default Tables;
