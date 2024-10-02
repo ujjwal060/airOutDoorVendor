@@ -26,7 +26,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e) => { 
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:8000/vendor/login', { email, password });
