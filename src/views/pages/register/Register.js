@@ -49,7 +49,6 @@ const Register = () => {
       toast.error("Passwords do not match");
       return;
     }
-console.log(imageFile);
 
     const formData = new FormData();
     formData.append('name', register.username);
@@ -60,7 +59,7 @@ console.log(imageFile);
     formData.append('image', imageFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/vendor/signup', formData);
+      const response = await axios.post('http://44.196.192.232:8000/vendor/signup', formData);
       toast.success("Registration successful");
       navigate('/approval');
     } catch (error) {
