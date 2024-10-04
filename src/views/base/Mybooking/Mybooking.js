@@ -25,12 +25,13 @@ const Tables = () => {
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage] = useState(10);
+  const vendorId=localStorage.getItem("vendorId");
 
   // Fetch bookings from the API on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const bookingsResponse = await axios.get('http://44.196.192.232:8000/booking/get');
+        const bookingsResponse = await axios.get(`http://44.196.192.232:8000/booking/getBook/${vendorId}`);
         setBookings(bookingsResponse.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -46,8 +47,8 @@ const Tables = () => {
   // Delete a booking by ID
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://44.196.192.232:8000/booking/delete/${id}`); // Update with your delete endpoint
-      setBookings(Bookings.filter((booking) => booking._id !== id)); // Update state to remove the deleted booking
+      await axios.delete(`http://44.196.192.232:8000/booking/delete/${id}`);
+      setBookings(Bookings.filter((booking) => booking._id !== id));
     } catch (error) {
       console.error('Error deleting booking:', error);
       setError('Failed to delete booking');
@@ -79,43 +80,47 @@ const Tables = () => {
               <div className="text-danger">{error}</div>
             ) : (
               <CTable>
-                <CTableHead color="dark">
-                  <CTableRow>
-                    <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Check In</CTableHeaderCell>
-                    <CTableHeaderCell>Check Out</CTableHeaderCell>
-                    <CTableHeaderCell>Guests</CTableHeaderCell>
-                    <CTableHeaderCell>Camper</CTableHeaderCell>
-                    <CTableHeaderCell>Price</CTableHeaderCell> 
-                    <CTableHeaderCell>Action</CTableHeaderCell> 
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {currentBookings.length > 0 ? (
-                    currentBookings.map((Booking, index) => (
-                      <CTableRow key={Booking._id}>
-                        <CTableHeaderCell scope="row">{index + 1 + (currentPage - 1) * rowsPerPage}</CTableHeaderCell> {/* Serial Number */}
-                        <CTableDataCell>{new Date(Booking.checkIn).toLocaleDateString()}</CTableDataCell>
-                        <CTableDataCell>{new Date(Booking.checkOut).toLocaleDateString()}</CTableDataCell>
-                        <CTableDataCell>{Booking.guests}</CTableDataCell>
-                        <CTableDataCell>{Booking.camper ? 'Yes' : 'No'}</CTableDataCell>
-                        <CTableDataCell> $ {Booking.pricing}</CTableDataCell> {/* Displaying price */}
-                        <CTableDataCell>
-                          <FontAwesomeIcon 
-                            icon={faTrash} 
-                            onClick={() => handleDelete(Booking._id)} 
-                            style={{ cursor: 'pointer', color: 'red' }} 
-                          />
-                        </CTableDataCell>
-                      </CTableRow>
-                    ))
-                  ) : (
-                    <CTableRow>
-                      <CTableDataCell colSpan={7} className="text-center">No bookings found</CTableDataCell>
+              <CTableHead color="dark">
+                <CTableRow>
+                  <CTableHeaderCell>#</CTableHeaderCell>
+                  <CTableHeaderCell>Check In</CTableHeaderCell>
+                  <CTableHeaderCell>Check Out</CTableHeaderCell>
+                  <CTableHeaderCell>Guests</CTableHeaderCell>
+                  <CTableHeaderCell>Camper</CTableHeaderCell>
+                  <CTableHeaderCell>Price</CTableHeaderCell>
+                  <CTableHeaderCell>Action</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {currentBookings.length > 0 ? (
+                  currentBookings.map((Booking, index) => (
+                    <CTableRow key={Booking._id}>
+                      <CTableHeaderCell scope="row">
+                        {index + 1 + (currentPage - 1) * rowsPerPage}
+                      </CTableHeaderCell>
+                      <CTableDataCell>{new Date(Booking.checkInDate).toLocaleDateString()}</CTableDataCell>
+                      <CTableDataCell>{new Date(Booking.checkOutDate).toLocaleDateString()}</CTableDataCell>
+                      <CTableDataCell>{Booking.guests}</CTableDataCell>
+                      <CTableDataCell>{Booking.camper ? 'Yes' : 'No'}</CTableDataCell>
+                      <CTableDataCell>{Booking.totalAmount}</CTableDataCell>
+                      <CTableDataCell>
+                        <FontAwesomeIcon
+                          icon={faTrash}
+                          onClick={() => handleDelete(Booking._id)}
+                          style={{ cursor: 'pointer', color: 'red' }}
+                        />
+                      </CTableDataCell>
                     </CTableRow>
-                  )}
-                </CTableBody>
-              </CTable>
+                  ))
+                ) : (
+                  <CTableRow>
+                    <CTableDataCell colSpan={7} className="text-center">
+                      No bookings found
+                    </CTableDataCell>
+                  </CTableRow>
+                )}
+              </CTableBody>
+            </CTable>
             )}
           </CCardBody>
          
