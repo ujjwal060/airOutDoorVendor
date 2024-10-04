@@ -23,14 +23,14 @@ import {
     CFormSelect,
     CPagination,
     CFormLabel,
-    CPaginationItem,
+    CPaginationItem
 } from '@coreui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ToastContainer, toast } from 'react-toastify';
 import DatePicker from 'react-datepicker';
 import 'react-toastify/dist/ReactToastify.css';
-import 'react-datepicker/dist/react-datepicker.css'; // Date picker styling
+import 'react-datepicker/dist/react-datepicker.css';
 
 const Tables = () => {
     const [properties, setProperties] = useState([]);
@@ -42,7 +42,9 @@ const Tables = () => {
         description: '',
         amenities: '',
         pricing: '',
-        availability: null,  // Change to null for the DatePicker
+        availability: 'No', // Initialize with default value
+        startDate: null,
+        endDate: null,
         category: '',
         image: null,
     });
@@ -84,8 +86,13 @@ const Tables = () => {
         setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
     };
 
-    const handleDateChange = (date) => {
-        setNewProperty((prev) => ({ ...prev, availability: date }));
+    // Handle start date and end date changes
+    const handleStartDateChange = (date) => {
+        setNewProperty((prev) => ({ ...prev, startDate: date }));
+    };
+
+    const handleEndDateChange = (date) => {
+        setNewProperty((prev) => ({ ...prev, endDate: date }));
     };
 
     const fetchProperties = async () => {
@@ -103,15 +110,14 @@ const Tables = () => {
         Object.keys(newProperty).forEach((key) => {
             formData.append(key, newProperty[key]);
         });
-    
+
         const vendorId = localStorage.getItem('vendorId');
-        if (vendorId) {
-            formData.append('vendorId', vendorId);
-        } else {
+        if (!vendorId) {
             toast.error('Vendor ID not found in local storage');
             return;
         }
-    
+        formData.append('vendorId', vendorId);
+
         try {
             if (editMode) {
                 await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
@@ -120,19 +126,16 @@ const Tables = () => {
                 await axios.post('http://44.196.192.232:8000/property/post', formData);
                 toast.success('Property added successfully');
             }
-    
-            // Refetch the properties to reflect the changes
+
             fetchProperties();
-    
         } catch (error) {
             console.error('Error adding/updating property:', error);
-            const errorMessage = error.response?.data?.message || "Error adding/updating property";
-            toast.error(errorMessage);
+            toast.error(error.response?.data?.message || 'Error adding/updating property');
         }
-    
+
         closeModal();
     };
-    
+
     const closeModal = () => {
         setModalVisible(false);
         setEditMode(false);
@@ -142,7 +145,9 @@ const Tables = () => {
             description: '',
             amenities: '',
             pricing: '',
-            availability: null,
+            availability: 'No', // Reset availability field to default
+            startDate: null,
+            endDate: null,
             category: '',
             image: null,
         });
@@ -164,7 +169,9 @@ const Tables = () => {
             description: property.description,
             amenities: property.amenities,
             pricing: property.pricing,
-            availability: new Date(property.availability), // Convert string to Date object
+            availability: property.availability,
+            startDate: property.startDate ? new Date(property.startDate) : null,
+            endDate: property.endDate ? new Date(property.endDate) : null,
             category: property.category,
             image: property.image,
         });
@@ -172,6 +179,7 @@ const Tables = () => {
         setEditMode(true);
         setModalVisible(true);
     };
+    
 
     return (
         <>
@@ -196,6 +204,8 @@ const Tables = () => {
                                         <CTableHeaderCell>Amenities</CTableHeaderCell>
                                         <CTableHeaderCell>Pricing</CTableHeaderCell>
                                         <CTableHeaderCell>Availability</CTableHeaderCell>
+                                        <CTableHeaderCell>Start Date</CTableHeaderCell>
+                                        <CTableHeaderCell>End Date</CTableHeaderCell>
                                         <CTableHeaderCell>Actions</CTableHeaderCell>
                                     </CTableRow>
                                 </CTableHead>
@@ -213,8 +223,12 @@ const Tables = () => {
                                             <CTableDataCell>{property.description}</CTableDataCell>
                                             <CTableDataCell>{property.amenities}</CTableDataCell>
                                             <CTableDataCell>{property.pricing}</CTableDataCell>
+                                            <CTableDataCell>{property.availability}</CTableDataCell>
                                             <CTableDataCell>
-                                                {new Date(property.availability).toLocaleString()}
+                                                {new Date(property.startDate).toLocaleDateString()}
+                                            </CTableDataCell>
+                                            <CTableDataCell>
+                                                {new Date(property.endDate).toLocaleDateString()}
                                             </CTableDataCell>
                                             <CTableDataCell>
                                                 <FontAwesomeIcon
@@ -232,78 +246,131 @@ const Tables = () => {
                                     ))}
                                 </CTableBody>
                             </CTable>
+
                         </CCardBody>
                     </CCard>
                 </CCol>
             </CRow>
 
-            {/* Modal for adding/updating a Property */}
+            <CPagination
+                aria-label="Page navigation example"
+                className="mt-3"
+                align="center"
+                size="sm"
+            >
+
+                <CPaginationItem
+                    disabled={currentPage === 1}
+                    onClick={() => paginate(currentPage - 1)}
+                >
+                    &laquo;
+                </CPaginationItem>
+
+
+                {[...Array(Math.ceil(properties.length / itemsPerPage))].map((_, idx) => (
+                    <CPaginationItem
+                        key={idx}
+                        active={currentPage === idx + 1}
+                        onClick={() => paginate(idx + 1)}
+                    >
+                        {idx + 1}
+                    </CPaginationItem>
+                ))}
+
+
+                <CPaginationItem
+                    disabled={currentPage === Math.ceil(properties.length / itemsPerPage)}
+                    onClick={() => paginate(currentPage + 1)}
+                >
+                    &raquo;
+                </CPaginationItem>
+            </CPagination>
+
+
             <CModal visible={modalVisible} onClose={closeModal}>
-                <CModalHeader>{editMode ? 'Update Property' : 'Add Property'}</CModalHeader>
+                <CModalHeader>{editMode ? 'Edit Property' : 'Add Property'}</CModalHeader>
                 <CModalBody>
                     <CForm>
-                        <CFormInput className="mb-4"
-                            label="Property Name"
+                        <CFormLabel >Property Name</CFormLabel>
+                        <CFormInput className="mb-3"
+                            type="text"
                             name="name"
                             value={newProperty.name}
                             onChange={handleInputChange}
-                            required
                         />
-                        <CFormSelect className="mb-4"
-                            label="Category"
+
+                        <CFormLabel>Description</CFormLabel>
+                        <CFormTextarea className="mb-3"
+                            name="description"
+                            value={newProperty.description}
+                            onChange={handleInputChange}
+                        />
+
+                        <CFormLabel>Amenities</CFormLabel>
+                        <CFormTextarea className="mb-3"
+                            name="amenities"
+                            value={newProperty.amenities}
+                            onChange={handleInputChange}
+                        />
+
+                        <CFormLabel>Pricing</CFormLabel>
+                        <CFormInput className="mb-3"
+                            type="text"
+                            name="pricing"
+                            value={newProperty.pricing}
+                            onChange={handleInputChange}
+                        />
+
+                        <CFormLabel>Availability</CFormLabel>
+                        <CFormSelect className="mb-3"
+                            name="availability"
+                            value={newProperty.availability}
+                            onChange={handleInputChange}
+                        >
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </CFormSelect>
+
+                        <CRow className="mb-3">
+                            <CCol md={6}>
+                                <CFormLabel>Start Date</CFormLabel>
+                                <DatePicker
+                                    selected={newProperty.startDate}
+                                    onChange={handleStartDateChange}
+                                    dateFormat="dd/MM/yyyy"
+                                    className="form-control"
+                                />
+                            </CCol>
+
+                            <CCol md={6}>
+                                <CFormLabel>End Date</CFormLabel>
+                                <DatePicker
+                                    selected={newProperty.endDate}
+                                    onChange={handleEndDateChange}
+                                    dateFormat="dd/MM/yyyy"
+                                    className="form-control"
+                                />
+                            </CCol>
+                        </CRow>
+
+
+                        <CFormLabel>Category</CFormLabel>
+                        <CFormSelect className="mb-3"
                             name="category"
                             value={newProperty.category}
                             onChange={handleInputChange}
-                            required
                         >
-                            <option value="">Select Category</option>
-                            {categories.map((category, index) => (
-                                <option key={index} value={category}>
+                            <option>Select Category</option>
+                            {categories.map((category, idx) => (
+                                <option key={idx} value={category}>
                                     {category}
                                 </option>
                             ))}
                         </CFormSelect>
-                        <CFormTextarea 
-                            label="Description"
-                            name="description"
-                            value={newProperty.description}
-                            onChange={handleInputChange}
-                            required
-                        />
-                        <CFormTextarea
-                            label="Amenities"
-                            name="amenities"
-                            value={newProperty.amenities}
-                            onChange={handleInputChange}
-                            required
-                        />
-                        <CFormInput className="mb-4"
-                            label="Pricing"
-                            name="pricing"
-                            value={newProperty.pricing}
-                            onChange={handleInputChange}
-                            required
-                        />
 
-                        <CRow className="mb-4">
-                            <CCol xs="12">
-                                <CFormLabel htmlFor="availability">Availability</CFormLabel>
-                                <div className="datepicker-wrapper">
-                                    <DatePicker
-                                        selected={newProperty.availability}
-                                        onChange={handleDateChange}
-                                        showTimeSelect
-                                        dateFormat="Pp"
-                                        className="form-control"
-                                        id="availability"
-                                    />
-                                </div>
-                            </CCol>
-                        </CRow>
-
-                        <CFormInput
+                        <CFormLabel>Image</CFormLabel>
+                        <CFormInput className="mb-3"
                             type="file"
-                            label="Image"
                             name="image"
                             onChange={handleFileChange}
                         />
@@ -311,33 +378,13 @@ const Tables = () => {
                 </CModalBody>
                 <CModalFooter>
                     <CButton color="secondary" onClick={closeModal}>
-                        Cancel
+                        Close
                     </CButton>
-                    <CButton color="primary" onClick={addOrUpdateProperty}>
+                    <CButton color="warning" onClick={addOrUpdateProperty}>
                         {editMode ? 'Update Property' : 'Add Property'}
                     </CButton>
                 </CModalFooter>
             </CModal>
-
-            {/* Pagination */}
-            <CPagination aria-label="Page navigation" style={{display:"flex", justifyContent:"center"}}>
-                <CPaginationItem onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
-                    Previous
-                </CPaginationItem>
-                {Array.from({ length: Math.ceil(properties.length / itemsPerPage) }).map((_, index) => (
-                    <CPaginationItem
-                        key={index}
-                        active={index + 1 === currentPage}
-                        onClick={() => paginate(index + 1)}
-                    >
-                        {index + 1}
-                    </CPaginationItem>
-                ))}
-                <CPaginationItem onClick={() => paginate(currentPage + 1)} disabled={currentPage === Math.ceil(properties.length / itemsPerPage)}>
-                    Next
-                </CPaginationItem>
-            </CPagination>
-
             <ToastContainer />
         </>
     );
