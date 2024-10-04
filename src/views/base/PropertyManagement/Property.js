@@ -216,7 +216,7 @@ const Tables = () => {
                                                 {indexOfFirstProperty + index + 1}
                                             </CTableHeaderCell>
                                             <CTableDataCell>
-                                                <img src={property.imageUrl} alt={property.name} width="50" />
+                                                <img src={property.imageUrl[0]} alt={property.name} width="50" />
                                             </CTableDataCell>
                                             <CTableDataCell>{property.name}</CTableDataCell>
                                             <CTableDataCell>{property.category}</CTableDataCell>
