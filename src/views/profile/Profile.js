@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
     CCard,
     CCardBody,
@@ -16,33 +17,56 @@ import {
 import { CIcon } from '@coreui/icons-react';
 import { cilPen } from '@coreui/icons';
 import logo1 from './img/logo1.png';
-import profile from './img/profile.webp'; // Default profile image
+import profilePlaceholder from './img/profile.webp'; // Default profile image
 
 const Profile = () => {
-    // State for storing personal information
     const [userInfo, setUserInfo] = useState({
-        fullName: 'Sumit Kumar Singh',
-        email: 'sumit.singh@aayaninfotech.com',
-        phone: '9198701590',
-        address: 'Incugus Lucknow'
+        fullName: '',
+        email: '',
+        phone: '',
+        address: '',
+        profileImage: profilePlaceholder
     });
 
-    // State for profile image
-    const [profileImage, setProfileImage] = useState(profile);
-
-    // State to manage modal visibility and editable fields
-    const [ModalVisible1, setModalVisible1] = useState(false);
-    const [ModalVisible, setModalVisible] = useState(false);
     const [editInfo, setEditInfo] = useState(userInfo);
     const [file, setFile] = useState(null);
+    const [ModalVisible1, setModalVisible1] = useState(false);
+    const [ModalVisible, setModalVisible] = useState(false);
 
-    // Function to handle input changes in the modal
+    // Fetch vendorId from local storage (or context if you're using one)
+    const vendorId = localStorage.getItem('vendorId');
+
+    useEffect(() => {
+        if (vendorId) {
+            // Fetch vendor data based on vendorId
+            axios.get(`http://localhost:8000/vendor/vendor/${vendorId}`)
+                .then((response) => {
+                    const vendorData = response.data;
+                    setUserInfo({
+                        fullName: vendorData.name,
+                        email: vendorData.email,
+                        phone: vendorData.phone,
+                        address: vendorData.address,
+                        profileImage: vendorData.profileImage || profilePlaceholder
+                    });
+                    setEditInfo({
+                        fullName: vendorData.name,
+                        email: vendorData.email,
+                        phone: vendorData.phone,
+                        address: vendorData.address
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error fetching vendor data:', error);
+                });
+        }
+    }, [vendorId]);
+
     const handleModalChange = (event) => {
         const { name, value } = event.target;
         setEditInfo((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Function to handle file input change
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         if (selectedFile) {
@@ -50,33 +74,43 @@ const Profile = () => {
         }
     };
 
-    // Function to handle save changes
     const handleSaveChanges = () => {
-        setUserInfo(editInfo);
+        const updatedInfo = { ...editInfo };
         if (file) {
-            setProfileImage(file);
+            updatedInfo.profileImage = file;
         }
-        setModalVisible1(false);
-        setModalVisible(false);
+    
+        // Get the token from local storage (or wherever you store it)
+        const token = localStorage.getItem('authToken'); // Change 'authToken' to your actual token key
+    
+        // Make an API call to update the information
+        axios.put(`http://localhost:8000/vendor/profile/${vendorId}`, updatedInfo, {
+            headers: {
+                'Authorization': `Bearer ${token}`, // Include the token in the Authorization header
+            },
+        })
+            .then((response) => {
+                console.log('Profile updated successfully:', response.data);
+                setUserInfo(updatedInfo); // Update userInfo with the new data
+                setModalVisible1(false);
+            })
+            .catch((error) => {
+                console.error('Error updating profile:', error);
+            });
     };
-
+    
     return (
         <>
             <CRow className="justify-content-center align-items-center" style={{ height: '100vh' }}>
-                <img
-                    style={{ width: "450px" }}
-                    src={logo1}
-                    alt="Logo"
-                />
+                <img style={{ width: "450px" }} src={logo1} alt="Logo" />
             </CRow>
-            
+
             <CRow>
-                {/* Left side card for profile picture and user information */}
                 <CCol md={4}>
                     <CCard>
                         <CCardBody className="text-center">
                             <img
-                                src={profileImage}
+                                src={userInfo.profileImage}
                                 alt="Profile"
                                 className="img-fluid rounded-circle mb-3"
                                 style={{ width: '150px', height: '150px' }}
@@ -91,7 +125,6 @@ const Profile = () => {
                     </CCard>
                 </CCol>
 
-                {/* Right side card for personal information */}
                 <CCol md={7}>
                     <CCard>
                         <CCardHeader className="d-flex justify-content-between align-items-center">
@@ -103,7 +136,6 @@ const Profile = () => {
                         <CCardBody>
                             <CForm>
                                 <CRow>
-                                    {/* Column for Labels */}
                                     <CCol md={4}>
                                         <div className="mb-3">
                                             <label>Name :</label>
@@ -122,7 +154,6 @@ const Profile = () => {
                                         </CButton>
                                     </CCol>
 
-                                    {/* Column for Displaying User Info */}
                                     <CCol md={8}>
                                         <div className="d-flex align-items-center mb-3">
                                             <div>{userInfo.fullName}</div>
@@ -145,7 +176,6 @@ const Profile = () => {
             </CRow>
 
             {/* Modal for Editing Personal Information */}
-
             <CModal visible={ModalVisible1} onClose={() => setModalVisible1(false)}>
                 <CModalHeader>Update Personal Information</CModalHeader>
                 <CModalBody>
@@ -154,11 +184,7 @@ const Profile = () => {
                             <CCol md={12}>
                                 <div className="mb-3">
                                     <label htmlFor="profileImage">Profile Image</label>
-                                    <CFormInput
-                                        type="file"
-                                        id="profileImage"
-                                        onChange={handleFileChange}
-                                    />
+                                    <CFormInput type="file" id="profileImage" onChange={handleFileChange} />
                                 </div>
                                 <div className="mb-3">
                                     <label htmlFor="fullName">Name</label>
@@ -209,45 +235,31 @@ const Profile = () => {
                     <CButton color="warning" onClick={handleSaveChanges}>Save</CButton>
                 </CModalFooter>
             </CModal>
-            
 
-            {/*Modal for Editing Personal Information */}
-
+            {/* Modal for Editing Password */}
             <CModal visible={ModalVisible} onClose={() => setModalVisible(false)}>
                 <CModalHeader>Update Password</CModalHeader>
                 <CModalBody>
                     <CForm>
                         <CRow>
-                            <CCol md={12}>                                                                                                                              
+                            <CCol md={12}>
                                 <div className="mb-3">
-                                    <label htmlFor="password">Old Password</label>
-                                    <CFormInput
-                                        type="text"
-                                        id="old password"
-                                        name="Old Password"
-                                        value={editInfo.oldpassword}
-                                        onChange={handleModalChange}
-                                    />
+                                    <label htmlFor="password">Password</label>
+                                    <CFormInput type="password" id="password" />
                                 </div>
                                 <div className="mb-3">
-                                    <label htmlFor="password">New Password</label>
-                                    <CFormInput
-                                        type="text"
-                                        id="new password"
-                                        name="new Password"
-                                        value={editInfo.newpassword}
-                                        onChange={handleModalChange}
-                                    />
+                                    <label htmlFor="confirmPassword">Confirm Password</label>
+                                    <CFormInput type="password" id="confirmPassword" />
                                 </div>
                             </CCol>
                         </CRow>
                     </CForm>
                 </CModalBody>
                 <CModalFooter>
-                    <CButton color="warning" onClick={handleSaveChanges}>Save</CButton>
+                    <CButton color="secondary" onClick={() => setModalVisible(false)}>Cancel</CButton>
+                    <CButton color="warning">Save</CButton>
                 </CModalFooter>
             </CModal>
-
         </>
     );
 };

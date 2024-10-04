@@ -65,6 +65,7 @@ const Tables = () => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
+    <>
     <CRow>
       <CCol xs={12}>
         <CCard className="mb-4">
@@ -117,13 +118,17 @@ const Tables = () => {
               </CTable>
             )}
           </CCardBody>
-          {/* Pagination */}
-          <CPagination aria-label="Page navigation example" style={{display:"flex", justifyContent:"center"}}>
+         
+        </CCard>
+      </CCol>
+    </CRow>
+     {/* Pagination */}
+     <CPagination aria-label="Page navigation example" style={{display:"flex", justifyContent:"center"}}>
             <CPaginationItem
               disabled={currentPage === 1}
               onClick={() => paginate(currentPage - 1)}
             >
-              Previous
+               &laquo;
             </CPaginationItem>
             {Array.from({ length: totalPages }, (_, index) => (
               <CPaginationItem
@@ -138,12 +143,10 @@ const Tables = () => {
               disabled={currentPage === totalPages}
               onClick={() => paginate(currentPage + 1)}
             >
-              Next
+               &raquo;
             </CPaginationItem>
           </CPagination>
-        </CCard>
-      </CCol>
-    </CRow>
+    </>
   );
 };
 
