@@ -42,7 +42,7 @@ const Tables = () => {
         description: '',
         amenities: '',
         pricing: '',
-        availability: 'No', // Initialize with default value
+        availability: 'No',
         startDate: null,
         endDate: null,
         category: '',
@@ -83,7 +83,9 @@ const Tables = () => {
     };
 
     const handleFileChange = (e) => {
-        setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
+        const files = Array.from(e.target.files);
+        setNewProperty((prev) => ({ ...prev, images: files }));
+        // setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
     };
 
     // Handle start date and end date changes
@@ -111,6 +113,12 @@ const Tables = () => {
             formData.append(key, newProperty[key]);
         });
 
+        if (newProperty.images && newProperty.images.length > 0) {
+            newProperty.images.forEach((image, index) => {
+                formData.append('images', image);
+            });
+        }
+
         const vendorId = localStorage.getItem('vendorId');
         if (!vendorId) {
             toast.error('Vendor ID not found in local storage');
@@ -120,10 +128,10 @@ const Tables = () => {
 
         try {
             if (editMode) {
-                await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
+                await axios.put(`http://localhost:8000/property/update/${selectedPropertyId}`, formData);
                 toast.success('Property updated successfully');
             } else {
-                await axios.post('http://44.196.192.232:8000/property/post', formData);
+                await axios.post('http://localhost:8000/property/post', formData);
                 toast.success('Property added successfully');
             }
 
@@ -145,7 +153,7 @@ const Tables = () => {
             description: '',
             amenities: '',
             pricing: '',
-            availability: 'No', // Reset availability field to default
+            availability: 'No',
             startDate: null,
             endDate: null,
             category: '',
@@ -371,7 +379,8 @@ const Tables = () => {
                         <CFormLabel>Image</CFormLabel>
                         <CFormInput className="mb-3"
                             type="file"
-                            name="image"
+                            name="images"
+                            multiple
                             onChange={handleFileChange}
                         />
                     </CForm>
