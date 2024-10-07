@@ -56,10 +56,10 @@ const Register = () => {
     formData.append('phone', register.mobile);
     formData.append('address', register.address);
     formData.append('password', register.password);
-    formData.append('image', imageFile);
+    formData.append('images', imageFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/vendor/signup', formData);
+      const response = await axios.post('http://44.196.192.232:8000/vendor/signup', formData);
       toast.success("Registration successful");
       navigate('/approval');
     } catch (error) {

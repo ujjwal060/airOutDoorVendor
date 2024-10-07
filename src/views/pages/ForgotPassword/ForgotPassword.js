@@ -32,7 +32,7 @@ const Register = () => {
     e.preventDefault();
     
     try {
-      await axios.post('http://localhost:8000/vendor/sendOTP', { email });
+      await axios.post('http://44.196.192.232:8000/vendor/sendOTP', { email });
       
       toast.success('OTP has been sent to your email.');
       setTimeout(() => {

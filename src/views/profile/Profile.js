@@ -40,8 +40,10 @@ const Profile = () => {
         if (vendorId) {
             // Fetch vendor data based on vendorId
             axios.get(`http://44.196.192.232:8000/vendor/vendor/${vendorId}`)
-                .then((response) => {
+                .then((response) => {                    
                     const vendorData = response.data;
+                    console.log(vendorData);
+
                     setUserInfo({
                         fullName: vendorData.name,
                         email: vendorData.email,
@@ -101,9 +103,9 @@ const Profile = () => {
     
     return (
         <>
-            <CRow className="justify-content-center align-items-center" style={{ height: '100vh' }}>
+            {/* <CRow className="justify-content-center align-items-center" style={{ height: '100vh' }}>
                 <img style={{ width: "450px" }} src={logo1} alt="Logo" />
-            </CRow>
+            </CRow> */}
 
             <CRow>
                 <CCol md={4}>

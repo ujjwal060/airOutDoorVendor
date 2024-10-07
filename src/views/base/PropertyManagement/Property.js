@@ -42,7 +42,7 @@ const Tables = () => {
         description: '',
         amenities: '',
         pricing: '',
-        availability: 'No', // Initialize with default value
+        availability: 'No',
         startDate: null,
         endDate: null,
         category: '',
@@ -83,7 +83,9 @@ const Tables = () => {
     };
 
     const handleFileChange = (e) => {
-        setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
+        const files = Array.from(e.target.files);
+        setNewProperty((prev) => ({ ...prev, images: files }));
+        // setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
     };
 
     // Handle start date and end date changes
@@ -98,7 +100,7 @@ const Tables = () => {
     const fetchProperties = async () => {
         try {
             const vendorId = localStorage.getItem('vendorId');
-            const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`);
+            const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`);
             setProperties(response.data);
         } catch (error) {
             console.error('Error fetching properties:', error);
@@ -110,6 +112,12 @@ const Tables = () => {
         Object.keys(newProperty).forEach((key) => {
             formData.append(key, newProperty[key]);
         });
+
+        if (newProperty.images && newProperty.images.length > 0) {
+            newProperty.images.forEach((image, index) => {
+                formData.append('images', image);
+            });
+        }
 
         const vendorId = localStorage.getItem('vendorId');
         if (!vendorId) {
@@ -145,7 +153,7 @@ const Tables = () => {
             description: '',
             amenities: '',
             pricing: '',
-            availability: 'No', // Reset availability field to default
+            availability: 'No',
             startDate: null,
             endDate: null,
             category: '',
@@ -155,7 +163,7 @@ const Tables = () => {
 
     const deleteProperty = async (id) => {
         try {
-            await axios.delete(`http://localhost:8000/property/delete/${id}`);
+            await axios.delete(`http://44.196.192.232:8000/property/delete/${id}`);
             setProperties(properties.filter((property) => property._id !== id));
             toast.success('Property deleted successfully');
         } catch (error) {
@@ -371,7 +379,8 @@ const Tables = () => {
                         <CFormLabel>Image</CFormLabel>
                         <CFormInput className="mb-3"
                             type="file"
-                            name="image"
+                            name="images"
+                            multiple
                             onChange={handleFileChange}
                         />
                     </CForm>
