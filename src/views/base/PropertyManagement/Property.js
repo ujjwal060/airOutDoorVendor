@@ -120,25 +120,10 @@ const Tables = () => {
 
         try {
             if (editMode) {
-<<<<<<< HEAD
                 await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
                 toast.success('Property updated successfully');
             } else {
                 await axios.post('http://44.196.192.232:8000/property/post', formData);
-=======
-                const response = await axios.put(`http://localhost:8000/property/update/${selectedPropertyId}`, formData);
-                setProperties(
-                    properties.map((property) =>
-                        property._id === selectedPropertyId
-                            ? { ...property, ...response.data }
-                            : property
-                    )
-                );
-                toast.success('Property updated successfully');
-            } else {
-                const response = await axios.post('http://localhost:8000/property/post', formData);
-                setProperties([...properties, response.data]);
->>>>>>> 74e71d494a9c8658918a652c2e09b76b84c3e521
                 toast.success('Property added successfully');
             }
 
