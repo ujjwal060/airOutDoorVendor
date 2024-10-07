@@ -73,7 +73,7 @@ const Tables = () => {
     const fetchProperties = async () => {
         try {
             const vendorId = localStorage.getItem('vendorId');
-            const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`);
+            const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`);
             setProperties(response.data);
         } catch (error) {
             console.error('Error fetching properties:', error);
@@ -96,7 +96,7 @@ const Tables = () => {
 
         try {
             if (editMode) {
-                const response = await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
+                const response = await axios.put(`http://localhost:8000/property/update/${selectedPropertyId}`, formData);
                 setProperties(
                     properties.map((property) =>
                         property._id === selectedPropertyId
@@ -106,7 +106,7 @@ const Tables = () => {
                 );
                 toast.success('Property updated successfully');
             } else {
-                const response = await axios.post('http://44.196.192.232:8000/property/post', formData);
+                const response = await axios.post('http://localhost:8000/property/post', formData);
                 setProperties([...properties, response.data]);
                 toast.success('Property added successfully');
             }
@@ -135,7 +135,7 @@ const Tables = () => {
 
     const deleteProperty = async (id) => {
         try {
-            await axios.delete(`http://44.196.192.232:8000/property/delete/${id}`);
+            await axios.delete(`http://localhost:8000/property/delete/${id}`);
             setProperties(properties.filter((property) => property._id !== id));
             toast.success('Property deleted successfully');
         } catch (error) {
