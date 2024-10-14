@@ -43,16 +43,23 @@ const _nav = [
   },
   {
     component: CNavItem,
+    name: 'My Reviews',
+    to: '/review',
+    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'My Reservations',
     to: '/reservation',
     icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'My Reviews',
-    to: '/review',
-    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
+    name: 'My Favourite',
+    to: '/favourite',
+    icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
   },
+ 
   {
     component: CNavItem,
     name: 'My Inbox',

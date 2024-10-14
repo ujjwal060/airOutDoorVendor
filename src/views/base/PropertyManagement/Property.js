@@ -100,7 +100,7 @@ const Tables = () => {
     const fetchProperties = async () => {
         try {
             const vendorId = localStorage.getItem('vendorId');
-            const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`);
+            const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`);
             setProperties(response.data);
         } catch (error) {
             console.error('Error fetching properties:', error);
@@ -128,10 +128,10 @@ const Tables = () => {
 
         try {
             if (editMode) {
-                await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
+                await axios.put(`http://localhost:8000/property/update/${selectedPropertyId}`, formData);
                 toast.success('Property updated successfully');
             } else {
-                await axios.post('http://44.196.192.232:8000/property/post', formData);
+                await axios.post('http://localhost:8000/property/post', formData);
                 toast.success('Property added successfully');
             }
 
@@ -163,7 +163,7 @@ const Tables = () => {
 
     const deleteProperty = async (id) => {
         try {
-            await axios.delete(`http://44.196.192.232:8000/property/delete/${id}`);
+            await axios.delete(`http://localhost:8000/property/delete/${id}`);
             setProperties(properties.filter((property) => property._id !== id));
             toast.success('Property deleted successfully');
         } catch (error) {
@@ -211,7 +211,7 @@ const Tables = () => {
                                         <CTableHeaderCell>Description</CTableHeaderCell>
                                         <CTableHeaderCell>Amenities</CTableHeaderCell>
                                         <CTableHeaderCell>Pricing</CTableHeaderCell>
-                                        <CTableHeaderCell>Availability</CTableHeaderCell>
+                                        {/* <CTableHeaderCell>Availability</CTableHeaderCell> */}
                                         <CTableHeaderCell>Start Date</CTableHeaderCell>
                                         <CTableHeaderCell>End Date</CTableHeaderCell>
                                         <CTableHeaderCell>Actions</CTableHeaderCell>
@@ -231,7 +231,7 @@ const Tables = () => {
                                             <CTableDataCell>{property.description}</CTableDataCell>
                                             <CTableDataCell>{property.amenities}</CTableDataCell>
                                             <CTableDataCell>{property.pricing}</CTableDataCell>
-                                            <CTableDataCell>{property.availability}</CTableDataCell>
+                                            {/* <CTableDataCell>{property.availability}</CTableDataCell> */}
                                             <CTableDataCell>
                                                 {new Date(property.startDate).toLocaleDateString()}
                                             </CTableDataCell>

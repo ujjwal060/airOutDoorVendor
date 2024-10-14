@@ -34,8 +34,9 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setRegister((prev) => ({ ...prev, [name]: value }))
+    setRegister((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     setImageFile(file);
@@ -44,33 +45,54 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (register.password !== register.repeatPassword) {
-      toast.error("Passwords do not match");
+  
+    // Basic validation for required fields
+    if (!register.username || !register.email || !register.mobile || !register.address || !register.password) {
+      toast.error('All fields are required');
       return;
     }
-
+  
+    // Check if passwords match
+    if (register.password !== register.repeatPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+  
     const formData = new FormData();
-    formData.append('name', register.username);
-    formData.append('email', register.email);
-    formData.append('phone', register.mobile);
-    formData.append('address', register.address);
-    formData.append('password', register.password);
-    formData.append('images', imageFile);
-
+    formData.append('name', register.username); // Ensure this matches backend field 'name'
+    formData.append('email', register.email); // Ensure this matches backend field 'email'
+    formData.append('phone', register.mobile); // Ensure this matches backend field 'phone'
+    formData.append('address', register.address); // Ensure this matches backend field 'address'
+    formData.append('password', register.password); // Ensure this matches backend field 'password'
+    formData.append('profileImage', imageFile); // Ensure this matches backend field 'profileImage'
+  
     try {
-      const response = await axios.post('http://44.196.192.232:8000/vendor/signup', formData);
-      toast.success("Registration successful");
+      const response = await axios.post('http://localhost:8000/vendor/signup', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success('Registration successful');
       navigate('/approval');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Registration failed";
-      toast.error(errorMessage);
+      // Log detailed error message for troubleshooting
+      if (error.response) {
+        console.error('Response data:', error.response.data);  // Detailed error message from backend
+        console.error('Response status:', error.response.status);  // HTTP status code
+        console.error('Response headers:', error.response.headers);  // Any response headers
+  
+        const errorMessage = error.response.data.message || 'Registration failed due to bad request';
+        toast.error(errorMessage);
+      } else {
+        console.error('Error:', error.message);
+        toast.error('Network error or server not reachable');
+      }
     }
   };
-
+  
   return (
     <div className="min-vh-100 d-flex justify-content-center align-items-center">
-      <CContainer style={{ margin: "20px" }}>
+      <CContainer style={{ margin: '20px' }}>
         <CRow className="justify-content-center">
           <CCol md={9} lg={7} xl={6}>
             <CCard className="mx-4">
@@ -181,7 +203,7 @@ const Register = () => {
                   </CInputGroup>
 
                   <div className="b-grid">
-                    <CButton color="warning" style={{ color: "white" }} type="submit">
+                    <CButton color="warning" style={{ color: 'white' }} type="submit">
                       Create Account
                     </CButton>
                   </div>

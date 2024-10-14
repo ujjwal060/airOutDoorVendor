@@ -39,7 +39,7 @@ const Profile = () => {
     useEffect(() => {
         if (vendorId) {
             // Fetch vendor data based on vendorId
-            axios.get(`http://44.196.192.232:8000/vendor/vendor/${vendorId}`)
+            axios.get(`http://localhost:8000/vendor/vendor/${vendorId}`)
                 .then((response) => {                    
                     const vendorData = response.data;
                     console.log(vendorData);
@@ -86,7 +86,7 @@ const Profile = () => {
         const token = localStorage.getItem('authToken'); // Change 'authToken' to your actual token key
     
         // Make an API call to update the information
-        axios.put(`http://44.196.192.232:8000/vendor/profile/${vendorId}`, updatedInfo, {
+        axios.put(`http://localhost:8000/vendor/profile/${vendorId}`, updatedInfo, {
             headers: {
                 'Authorization': `Bearer ${token}`, // Include the token in the Authorization header
             },
