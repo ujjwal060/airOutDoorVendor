@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios'; // Import axios
+import axios from 'axios';
 import {
   CTable,
   CTableHead,
@@ -13,11 +13,13 @@ import {
 } from '@coreui/react';
 import { cilTrash, cilChevronLeft, cilChevronRight } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
+import { ToastContainer, toast } from 'react-toastify'; // Import toastify
+import 'react-toastify/dist/ReactToastify.css'; // Import toast styles
 
 const ReviewTable = () => {
   const [reviews, setReviews] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalReviews, setTotalReviews] = useState(0); // Track total reviews from API
+  const [totalReviews, setTotalReviews] = useState(0);
   const itemsPerPage = 10;
 
   // Fetch reviews from the API
@@ -29,20 +31,23 @@ const ReviewTable = () => {
           limit: itemsPerPage,
         },
       });
-      setReviews(response.data.data); // Adjust according to your API response structure
-      setTotalReviews(response.data.total); // Set total reviews from API response
+      setReviews(response.data.data);
+      setTotalReviews(response.data.total);
     } catch (error) {
       console.error('Error fetching reviews:', error);
+      toast.error('Failed to fetch reviews'); // Show error toast
     }
   };
 
   // Delete a review by ID
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/review/delete/${id}`); // Make sure the endpoint is correct
-      setReviews(reviews.filter((review) => review._id !== id)); // Use _id if that’s your primary key
+      await axios.delete(`http://localhost:8000/review/delete/${id}`);
+      setReviews(reviews.filter((review) => review._id !== id));
+      toast.success('Review deleted successfully'); // Show success toast
     } catch (error) {
       console.error('Error deleting review:', error);
+      toast.error('Failed to delete review'); // Show error toast
     }
   };
 
@@ -50,14 +55,14 @@ const ReviewTable = () => {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      fetchReviews(currentPage + 1); // Fetch new page of reviews
+      fetchReviews(currentPage + 1);
     }
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      fetchReviews(currentPage - 1); // Fetch new page of reviews
+      fetchReviews(currentPage - 1);
     }
   };
 
@@ -110,6 +115,9 @@ const ReviewTable = () => {
           <CIcon icon={cilChevronRight} />
         </CPaginationItem>
       </CPagination>
+
+      {/* Toast Container for notifications */}
+      <ToastContainer />
     </>
   );
 };
