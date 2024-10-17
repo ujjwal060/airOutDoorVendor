@@ -79,6 +79,12 @@ const _nav = [
     to: '/inbox',
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
+  {
+    component: CNavItem,
+    name: 'My Chat',
+    to: '/chat',
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
+  },
 
 ]
 
