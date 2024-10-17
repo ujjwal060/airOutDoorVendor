@@ -211,7 +211,7 @@ const Tables = () => {
                                         <CTableHeaderCell>Description</CTableHeaderCell>
                                         <CTableHeaderCell>Amenities</CTableHeaderCell>
                                         <CTableHeaderCell>Pricing</CTableHeaderCell>
-                                        <CTableHeaderCell>Availability</CTableHeaderCell>
+                                        {/* <CTableHeaderCell>Availability</CTableHeaderCell> */}
                                         <CTableHeaderCell>Start Date</CTableHeaderCell>
                                         <CTableHeaderCell>End Date</CTableHeaderCell>
                                         <CTableHeaderCell>Actions</CTableHeaderCell>
@@ -231,7 +231,7 @@ const Tables = () => {
                                             <CTableDataCell>{property.description}</CTableDataCell>
                                             <CTableDataCell>{property.amenities}</CTableDataCell>
                                             <CTableDataCell>{property.pricing}</CTableDataCell>
-                                            <CTableDataCell>{property.availability}</CTableDataCell>
+                                            {/* <CTableDataCell>{property.availability}</CTableDataCell> */}
                                             <CTableDataCell>
                                                 {new Date(property.startDate).toLocaleDateString()}
                                             </CTableDataCell>

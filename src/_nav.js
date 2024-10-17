@@ -43,15 +43,35 @@ const _nav = [
   },
   {
     component: CNavItem,
+    name: 'My Reviews',
+    to: '/review',
+    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'My Reservations',
     to: '/reservation',
     icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'My Reviews',
-    to: '/review',
-    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
+    name: 'My Favourite',
+    to: '/favorite',
+    icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
+  },
+ 
+
+  {
+    component: CNavItem,
+    name: 'Invoices',
+    to: '/invoice',
+    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'My Legal',
+    to: '/legal',
+    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
@@ -61,15 +81,9 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Invoices',
-    to: '/invoice',
-    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Legal',
-    to: '/legal',
-    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+    name: 'My Chat',
+    to: '/chat',
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
 
 ]

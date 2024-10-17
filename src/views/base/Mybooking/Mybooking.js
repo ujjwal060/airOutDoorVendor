@@ -141,7 +141,7 @@ const Tables = () => {
                 active={currentPage === index + 1}
                 onClick={() => paginate(index + 1)}
               >
-                {index + 1}
+                {index + 1} 
               </CPaginationItem>
             ))}
             <CPaginationItem
