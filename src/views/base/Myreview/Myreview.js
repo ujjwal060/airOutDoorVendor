@@ -25,7 +25,7 @@ const ReviewTable = () => {
   // Fetch reviews from the API
   const fetchReviews = async (page) => {
     try {
-      const response = await axios.get('http://localhost:8000/review/getreviews', {
+      const response = await axios.get('http://44.196.192.232:8000/review/getreviews', {
         params: {
           page,
           limit: itemsPerPage,
@@ -42,7 +42,7 @@ const ReviewTable = () => {
   // Delete a review by ID
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/review/delete/${id}`);
+      await axios.delete(`http://44.196.192.232:8000/review/delete/${id}`);
       setReviews(reviews.filter((review) => review._id !== id));
       toast.success('Review deleted successfully'); // Show success toast
     } catch (error) {

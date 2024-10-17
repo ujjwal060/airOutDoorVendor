@@ -67,7 +67,7 @@ const Register = () => {
     formData.append('profileImage', imageFile); // Ensure this matches backend field 'profileImage'
   
     try {
-      const response = await axios.post('http://localhost:8000/vendor/signup', formData, {
+      const response = await axios.post('http://44.196.192.232:8000/vendor/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
