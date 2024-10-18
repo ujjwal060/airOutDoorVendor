@@ -4,7 +4,7 @@ FROM node:18 as build
 WORKDIR /app
 
 # Copy the package.json and vite.config.mjs files
-COPY package.json package-lock.json vite.config.mjs ./
+COPY package.json  ./
 
 # Install dependencies
 RUN npm install
