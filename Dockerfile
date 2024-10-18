@@ -1,4 +1,3 @@
-# Stage 1: Build the Vite app
 FROM node:18 as build
 
 # Set working directory inside the container
