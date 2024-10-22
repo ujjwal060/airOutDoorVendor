@@ -15,10 +15,11 @@ import {
   CToastHeader,
   CToaster,
 } from '@coreui/react';
-import EmojiPicker from 'emoji-picker-react'; // Correctly import the default export
+import EmojiPicker from 'emoji-picker-react';
 import { FaSmile, FaPaperPlane } from 'react-icons/fa';
-import './ChatSection.scss'; // Custom SCSS for extra styling
-import image8 from './img/image8.png'
+import { db } from './firebase'; // Make sure you have this configured correctly
+import { ref, set, onValue, push } from 'firebase/database';
+import './ChatSection.scss';
 
 const ChatSection = () => {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -27,64 +28,78 @@ const ChatSection = () => {
   const [toastData, setToastData] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [chats, setChats] = useState([]);
 
-  // Simulated chat data
-  const chats = [
-    { id: 1, name: 'Sumit', message: 'Hey! WhatsApp? how can I help you?', img: image8},
-    { id: 2, name: 'Abhishek', message: 'Hey! WhatsApp? how can I help you?', img: image8 },
-    { id: 3, name: 'Anmol', message: 'Hey! WhatsApp? how can I help you?', img: image8 },
-    { id: 4, name: 'Akash', message: 'Hey! WhatsApp? how can I help you?', img: image8 },
-  ];
+  const vendorId = localStorage.getItem('vendorId');
 
-  // Simulate message arrival (You can replace this with your own data fetching logic)
   useEffect(() => {
-    const timer = setInterval(() => {
-      const newMessage = {
-        id: 2, // Simulating a new message for chat with id 2 (Abhishek)
-        message: 'This is a new message!',
-        time: new Date().toLocaleTimeString(),
-      };
-      handleNewMessage(newMessage);
-    }, 10000); // Simulate new message every 10 seconds
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleNewMessage = (newMessage) => {
-    // Update unread message count
-    setNewMessages((prevMessages) => ({
-      ...prevMessages,
-      [newMessage.id]: (prevMessages[newMessage.id] || 0) + 1,
-    }));
-
-    // Show notification for new message
-    setToastData({
-      chatId: newMessage.id,
-      message: newMessage.message,
-      time: newMessage.time,
+    // Fetch chat metadata to set the chat list dynamically
+    const chatMetadataRef = ref(db, `chatMetadata`);
+    const unsubscribe = onValue(chatMetadataRef, (snapshot) => {
+      const chatsData = [];
+      snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        chatsData.push({ id: childSnapshot.key, ...data });
+      });
+      setChats(chatsData);
     });
-    setShowToast(true);
-  };
+
+    return () => unsubscribe();
+  }, []);
+  
+
+  useEffect(() => {
+    if (selectedChat) {
+      const chatRef = ref(db, `chats/${selectedChat.userId}${vendorId}`);
+      const unsubscribe = onValue(chatRef, (snapshot) => {
+        const messagesData = [];
+        if (snapshot.exists()) {
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            messagesData.push(message);
+          });
+          setMessages(messagesData);
+        } else {
+          setMessages([]); // Clear messages if none found
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [selectedChat, vendorId]);
 
   const handleChatClick = (chat) => {
-    // Clear unread messages for the selected chat
     setSelectedChat(chat);
-    setNewMessages((prevMessages) => ({
-      ...prevMessages,
-      [chat.id]: 0, // Clear unread message count
-    }));
+    setMessages([]); // Clear previous messages on new chat selection
   };
 
-  const handleEmojiSelect = (emoji) => {
-    setCurrentMessage((prev) => prev + emoji.emoji); // Add emoji to message
-    setShowEmojiPicker(false); // Close emoji picker after selecting
-  };
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (currentMessage.trim()) {
-      // Simulate sending the message (update the selected chat's message or log the message)
-      console.log('Message sent:', currentMessage);
-      setCurrentMessage(''); // Clear the input
+      const newMessageData = {
+        text: currentMessage,
+        senderId: vendorId,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Push the new message to the chat
+      const chatRef = ref(db, `chats/${selectedChat.userId}${vendorId}`);
+      await push(chatRef, newMessageData);
+
+      // Update chat metadata with the last message
+      const chatMetadataRef = ref(db, `chatMetadata/${selectedChat.userId}_${vendorId}`);
+      const chatMetadata = {
+        userId: selectedChat.userId,
+        vendorId: vendorId,
+        lastMessage: currentMessage,
+        timestamp: newMessageData.timestamp,
+      };
+      await set(chatMetadataRef, chatMetadata);
+
+      setCurrentMessage('');
+      // Optionally show a toast notification for the new message
+      setShowToast(true);
+      setToastData({ message: currentMessage, time: new Date().toLocaleTimeString() });
     }
   };
 
@@ -94,25 +109,24 @@ const ChatSection = () => {
       <CCol md={5}>
         <CFormInput
           type="search"
-          placeholder="Search by host name"
+          placeholder="Search by user name"
           className="mb-3"
         />
         <CListGroup>
           {chats.map((chat) => (
             <CListGroupItem
-              key={chat.id}
+              key={chat.userId}
               onClick={() => handleChatClick(chat)}
               className="d-flex align-items-center chat-item"
             >
               <img
-                src={chat.img}
-                alt={chat.name}
+                src={chat.img || 'defaultImg.png'} // Add a default image
+                alt={chat.userId}
                 className="rounded-circle me-3"
                 style={{ width: '50px', height: '50px' }}
               />
               <div>
-                <strong>{chat.name}</strong>
-                <p className="mb-3">{chat.message}</p>
+                <strong>{chat.userId}</strong>
               </div>
               {newMessages[chat.id] > 0 && (
                 <CBadge color="danger" className="ms-auto">
@@ -129,12 +143,23 @@ const ChatSection = () => {
         {selectedChat ? (
           <CCard>
             <CCardHeader>
-              <h5>{selectedChat.name}</h5>
+              <h5>{selectedChat.userId}</h5>
             </CCardHeader>
             <CCardBody>
               <div className="chat-messages">
-                {/* Display chat messages dynamically */}
-                <p>{selectedChat.message}</p>
+                {messages.length > 0 ? (
+                  messages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`message ${msg.senderId === vendorId ? 'sent' : 'received'}`}
+                    >
+                      <p>{msg.text}</p>
+                      <small>{new Date(msg.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                  ))
+                ) : (
+                  <p>No messages to display.</p>
+                )}
               </div>
               <div className="chat-input-wrapper">
                 <div className="chat-input d-flex align-items-center">
@@ -151,7 +176,7 @@ const ChatSection = () => {
                     className="me-2"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
-                        handleSendMessage(); // Send message on Enter key press
+                        handleSendMessage();
                       }
                     }}
                   />
@@ -159,13 +184,11 @@ const ChatSection = () => {
                     <FaPaperPlane size={20} />
                   </CButton>
                 </div>
-                {/* Emoji Picker */}
                 {showEmojiPicker && (
                   <div className="emoji-picker">
                     <EmojiPicker
-                      onEmojiClick={handleEmojiSelect}
+                      onEmojiClick={(e, emojiObject) => setCurrentMessage((prev) => prev + emojiObject.emoji)}
                       disableSearchBar
-                      width="550px"
                     />
                   </div>
                 )}
@@ -186,7 +209,7 @@ const ChatSection = () => {
         <CToaster position="top-end">
           <CToast autohide={true} visible={true} className="bg-info text-white">
             <CToastHeader closeButton>
-              <strong className="me-auto">New Message from {chats.find(chat => chat.id === toastData.chatId)?.name}</strong>
+              <strong className="me-auto">New Message from {selectedChat?.userId}</strong>
               <small>{toastData.time}</small>
             </CToastHeader>
             <CToastBody>{toastData.message}</CToastBody>

@@ -45,3 +45,37 @@
     margin-top: 1em;
   }
   
+  .chat-messages {
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+  }
+  
+  .message {
+    max-width: 60%;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    position: relative;
+    word-wrap: break-word;
+  
+    small {
+      display: block;
+      text-align: right;
+      color: #777;
+    }
+  }
+  
+  .sent {
+    align-self: flex-end;
+    background-color: #cce5ff; // Light blue background for sent messages
+    text-align: right;
+  }
+  
+  .received {
+    align-self: flex-start;
+    background-color: #f8f9fa; // Light gray background for received messages
+  }
+  
