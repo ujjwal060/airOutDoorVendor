@@ -28,10 +28,16 @@ const _nav = [
   //   to: '/mylisting',
   //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   // },
+  // {
+  //   component: CNavItem,
+  //   name: 'Property Management',
+  //   to: '/property',
+  //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
+  // },
   {
     component: CNavItem,
     name: 'Property Management',
-    to: '/property',
+    to: '/msg',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
 

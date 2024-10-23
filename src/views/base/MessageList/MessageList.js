@@ -1,348 +1,525 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
+  CButton,
+  CCard,
+  CCardBody,
+  CCardHeader,
   CTable,
   CTableBody,
   CTableDataCell,
   CTableHead,
   CTableHeaderCell,
   CTableRow,
-  CPagination,
-  CPaginationItem,
-  CButton,
   CModal,
   CModalHeader,
   CModalTitle,
   CModalBody,
   CModalFooter,
-  CForm,
-  CFormLabel,
   CFormInput,
-  CFormSelect,
-  CRow,
-  CCol,
-} from "@coreui/react";
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+} from '@coreui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
-const PropertyTable = () => {
-  const [properties, setProperties] = useState([]); // Initial state is an empty array
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // You can customize this number
+const PropertyManagement = () => {
+  const [properties, setProperties] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newProperty, setNewProperty] = useState({
-    propertyNickname: "",
-    category: "",
-    propertyDescription: "",
-    priceRange: { min: "", max: "" },
-    guestLimitPerDay: "",
-    location: { city: "", state: "" },
-    instantBooking: false,
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [availableDateRange, setAvailableDateRange] = useState({ start: '', end: '' });
+
+  const [currentProperty, setCurrentProperty] = useState({
+    propery_nickname: '',
+    category: '',
+    property_description: '',
+    priceRange: { min: '', max: '' },
+    location: { address: '', city: '', state: '', zip_code: '' },
+    instant_booking: '',
+    details: {
+      acreage: '',
+      guided_hunt: '',
+      guest_limit: '',
+      lodging: '',
+      shooting_range: '',
+      extended_details: '',
+    },
+    pricePerGroupSize: [{ groupSize: '', price: '' }],
+    cancellationPolicy: '',
   });
 
-  // Fetch properties from API
+  // Fetch properties from the server
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const response = await axios.get("http://44.196.192.232:8000/host/getProperty");
-        setProperties(response.data.data || []); // Ensure properties is always an array
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching properties:", error);
-        setLoading(false);
-      }
-    };
     fetchProperties();
   }, []);
 
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = properties.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  // Modal toggle
-  const toggleModal = () => {
-    setModalVisible(!modalVisible);
-    if (modalVisible) {
-      // Reset newProperty state when closing modal
-      setNewProperty({
-        propertyNickname: "",
-        category: "",
-        propertyDescription: "",
-        priceRange: { min: "", max: "" },
-        guestLimitPerDay: "",
-        location: { city: "", state: "" },
-        instantBooking: false,
-      });
-    }
-  };
-
-  // Handle input changes for new property
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name.startsWith("priceRange")) {
-      setNewProperty((prevState) => ({
-        ...prevState,
-        priceRange: {
-          ...prevState.priceRange,
-          [name.split(".")[1]]: value,
-        },
-      }));
-    } else if (name.startsWith("location")) {
-      setNewProperty((prevState) => ({
-        ...prevState,
-        location: {
-          ...prevState.location,
-          [name.split(".")[1]]: value,
-        },
-      }));
-    } else {
-      setNewProperty((prevState) => ({
-        ...prevState,
-        [name]: value,
-      }));
-    }
-  };
-
-  // Handle adding new property
-  const handleAddProperty = async () => {
+  const fetchProperties = async () => {
     try {
-      await axios.post("http://44.196.192.232:8000/host/add", newProperty);
-
-      // Fetch properties again after adding a new property
-      const response = await axios.get("http://44.196.192.232:8000/host/getProperty");
-      setProperties(response.data.data || []);
-      toggleModal(); // Close modal
+      const response = await axios.get('http://localhost:8000/host/getproperty');
+      console.log("111", response.data.data)
+      setProperties(Array.isArray(response.data.data) ? response.data.data : []);
     } catch (error) {
-      console.error("Error adding property:", error);
+      console.error('Error fetching properties:', error);
+      setProperties([]); // Fallback to an empty array on error
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+
+  const handleAddProperty = () => {
+    setCurrentProperty({
+      propery_nickname: '',
+      category: '',
+      propertyproperty_description: '',
+      priceRange: { min: '', max: '' },
+      location: { address: '', city: '', state: '', postalCode: '' },
+      instant_booking: '',
+      details: {
+        acreage: '',
+        guided_hunt: '',
+        guest_limit: '',
+        lodging: '',
+        shooting_range: '',
+        extended_details: '',
+      },
+      pricePerGroupSize: [{ groupSize: '', price: '' }],
+      cancellationPolicy: '',
+    });
+    setModalVisible(true);
+  };
+
+  const handleEditProperty = (property) => {
+    setCurrentProperty(property);
+    setModalVisible(true);
+  };
+
+  const handleDeleteProperty = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8000/host/deleteproperty/${id}`);
+      fetchProperties();
+    } catch (error) {
+      console.error('Error deleting property:', error);
+    }
+  };
+
+  const handleViewProperty = (property) => {
+    setCurrentProperty(property);
+    setViewModalVisible(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (currentProperty._id) {
+        // Update existing property
+        await axios.put(`http://localhost:8000/host/updateproperty/${currentProperty._id}`, currentProperty);
+      } else {
+        // Add new property
+        await axios.post('http://localhost:8000/host/add', currentProperty);
+      }
+      fetchProperties();
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Error saving property:', error);
+    }
+  };
 
   return (
-    <>
-     <CRow className="align-items-center mb-3">
-        <CCol>
-          <h4>Property Management</h4>
-        </CCol>
-        <CCol className="text-end">
-          <CButton color="warning" onClick={toggleModal}>
+    <div>
+      <CCard>
+
+        <CCardHeader>
+          Property Management
+          <CButton color="warning" onClick={handleAddProperty} style={{ float: 'right' }}>
             Add Property
           </CButton>
-        </CCol>
-      </CRow>
+        </CCardHeader>
 
-      <CTable hover responsive>
-        <CTableHead>
-          <CTableRow>
-            <CTableHeaderCell scope="col">#</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Property Name</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Category</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Description</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Price Range</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Guest Limit</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Location</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Booking Type</CTableHeaderCell>
-            <CTableHeaderCell scope="col">Actions</CTableHeaderCell>
-          </CTableRow>
-        </CTableHead>
-        <CTableBody>
-          {currentItems.length > 0 ? (
-            currentItems.map((property, index) => (
-              <CTableRow key={property._id}>
-                <CTableDataCell>{index + 1}</CTableDataCell>
-                <CTableDataCell>{property.propertyNickname}</CTableDataCell>
-                <CTableDataCell>{property.category}</CTableDataCell>
-                <CTableDataCell>{property.propertyDescription}</CTableDataCell>
-                <CTableDataCell>
-                  {property.priceRange ? `$${property.priceRange.min} - $${property.priceRange.max}` : "N/A"}
-                </CTableDataCell>
-                <CTableDataCell>{property.guestLimitPerDay}</CTableDataCell>
-                <CTableDataCell>
-                  {property.location.city}, {property.location.state}
-                </CTableDataCell>
-                <CTableDataCell>{property.instantBooking ? "Instant" : "Manual"}</CTableDataCell>
-                <CTableDataCell>
-                  <button className="btn btn-link" onClick={() => handleEdit(property._id)}>
-                    <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                  <button className="btn btn-link text-danger" onClick={() => handleDelete(property._id)}>
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </CTableDataCell>
+        <CCardBody>
+          <CTable striped>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Sno</CTableHeaderCell>
+                <CTableHeaderCell>Name</CTableHeaderCell>
+                <CTableHeaderCell>Category</CTableHeaderCell>
+                <CTableHeaderCell>description</CTableHeaderCell>
+                <CTableHeaderCell>Price Range</CTableHeaderCell>
+                <CTableHeaderCell>Booking Type</CTableHeaderCell>
+                <CTableHeaderCell>Action</CTableHeaderCell>
               </CTableRow>
-            ))
-          ) : (
-            <CTableRow>
-              <CTableDataCell colSpan="9">No properties found.</CTableDataCell>
-            </CTableRow>
-          )}
-        </CTableBody>
-      </CTable>
+            </CTableHead>
+            <CTableBody>
+              {Array.isArray(properties) && properties.map((property, index) => (
+                <CTableRow key={property._id}>
+                  <CTableDataCell>{index + 1}</CTableDataCell>
+                  <CTableDataCell>{property.propertyNickname}</CTableDataCell>
+                  <CTableDataCell>{property.category}</CTableDataCell>
+                  <CTableDataCell>{property.propertyDescription}</CTableDataCell>
+                  <CTableDataCell>
+                    {property.priceRange.min} - {property.priceRange.max}
+                  </CTableDataCell>
+                  <CTableDataCell>{property.instantBooking}</CTableDataCell>
+                  <CTableDataCell>
+                    <CButton color="info" onClick={() => handleViewProperty(property)} className="me-2">
+                      <FontAwesomeIcon icon={faEye} />
+                    </CButton>
+                    <CButton color="warning" onClick={() => handleEditProperty(property)} className="me-2">
+                      <FontAwesomeIcon icon={faEdit} />
+                    </CButton>
+                    <CButton color="danger" onClick={() => handleDeleteProperty(property._id)}>
+                      <FontAwesomeIcon icon={faTrash} />
+                    </CButton>
+                  </CTableDataCell>
+                </CTableRow>
+              ))}
+            </CTableBody>
 
-      {/* Pagination Component */}
-      {properties.length > 0 && (
-        <CPagination aria-label="Page navigation" style={{display:"flex", justifyContent:'center'}}>
-          <CPaginationItem
-            onClick={() => paginate(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            &laquo;
-          </CPaginationItem>
-          {Array.from({
-            length: Math.ceil(properties.length / itemsPerPage),
-          }).map((_, index) => (
-            <CPaginationItem
-              key={index + 1}
-              active={index + 1 === currentPage}
-              onClick={() => paginate(index + 1)}
-            >
-              {index + 1}
-            </CPaginationItem>
-          ))}
-          <CPaginationItem
-            onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === Math.ceil(properties.length / itemsPerPage)}
-          >
-            &raquo;
-          </CPaginationItem>
-        </CPagination>
-      )}
+          </CTable>
+        </CCardBody>
 
-      {/* Modal for Adding Property */}
-      <CModal visible={modalVisible} onClose={toggleModal}>
-        <CModalHeader closeButton>
-          <CModalTitle>Add New Property</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CForm>
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="propertyNickname">Property Name</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="propertyNickname"
-                  name="propertyNickname"
-                  value={newProperty.propertyNickname}
-                  onChange={handleInputChange}
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel htmlFor="category">Category</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="category"
-                  name="category"
-                  value={newProperty.category}
-                  onChange={handleInputChange}
-                />
-              </CCol>
-            </CRow>
+        {/* Add/Edit Modal */}
+        <CModal visible={modalVisible} onClose={() => setModalVisible(false)} size="lg">
+          <CModalHeader>
+            <CModalTitle>{currentProperty._id ? 'Edit Property' : 'Add Property'}</CModalTitle>
+          </CModalHeader>
 
-            <CRow className="mb-3">
-              <CCol md={12}>
-                <CFormLabel htmlFor="propertyDescription">Description</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="propertyDescription"
-                  name="propertyDescription"
-                  value={newProperty.propertyDescription}
-                  onChange={handleInputChange}
-                />
-              </CCol>
-            </CRow>
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="min">Min Price</CFormLabel>
+          <CModalBody>
+            <div className="row">
+              {/* Form Inputs */}
+              <div className="col-md-6">
                 <CFormInput
-                  type="number"
-                  id="min"
-                  name="min"
-                  placeholder="Min"
-                  value={newProperty.priceRange.min}
-                  onChange={handleInputChange}
+                  label="Name"
+                  value={currentProperty.propery_nickname}
+                  onChange={(e) => setCurrentProperty({ ...currentProperty, propery_nickname: e.target.value })}
                 />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel htmlFor="max">Max Price</CFormLabel>
+              </div>
+              <div className="col-md-6">
                 <CFormInput
-                  type="number"
-                  id="max"
-                  name="max"
-                  placeholder="Max"
-                  value={newProperty.priceRange.max}
-                  onChange={handleInputChange}
+                  label="Category"
+                  value={currentProperty.category}
+                  onChange={(e) => setCurrentProperty({ ...currentProperty, category: e.target.value })}
                 />
-              </CCol>
-            </CRow>
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="description"
+                  value={currentProperty.property_description}
+                  onChange={(e) => setCurrentProperty({ ...currentProperty, property_description: e.target.value })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="Instant Booking"
+                  value={currentProperty.instant_booking}
+                  onChange={(e) => setCurrentProperty({ ...currentProperty, instant_booking: e.target.value })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="Min Price"
+                  value={currentProperty.priceRange.min}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    priceRange: { ...currentProperty.priceRange, min: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="Max Price"
+                  value={currentProperty.priceRange.max}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    priceRange: { ...currentProperty.priceRange, max: e.target.value }
+                  })}
+                />
+              </div>
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="guestLimitPerDay">Guest Limit</CFormLabel>
+              <div className="col-md-6">
                 <CFormInput
-                  type="number"
-                  id="guestLimitPerDay"
-                  name="guestLimitPerDay"
-                  value={newProperty.guestLimitPerDay}
-                  onChange={handleInputChange}
+                  label="Guest Limit Per Day"
+                  value={currentProperty.details?.guest_limit}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, guest_limit: e.target.value }
+                  })}
                 />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel htmlFor="city">City</CFormLabel>
+              </div>
+              <div className="col-md-6">
                 <CFormInput
-                  type="text"
-                  id="city"
-                  name="location.city"
-                  value={newProperty.location.city}
-                  onChange={handleInputChange}
+                  label="Guest Price Per Day"
+                  value={currentProperty.details?.guestPricePerDay}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, guestPricePerDay: e.target.value }
+                  })}
                 />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel htmlFor="state">State</CFormLabel>
+              </div>
+              <div className="col-md-6">
                 <CFormInput
-                  type="text"
-                  id="state"
-                  name="location.state"
-                  value={newProperty.location.state}
-                  onChange={handleInputChange}
+                  label="Cancellation Policy"
+                  value={currentProperty.details?.cancellationPolicy}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, cancellationPolicy: e.target.value }
+                  })}
                 />
-              </CCol>
-            </CRow>
+              </div>
 
-            <CRow className="mb-3">
-              <CCol md={12}>
-                <input
-                  type="checkbox"
-                  id="instantBooking"
-                  name="instantBooking"
-                  checked={newProperty.instantBooking}
-                  onChange={(e) => setNewProperty((prevState) => ({
-                    ...prevState,
-                    instantBooking: e.target.checked,
-                  }))}
-                />
-                <CFormLabel htmlFor="instantBooking" style={{marginLeft:"5px"}}>Instant Booking</CFormLabel>
-              </CCol>
-            </CRow>
-          </CForm>
-        </CModalBody>
-        <CModalFooter>
+              {/* Group Size and Price Input Fields */}
+              <div className="col-md-12">
+                <h5>Price Per Group Size</h5>
+                {currentProperty.pricePerGroupSize.map((group, index) => (
+                  <div className="row" key={index}>
+                    <div className="col-md-6">
+                      <CFormInput
+                        label={`Group Size ${index + 1}`}
+                        value={group.groupSize}
+                        onChange={(e) => {
+                          const updatedGroups = [...currentProperty.pricePerGroupSize];
+                          updatedGroups[index].groupSize = e.target.value;
+                          setCurrentProperty({ ...currentProperty, pricePerGroupSize: updatedGroups });
+                        }}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <CFormInput
+                        label={`Price ${index + 1}`}
+                        value={group.price}
+                        onChange={(e) => {
+                          const updatedGroups = [...currentProperty.pricePerGroupSize];
+                          updatedGroups[index].price = e.target.value;
+                          setCurrentProperty({ ...currentProperty, pricePerGroupSize: updatedGroups });
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <CButton color="warning" onClick={handleAddProperty}>
-            Add Property
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </>
+            {/* Location Inputs */}
+            <hr />
+            <h5>Location</h5>
+            <div className="row">
+              <div className="col-md-6">
+                <CFormInput
+                  label="Address"
+                  value={currentProperty.location?.address}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    location: { ...currentProperty.location, address: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="City"
+                  value={currentProperty.location?.city}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    location: { ...currentProperty.location, city: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="State"
+                  value={currentProperty.location?.state}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    location: { ...currentProperty.location, state: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="Postal Code"
+                  value={currentProperty.location?.postalCode}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    location: { ...currentProperty.location, postalCode: e.target.value }
+                  })}
+                />
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <hr />
+            <h5>Details</h5>
+            <div className="row">
+              <div className="col-md-4">
+                <CFormInput
+                  label="Acreage"
+                  value={currentProperty.details?.acreage}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, acreage: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-4">
+                <CFormInput
+                  label="Guided Hunt"
+                  value={currentProperty.details?.guided_hunt}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, guided_hunt: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-4">
+                <CFormInput
+                  label="Guest Limit"
+                  value={currentProperty.details?.guest_limit}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, guest_limit: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-4">
+                <CFormInput
+                  label="lodging"
+                  value={currentProperty.details?.lodging}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, lodging: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-4">
+                <CFormInput
+                  label="Shooting Range"
+                  value={currentProperty.details?.shooting_range}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, shooting_range: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="col-md-4">
+                <CFormInput
+                  label="Optional Extended Details"
+                  value={currentProperty.details?.extended_details}
+                  onChange={(e) => setCurrentProperty({
+                    ...currentProperty,
+                    details: { ...currentProperty.details, extended_details: e.target.value }
+                  })}
+                />
+              </div>
+            </div>
+
+            {/* Available Dates Section */}
+            <hr />
+            <h5>Available Dates</h5>
+            <div className="row">
+              <div className="col-md-6">
+                <CFormInput
+                  type="date"
+                  label="From"
+                  value={availableDateRange.from}
+                  onChange={(e) => setAvailableDateRange({ ...availableDateRange, from: e.target.value })}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  type="date"
+                  label="To"
+                  value={availableDateRange.to}
+                  onChange={(e) => setAvailableDateRange({ ...availableDateRange, to: e.target.value })}
+                />
+              </div>
+            </div>
+          </CModalBody>
+
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setModalVisible(false)}>
+              Close
+            </CButton>
+            <CButton color="warning" onClick={handleSave}>
+              Save Changes
+            </CButton>
+          </CModalFooter>
+        </CModal>
+
+        {/* View Property Modal */}
+<CModal visible={viewModalVisible} onClose={() => setViewModalVisible(false)} size="lg">
+  <CModalHeader>
+    <CModalTitle>View Property</CModalTitle>
+  </CModalHeader>
+  <CModalBody>
+    <div>
+      <h5>Name:</h5> {currentProperty?.propertyNickname || 'N/A'}
+    </div>
+    <div>
+      <h5>Category:</h5> {currentProperty?.category || 'N/A'}
+    </div>
+    <div>
+      <h5>Property Description:</h5> {currentProperty?.propertyDescription|| 'N/A'}
+    </div>
+    <div>
+      <h5>Instant Booking:</h5> {currentProperty?.instantBooking ? 'Yes' : 'No'}
+    </div>
+    <div>
+      <h5>Min Price:</h5> {currentProperty?.priceRange?.min || 'N/A'}
+    </div>
+    <div>
+      <h5>Max Price:</h5> {currentProperty?.priceRange?.max || 'N/A'}
+    </div>
+    <div>
+      <h5>Guest Limit Per Day:</h5> {currentProperty?.details?.guestLimitPerDay || 'N/A'}
+    </div>
+    <div>
+      <h5>Guest Price Per Day:</h5> {currentProperty?.details?.guestPricePerDay || 'N/A'}
+    </div>
+    <div>
+      <h5>Cancellation Policy:</h5> {currentProperty?.details?.cancellationPolicy || 'N/A'}
+    </div>
+
+    <div>
+      <h5>Price Per Group Size:</h5>
+      <strong>Group Size:</strong> {currentProperty?.guests || 'N/A'} |
+      <strong>Price:</strong> {currentProperty?.price || 'N/A'}
+    </div>
+
+    <div>
+      <h5>Location:</h5> 
+      {currentProperty?.location?.address || 'N/A'}, 
+      {currentProperty?.location?.city || 'N/A'}, 
+      {currentProperty?.location?.state || 'N/A'}, 
+      {currentProperty?.location?.postalCode || 'N/A'}
+    </div>
+    <div>
+      <h5>Acreage:</h5> {currentProperty?.details?.acreage || 'N/A'}
+    </div>
+    <div>
+      <h5>Guided Hunt:</h5> {currentProperty?.details?.guidedHunt ? 'Yes' : 'No'}
+    </div>
+    <div>
+      <h5>Lodging:</h5> {currentProperty?.details?.lodging ? 'Yes' : 'No'}
+    </div>
+    <div>
+      <h5>Shooting Range:</h5> {currentProperty?.details?.shooting_range ? 'Yes' : 'No'}
+    </div>
+    <div>
+      <h5>Optional Extended Details:</h5> {currentProperty?.details?.extended_details || 'N/A'}
+    </div>
+    <div>
+      <h5>Available Dates:</h5>
+      {availableDateRange?.from || 'N/A'} to {availableDateRange?.to || 'N/A'}
+    </div>
+  </CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setViewModalVisible(false)}>
+      Close
+    </CButton>
+  </CModalFooter>
+</CModal>
+
+
+
+
+      </CCard>
+    </div>
   );
 };
 
-export default PropertyTable;
+export default PropertyManagement;
