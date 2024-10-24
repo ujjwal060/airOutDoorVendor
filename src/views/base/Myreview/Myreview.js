@@ -23,21 +23,23 @@ const ReviewTable = () => {
   const itemsPerPage = 10;
 
   // Fetch reviews from the API
-  const fetchReviews = async (page) => {
-    try {
-      const response = await axios.get('http://44.196.192.232:8000/review/getreviews', {
-        params: {
-          page,
-          limit: itemsPerPage,
-        },
-      });
-      setReviews(response.data.data);
-      setTotalReviews(response.data.total);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      toast.error('Failed to fetch reviews'); // Show error toast
-    }
-  };
+// Correct the URL in the fetchReviews function
+const fetchReviews = async (page) => {
+  try {
+    const response = await axios.get('http://localhost:8000/review/getreviews', {
+      params: {
+        page,
+        limit: itemsPerPage,
+      },
+    });
+    setReviews(response.data.data);
+    setTotalReviews(response.data.total);
+  } catch (error) {
+    console.error('Error fetching reviews:', error);  // Log the error
+    toast.error('Failed to fetch reviews');           // Show error toast
+  }
+};
+
 
   // Delete a review by ID
   const handleDelete = async (id) => {

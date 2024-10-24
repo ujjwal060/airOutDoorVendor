@@ -37,7 +37,7 @@ const Tables = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [selectedPropertyId, setSelectedPropertyId] = useState(null);
-    const [newProperty, setNewProperty] = useState({
+    const [newProperty, setNewProperty] = useState({ 
         name: '',
         description: '',
         amenities: '',
