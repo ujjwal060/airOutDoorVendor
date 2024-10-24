@@ -10,131 +10,172 @@ import {
   CRow,
   CCol,
   CBadge,
-  CToast,
-  CToastBody,
-  CToastHeader,
-  CToaster,
+  CSpinner,
 } from '@coreui/react';
-import EmojiPicker from 'emoji-picker-react'; // Correctly import the default export
+import EmojiPicker from 'emoji-picker-react';
 import { FaSmile, FaPaperPlane } from 'react-icons/fa';
-import './ChatSection.scss'; // Custom SCSS for extra styling
-import image8 from './img/image8.png'
+import { db } from './firebase';
+import { ref, set, onValue, push } from 'firebase/database';
+import './ChatSection.scss';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ChatSection = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessages, setNewMessages] = useState({});
-  const [showToast, setShowToast] = useState(false);
-  const [toastData, setToastData] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Simulated chat data
-  const chats = [
-    { id: 1, name: 'Sumit', message: 'Hey! WhatsApp? how can I help you?', img: image8},
-    { id: 2, name: 'Abhishek', message: 'Hey! WhatsApp? how can I help you?', img: image8 },
-    { id: 3, name: 'Anmol', message: 'Hey! WhatsApp? how can I help you?', img: image8 },
-    { id: 4, name: 'Akash', message: 'Hey! WhatsApp? how can I help you?', img: image8 },
-  ];
+  const vendorId = localStorage.getItem('vendorId');
 
-  // Simulate message arrival (You can replace this with your own data fetching logic)
   useEffect(() => {
-    const timer = setInterval(() => {
-      const newMessage = {
-        id: 2, // Simulating a new message for chat with id 2 (Abhishek)
-        message: 'This is a new message!',
-        time: new Date().toLocaleTimeString(),
-      };
-      handleNewMessage(newMessage);
-    }, 10000); // Simulate new message every 10 seconds
+    const chatMetadataRef = ref(db, `chatMetadata`);
+    const unsubscribe = onValue(chatMetadataRef, (snapshot) => {
+      const chatsData = [];
+      snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        chatsData.push({ id: childSnapshot.key, ...data });
+      });
+      chatsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    return () => clearInterval(timer);
+      const userIds = chatsData.map((chat) => chat.userId);
+      const uniqueUserIds = [...new Set(userIds)];
+
+      axios
+        .post('http://44.196.192.232:8000/vendor/getUsers', { userIds: uniqueUserIds })
+        .then((response) => {
+          const enrichedChatsData = chatsData.map((chat) => {
+            const user = response.data.data.find((user) => user._id === chat.userId);
+            return { ...chat, userName: user?.fullName, userImage: user?.imageUrl };
+          });
+          setChats(enrichedChatsData);
+        })
+        .catch((error) => {
+          console.error("Error fetching user data:", error);
+          toast.error(error.response?.message);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleNewMessage = (newMessage) => {
-    // Update unread message count
-    setNewMessages((prevMessages) => ({
-      ...prevMessages,
-      [newMessage.id]: (prevMessages[newMessage.id] || 0) + 1,
-    }));
+  useEffect(() => {
+    if (selectedChat) {
+      const chatRef = ref(db, `chats/${selectedChat.userId}${vendorId}`);
+      const unsubscribe = onValue(chatRef, (snapshot) => {
+        const messagesData = [];
+        if (snapshot.exists()) {
+          snapshot.forEach((childSnapshot) => {
+            const message = childSnapshot.val();
+            messagesData.push(message);
+          });
+          setMessages(messagesData);
+        } else {
+          setMessages([]);
+        }
+      });
 
-    // Show notification for new message
-    setToastData({
-      chatId: newMessage.id,
-      message: newMessage.message,
-      time: newMessage.time,
-    });
-    setShowToast(true);
-  };
+      return () => unsubscribe();
+    }
+  }, [selectedChat, vendorId]);
 
   const handleChatClick = (chat) => {
-    // Clear unread messages for the selected chat
     setSelectedChat(chat);
-    setNewMessages((prevMessages) => ({
-      ...prevMessages,
-      [chat.id]: 0, // Clear unread message count
-    }));
+    setMessages([]);
   };
 
-  const handleEmojiSelect = (emoji) => {
-    setCurrentMessage((prev) => prev + emoji.emoji); // Add emoji to message
-    setShowEmojiPicker(false); // Close emoji picker after selecting
-  };
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (currentMessage.trim()) {
-      // Simulate sending the message (update the selected chat's message or log the message)
-      console.log('Message sent:', currentMessage);
-      setCurrentMessage(''); // Clear the input
+      const newMessageData = {
+        text: currentMessage,
+        senderId: vendorId,
+        timestamp: new Date().toISOString(),
+      };
+
+      const chatRef = ref(db, `chats/${selectedChat.userId}${vendorId}`);
+      await push(chatRef, newMessageData);
+
+      const chatMetadataRef = ref(db, `chatMetadata/${selectedChat.userId}_${vendorId}`);
+      const chatMetadata = {
+        userId: selectedChat.userId,
+        vendorId: vendorId,
+        lastMessage: currentMessage,
+        timestamp: newMessageData.timestamp,
+      };
+      await set(chatMetadataRef, chatMetadata);
+
+      setCurrentMessage('');
     }
   };
 
   return (
     <CRow>
-      {/* Chat List Section */}
+      {loading && (
+        <div className="loader-overlay">
+          <CSpinner className="loader" />
+        </div>
+      )}
+
       <CCol md={5}>
-        <CFormInput
-          type="search"
-          placeholder="Search by host name"
-          className="mb-3"
-        />
         <CListGroup>
-          {chats.map((chat) => (
-            <CListGroupItem
-              key={chat.id}
-              onClick={() => handleChatClick(chat)}
-              className="d-flex align-items-center chat-item"
-            >
-              <img
-                src={chat.img}
-                alt={chat.name}
-                className="rounded-circle me-3"
-                style={{ width: '50px', height: '50px' }}
-              />
-              <div>
-                <strong>{chat.name}</strong>
-                <p className="mb-3">{chat.message}</p>
-              </div>
-              {newMessages[chat.id] > 0 && (
-                <CBadge color="danger" className="ms-auto">
-                  {newMessages[chat.id]} new
-                </CBadge>
-              )}
-            </CListGroupItem>
-          ))}
+          {chats.length > 0 ? (
+            chats.map((chat) => (
+              <CListGroupItem
+                key={chat.userId}
+                onClick={() => handleChatClick(chat)}
+                className="d-flex align-items-center chat-item"
+              >
+                <img
+                  src={chat.userImage || 'defaultImg.png'}
+                  alt={chat.userName || 'User'}
+                  className="rounded-circle me-3"
+                  style={{ width: '50px', height: '50px' }}
+                />
+                <div>
+                  <strong>{chat.userName || 'Unknown User'}</strong>
+                  <p>{chat.lastMessage}</p>
+                </div>
+                {newMessages[chat.id] > 0 && (
+                  <CBadge color="danger" className="ms-auto">
+                    {newMessages[chat.id]} new
+                  </CBadge>
+                )}
+              </CListGroupItem>
+            ))
+          ) : (
+            <CListGroupItem>No chats available</CListGroupItem>
+          )}
         </CListGroup>
       </CCol>
 
-      {/* Chat Box Section */}
       <CCol md={7}>
         {selectedChat ? (
           <CCard>
             <CCardHeader>
-              <h5>{selectedChat.name}</h5>
+              <h5>{selectedChat.userName || 'Unknown User'}</h5>
             </CCardHeader>
             <CCardBody>
               <div className="chat-messages">
-                {/* Display chat messages dynamically */}
-                <p>{selectedChat.message}</p>
+                {messages.length > 0 ? (
+                  messages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`message ${msg.senderId === vendorId ? 'sent' : 'received'}`}
+                    >
+                      <p>{msg.text}</p>
+                      <small>{new Date(msg.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                  ))
+                ) : (
+                  <p>No messages to display.</p>
+                )}
               </div>
               <div className="chat-input-wrapper">
                 <div className="chat-input d-flex align-items-center">
@@ -151,7 +192,7 @@ const ChatSection = () => {
                     className="me-2"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
-                        handleSendMessage(); // Send message on Enter key press
+                        handleSendMessage();
                       }
                     }}
                   />
@@ -159,13 +200,13 @@ const ChatSection = () => {
                     <FaPaperPlane size={20} />
                   </CButton>
                 </div>
-                {/* Emoji Picker */}
                 {showEmojiPicker && (
                   <div className="emoji-picker">
                     <EmojiPicker
-                      onEmojiClick={handleEmojiSelect}
+                      onEmojiClick={(e, emojiObject) =>
+                        setCurrentMessage((prev) => prev + emojiObject.emoji)
+                      }
                       disableSearchBar
-                      width="550px"
                     />
                   </div>
                 )}
@@ -180,19 +221,7 @@ const ChatSection = () => {
           </CCard>
         )}
       </CCol>
-
-      {/* Toast Notification */}
-      {showToast && toastData && (
-        <CToaster position="top-end">
-          <CToast autohide={true} visible={true} className="bg-info text-white">
-            <CToastHeader closeButton>
-              <strong className="me-auto">New Message from {chats.find(chat => chat.id === toastData.chatId)?.name}</strong>
-              <small>{toastData.time}</small>
-            </CToastHeader>
-            <CToastBody>{toastData.message}</CToastBody>
-          </CToast>
-        </CToaster>
-      )}
+      <ToastContainer />
     </CRow>
   );
 };
