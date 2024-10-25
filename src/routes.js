@@ -18,6 +18,7 @@ const Myfavorite= React.lazy(() => import('./views/base/Myfavorite/Myfavorite'))
 const Myinvoice= React.lazy(() => import('./views/base/Myinvoice/Myinvoice'))
 const Myinbox= React.lazy(() => import('./views/base/Myinbox/Myinbox'))
 const ChatBox= React.lazy(() => import('./views/base/ChatBox/ChatBox'))
+const MyProperty= React.lazy(() => import('./views/base/MyProperty/MyProperty'))
 const MessageList= React.lazy(() => import('./views/base/MessageList/MessageList'))
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
@@ -28,7 +29,7 @@ const routes = [
   { path: '/mylisting', name: 'Mylisting', element: Mylisting },
   { path: '/mybooking', name: 'Mybooking', element: Mybooking },
   { path: '/profile', name: 'Profile', element: Profile },
-  { path: '/property', name: 'Property', element: Property },
+  { path: '/property1', name: 'Property', element: Property },
   { path: '/review', name: 'Myreview', element: Myreview },
   { path: '/reservation', name: 'Myreservation', element: Myreservation },
   { path: '/legal', name: 'Mylegal', element: Mylegal },
@@ -39,7 +40,8 @@ const routes = [
   { path: '/invoice', name: 'Myinvoice', element: Myinvoice },
   { path: '/inbox', name: 'Myinbox', element: Myinbox },
   { path: '/chat', name: 'ChatBox', element: ChatBox },
-  { path: '44.196.192.232', name: 'MessageList', element: MessageList },
+  { path: '/property2', name: 'MyProperty', element: MyProperty },
+  // { path: '/msg', name: 'MessageList', element: MessageList },
 
 ]
 

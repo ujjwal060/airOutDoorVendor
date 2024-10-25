@@ -30,13 +30,19 @@ const _nav = [
   // },
   {
     component: CNavItem,
+    name: 'Management',
+    to: '/property1',
+    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'Property Management',
-    to: '/property',
+    to: '/property2',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
   // {
   //   component: CNavItem,
-  //   name: 'Property Management',
+  //   name: 'Management',
   //   to: '/msg',
   //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   // },
