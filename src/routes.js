@@ -20,6 +20,8 @@ const Myinbox= React.lazy(() => import('./views/base/Myinbox/Myinbox'))
 const ChatBox= React.lazy(() => import('./views/base/ChatBox/ChatBox'))
 const MyProperty= React.lazy(() => import('./views/base/MyProperty/MyProperty'))
 const MessageList= React.lazy(() => import('./views/base/MessageList/MessageList'))
+const Map= React.lazy(() => import('./views/base/Map'))
+const test= React.lazy(() => import('./views/base/test'))
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
@@ -41,6 +43,8 @@ const routes = [
   { path: '/inbox', name: 'Myinbox', element: Myinbox },
   { path: '/chat', name: 'ChatBox', element: ChatBox },
   { path: '/property2', name: 'MyProperty', element: MyProperty },
+  { path: '/map', name: 'Map', element: Map },
+  { path: '/test', name: 'test', element: test },
   // { path: '/msg', name: 'MessageList', element: MessageList },
 
 ]

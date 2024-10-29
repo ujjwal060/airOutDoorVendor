@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
     CButton,
@@ -20,11 +20,15 @@ import {
     CFormTextarea,
     CFormSelect,
     CRow,
-    CCol
+    CCol,
+    CContainer
 } from '@coreui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import './MyProperty.scss'
+import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+
+const libraries = ['places'];
 
 const PropertyManagement = () => {
     const [properties, setProperties] = useState([]);
@@ -39,7 +43,7 @@ const PropertyManagement = () => {
         category: '',
         property_description: '',
         priceRange: { min: '', max: '' },
-        location: { address: '', city: '', state: '', zip_code: '' },
+        location: { address: '', city: '', state: '', postalCode: '' },
         instant_booking: '',
         details: {
             acreage: '',
@@ -51,7 +55,93 @@ const PropertyManagement = () => {
         },
         pricePerGroupSize: [{ groupSize: '', price: '' }],
         cancellationPolicy: '',
+        images: []
     });
+
+
+    const autocompleteRef = useRef(null);
+
+    const { isLoaded } = useLoadScript({
+        googleMapsApiKey: "AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s", // Replace with your API key
+        libraries,
+    });
+
+    // const handlePlaceSelect = (place) => {
+    //     if (!place.geometry) {
+    //         console.error("Selected place has no geometry");
+    //         return;
+    //     }
+
+    //     let city = '', state = '', postalCode = '', address = '';
+    //     place.address_components.forEach((component) => {
+    //         const types = component.types;
+    //         if (types.includes("locality") || types.includes("sublocality")) {
+    //             city = component.long_name;
+    //         }
+    //         if (types.includes("administrative_area_level_1")) {
+    //             state = component.short_name;
+    //         }
+    //         if (types.includes("postal_code")) {
+    //             postalCode = component.long_name;
+    //         }
+    //         if (types.includes("street_address") || types.includes("route")) {
+    //             address += component.long_name + ' ';
+    //         }
+    //     });
+
+    //     setCurrentProperty((prev) => ({
+    //         ...prev,
+    //         location: {
+    //             ...prev.location,
+    //             address: address.trim(),
+    //             city,
+    //             state,
+    //             postalCode,
+    //         },
+    //     }));
+    // };
+
+
+
+    const handlePlaceChanged = () => {
+        if (autocompleteRef.current) {
+            const place = autocompleteRef.current.getPlace();
+            if (!place.geometry) {
+                console.error("No geometry found for the selected place.");
+                return;
+            }
+            
+            let city = '', state = '', postalCode = '', address = '';
+            place.address_components.forEach((component) => {
+                const types = component.types;
+                if (types.includes("locality") || types.includes("sublocality")) {
+                    city = component.long_name;
+                }
+                if (types.includes("administrative_area_level_1")) {
+                    state = component.short_name;
+                }
+                if (types.includes("postal_code")) {
+                    postalCode = component.long_name;
+                }
+                if (types.includes("street_address") || types.includes("route")) {
+                    address += component.long_name + ' ';
+                }
+            });
+
+            setCurrentProperty((prev) => ({
+                ...prev,
+                location: {
+                    ...prev.location,
+                    address: address.trim(),
+                    city,
+                    state,
+                    postalCode,
+                },
+            }));
+        }
+    };
+
+
 
     // Fetch properties from the server
     useEffect(() => {
@@ -98,21 +188,25 @@ const PropertyManagement = () => {
         setCurrentProperty({
             propery_nickname: '',
             category: '',
-            propertyproperty_description: '',
+            property_description: '',
             priceRange: { min: '', max: '' },
             location: { address: '', city: '', state: '', postalCode: '' },
             instant_booking: '',
-            acreage: '',
-            guided_hunt: '',
-            guest_limit: '',
-            lodging: '',
-            shooting_range: '',
-            extended_details: '',
+            details: {
+                acreage: '',
+                guided_hunt: '',
+                guest_limit: '',
+                lodging: '',
+                shooting_range: '',
+                extended_details: '',
+            },
             pricePerGroupSize: [{ groupSize: '', price: '' }],
             cancellationPolicy: '',
+            images: [],
         });
         setModalVisible(true);
     };
+
 
     const handleEditProperty = (property) => {
         setCurrentProperty(property);
@@ -151,7 +245,7 @@ const PropertyManagement = () => {
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files); // Convert FileList to an array
-
+    
         if (files.length > 0) {
             const validFiles = files.slice(0, 5); // Limit to the first 5 files
             const fileURLs = validFiles.map((file) => {
@@ -163,18 +257,25 @@ const PropertyManagement = () => {
                     };
                 });
             });
-
+    
             Promise.all(fileURLs).then((urls) => {
                 setImageFile(validFiles); // Store the valid image files in the state
-                setCurrentProperty((prev) => ({
-                    ...prev,
-                    imagePreview: urls, // Update imagePreview with the array of URLs
-                }));
+                setCurrentProperty((prev) => {
+                    const updatedProperty = {
+                        ...prev,
+                        imagePreview: urls, // Update imagePreview with the array of URLs
+                        images: validFiles, // Store valid files in the images property
+                    };
+                    console.log(updatedProperty); // Log the updated property
+                    return updatedProperty;
+                });
             });
         }
     };
+    
+    
 
-
+    if (!isLoaded) return <div>Loading...</div>;
 
 
     return (
@@ -376,7 +477,7 @@ const PropertyManagement = () => {
                         <div className="col-md-12">
                             <h5>Price Range</h5>
                         </div>
-                        <div className="row"> {/* Add this row div to create a two-column layout */}
+                        <div className="row">
                             <div className="col-md-6">
                                 <CFormInput
                                     label="Min Price"
@@ -398,51 +499,67 @@ const PropertyManagement = () => {
                                 />
                             </div>
                         </div>
+
                         {/* Location Inputs */}
                         <hr />
-                        <h5>Location</h5>
-                        <div className="row">
-                            <div className="col-md-6">
+                        <CContainer>
+            <CRow className="justify-content-center">
+                <CCol md="12">
+                    <h5>Location</h5>
+                    <div className="row">
+                        <div className="col-md-6">
+                            <label>Address</label>
+                            <Autocomplete
+                                onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                                onPlaceChanged={handlePlaceChanged}
+                            >
                                 <CFormInput
-                                    label="Address"
-                                    value={currentProperty.location?.address}
+                                    type="text"
+                                    placeholder="Enter your address"
+                                    value={currentProperty.location.address}
                                     onChange={(e) => setCurrentProperty({
                                         ...currentProperty,
                                         location: { ...currentProperty.location, address: e.target.value }
                                     })}
                                 />
-                            </div>
-                            <div className="col-md-6">
-                                <CFormInput
-                                    label="City"
-                                    value={currentProperty.location?.city}
-                                    onChange={(e) => setCurrentProperty({
-                                        ...currentProperty,
-                                        location: { ...currentProperty.location, city: e.target.value }
-                                    })}
-                                />
-                            </div>
-                            <div className="col-md-6">
-                                <CFormInput
-                                    label="State"
-                                    value={currentProperty.location?.state}
-                                    onChange={(e) => setCurrentProperty({
-                                        ...currentProperty,
-                                        location: { ...currentProperty.location, state: e.target.value }
-                                    })}
-                                />
-                            </div>
-                            <div className="col-md-6">
-                                <CFormInput
-                                    label="Postal Code"
-                                    value={currentProperty.location?.postalCode}
-                                    onChange={(e) => setCurrentProperty({
-                                        ...currentProperty,
-                                        location: { ...currentProperty.location, postalCode: e.target.value }
-                                    })}
-                                />
-                            </div>
+                            </Autocomplete>
                         </div>
+                        <div className="col-md-6 mb-3">
+                            <CFormInput
+                                label="City"
+                                value={currentProperty.location.city}
+                                onChange={(e) => setCurrentProperty({
+                                    ...currentProperty,
+                                    location: { ...currentProperty.location, city: e.target.value }
+                                })}
+                            />
+                        </div>
+                        <div className="col-md-6">
+                            <CFormInput
+                                label="State"
+                                value={currentProperty.location.state}
+                                onChange={(e) => setCurrentProperty({
+                                    ...currentProperty,
+                                    location: { ...currentProperty.location, state: e.target.value }
+                                })}
+                            />
+                        </div>
+                        <div className="col-md-6">
+                            <CFormInput
+                                label="Postal Code"
+                                value={currentProperty.location.postalCode}
+                                onChange={(e) => setCurrentProperty({
+                                    ...currentProperty,
+                                    location: { ...currentProperty.location, postalCode: e.target.value }
+                                })}
+                            />
+                        </div>
+                    </div>
+                </CCol>
+            </CRow>
+        </CContainer>
+
+
                         {/* Details Section */}
                         <hr />
                         <h5>Details</h5>
