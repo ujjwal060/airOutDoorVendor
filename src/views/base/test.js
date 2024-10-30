@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   CButton,
   CCard,
@@ -18,8 +18,9 @@ import {
   CModalHeader,
   CModalTitle,
   CModalBody,
-  CModalFooter
+  CModalFooter,
 } from '@coreui/react';
+import { GoogleMap, LoadScript, Autocomplete } from '@react-google-maps/api';
 
 const PropertyManagement = () => {
   const [properties, setProperties] = useState([]);
@@ -29,37 +30,62 @@ const PropertyManagement = () => {
     description: '',
     priceMin: '',
     priceMax: '',
+    address: '',
+    state: '',
+    city: '',
+    postalCode: '',
   });
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [viewProperty, setViewProperty] = useState(null);
+  const autocompleteRef = useRef(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNewProperty((prev) => ({ ...prev, [name]: value }));
-  };
+  const handlePlaceChanged = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      const address = place.formatted_address;
+      const components = place.address_components;
 
-  const handleAddProperty = () => {
-    const { name, category, description, priceMin, priceMax } = newProperty;
-    if (name && category && description && priceMin && priceMax) {
-      setProperties((prev) => [
-        ...prev,
-        { ...newProperty, priceRange: `${priceMin} - ${priceMax}` }
-      ]);
-      setNewProperty({ name: '', category: '', description: '', priceMin: '', priceMax: '' }); // Reset form
-      setShowModal(false); // Close the modal after adding
+      const addressObj = {
+        address,
+        state: components.find(c => c.types.includes("administrative_area_level_1"))?.long_name || "",
+        city: components.find(c => c.types.includes("locality"))?.long_name || "",
+        postalCode: components.find(c => c.types.includes("postal_code"))?.long_name || ""
+      };
+
+      setNewProperty(prev => ({ ...prev, ...addressObj }));
+      autocompleteRef.current = null; // Clear the reference after selection
     } else {
-      alert('Please fill in all fields.'); // Simple validation alert
+      console.error("Autocomplete is not loaded yet.");
     }
   };
 
-  const handleDeleteProperty = (index) => {
-    const updatedProperties = properties.filter((_, i) => i !== index);
-    setProperties(updatedProperties);
-  };
-
-  const handleViewProperty = (property) => {
-    setViewProperty(property);
-    setShowModal(true);
+  const handleAddProperty = () => {
+    const { name, category, description, priceMin, priceMax, address, state, city, postalCode } = newProperty;
+    if (name && category && description && priceMin && priceMax && address && state && city && postalCode) {
+      if (parseFloat(priceMin) > parseFloat(priceMax)) {
+        alert("Minimum price should not exceed maximum price.");
+        return;
+      }
+      setProperties((prev) => [
+        ...prev,
+        { ...newProperty, priceRange: `${priceMin} - ${priceMax}` },
+      ]);
+      setNewProperty({
+        name: '',
+        category: '',
+        description: '',
+        priceMin: '',
+        priceMax: '',
+        address: '',
+        state: '',
+        city: '',
+        postalCode: '',
+      });
+      setShowAddModal(false);
+    } else {
+      alert('Please fill in all fields.');
+    }
   };
 
   return (
@@ -68,7 +94,7 @@ const PropertyManagement = () => {
         <CCard>
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <h3>Property Management</h3>
-            <CButton color="primary" onClick={() => setShowModal(true)}>
+            <CButton color="primary" onClick={() => setShowAddModal(true)}>
               Add Property
             </CButton>
           </CCardHeader>
@@ -80,27 +106,25 @@ const PropertyManagement = () => {
                   <CTableHeaderCell>Name</CTableHeaderCell>
                   <CTableHeaderCell>Category</CTableHeaderCell>
                   <CTableHeaderCell>Description</CTableHeaderCell>
-                  <CTableHeaderCell>Price Range</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
                 {properties.map((property, index) => (
                   <CTableRow key={index}>
-                    <CTableDataCell>{index + 1}</CTableDataCell> {/* Automatic serial number */}
+                    <CTableDataCell>{index + 1}</CTableDataCell>
                     <CTableDataCell>{property.name}</CTableDataCell>
                     <CTableDataCell>{property.category}</CTableDataCell>
                     <CTableDataCell>{property.description}</CTableDataCell>
-                    <CTableDataCell>{property.priceRange}</CTableDataCell>
                     <CTableDataCell>
-                      <CButton color="info" onClick={() => handleViewProperty(property)}>
-                        See
+                      <CButton color="info" size="sm" className="me-1">
+                        <i className="fas fa-eye"></i>
                       </CButton>
-                      <CButton color="warning" className="mx-2">
-                        Update
+                      <CButton color="warning" size="sm" className="me-1">
+                        <i className="fas fa-edit"></i>
                       </CButton>
-                      <CButton color="danger" onClick={() => handleDeleteProperty(index)}>
-                        Delete
+                      <CButton color="danger" size="sm">
+                        <i className="fas fa-trash-alt"></i>
                       </CButton>
                     </CTableDataCell>
                   </CTableRow>
@@ -112,9 +136,9 @@ const PropertyManagement = () => {
       </CCol>
 
       {/* Modal for Adding Property */}
-      <CModal visible={showModal} onClose={() => setShowModal(false)}>
+      <CModal visible={showAddModal} onClose={() => setShowAddModal(false)}>
         <CModalHeader closeButton>
-          <CModalTitle>{newProperty.name ? "Update Property" : "Add Property"}</CModalTitle>
+          <CModalTitle>Add Property</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CRow className="mb-3">
@@ -124,7 +148,7 @@ const PropertyManagement = () => {
                 name="name"
                 placeholder="Property Name"
                 value={newProperty.name}
-                onChange={handleChange}
+                onChange={(e) => setNewProperty(prev => ({ ...prev, name: e.target.value }))}
               />
             </CCol>
             <CCol md={6}>
@@ -133,7 +157,7 @@ const PropertyManagement = () => {
                 name="category"
                 placeholder="Category"
                 value={newProperty.category}
-                onChange={handleChange}
+                onChange={(e) => setNewProperty(prev => ({ ...prev, category: e.target.value }))}
               />
             </CCol>
           </CRow>
@@ -143,7 +167,7 @@ const PropertyManagement = () => {
                 name="description"
                 placeholder="Description"
                 value={newProperty.description}
-                onChange={handleChange}
+                onChange={(e) => setNewProperty(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
               />
             </CCol>
@@ -155,7 +179,7 @@ const PropertyManagement = () => {
                 name="priceMin"
                 placeholder="Minimum Price"
                 value={newProperty.priceMin}
-                onChange={handleChange}
+                onChange={(e) => setNewProperty(prev => ({ ...prev, priceMin: e.target.value }))}
               />
             </CCol>
             <CCol md={6}>
@@ -164,39 +188,31 @@ const PropertyManagement = () => {
                 name="priceMax"
                 placeholder="Maximum Price"
                 value={newProperty.priceMax}
-                onChange={handleChange}
+                onChange={(e) => setNewProperty(prev => ({ ...prev, priceMax: e.target.value }))}
               />
             </CCol>
           </CRow>
+
+          {/* Google Maps Autocomplete Location */}
+          <LoadScript googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s" libraries={['places']}>
+            <h5>Location</h5>
+            <Autocomplete onLoad={ref => (autocompleteRef.current = ref)} onPlaceChanged={handlePlaceChanged}>
+              <CFormInput
+                type="text"
+                placeholder="Enter address"
+                value={newProperty.address}
+                onChange={(e) => setNewProperty(prev => ({ ...prev, address: e.target.value }))}
+              />
+            </Autocomplete>
+          </LoadScript>
+          
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowModal(false)}>
+          <CButton color="secondary" onClick={() => setShowAddModal(false)}>
             Close
           </CButton>
           <CButton color="primary" onClick={handleAddProperty}>
-            {newProperty.name ? "Update Property" : "Add Property"}
-          </CButton>
-        </CModalFooter>
-      </CModal>
-
-      {/* Modal for Viewing Property Details */}
-      <CModal visible={!!viewProperty} onClose={() => setViewProperty(null)}>
-        <CModalHeader closeButton>
-          <CModalTitle>Property Details</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          {viewProperty && (
-            <div>
-              <p><strong>Name:</strong> {viewProperty.name}</p>
-              <p><strong>Category:</strong> {viewProperty.category}</p>
-              <p><strong>Description:</strong> {viewProperty.description}</p>
-              <p><strong>Price Range:</strong> {viewProperty.priceRange}</p>
-            </div>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setViewProperty(null)}>
-            Close
+            Add Property
           </CButton>
         </CModalFooter>
       </CModal>

@@ -24,28 +24,16 @@ const _nav = [
   },
   // {
   //   component: CNavItem,
-  //   name: 'My listing',
-  //   to: '/mylisting',
+  //   name: 'Management',
+  //   to: '/property1',
   //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   // },
-  {
-    component: CNavItem,
-    name: 'Management',
-    to: '/property1',
-    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
-  },
   {
     component: CNavItem,
     name: 'Property Management',
     to: '/property2',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
-  // {
-  //   component: CNavItem,
-  //   name: 'Management',
-  //   to: '/msg',
-  //   icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
-  // },
 
   {
     component: CNavItem,
@@ -59,12 +47,12 @@ const _nav = [
     to: '/review',
     icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'My Reservations',
-    to: '/reservation',
-    icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'My Reservations',
+  //   to: '/reservation',
+  //   icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
+  // },
   {
     component: CNavItem,
     name: 'My Favourite',

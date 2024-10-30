@@ -35,29 +35,59 @@ const PropertyManagement = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [viewModalVisible, setViewModalVisible] = useState(false);
     const [availableDateRange, setAvailableDateRange] = useState({ start: '', end: '' });
-    const [imageFile, setImageFile] = useState(null);
+    const [selectedImages, setSelectedImages] = useState([]);
     const [categories, setCategories] = useState([]);
 
     const [currentProperty, setCurrentProperty] = useState({
-        propery_nickname: '',
+        propertyNickname: '', // Changed from propery_nickname to match schema
         category: '',
-        property_description: '',
-        priceRange: { min: '', max: '' },
-        location: { address: '', city: '', state: '', postalCode: '' },
-        instant_booking: '',
+        propertyDescription: '', // Changed from property_description
+        instantBooking: false, // Changed from instant_booking, set to boolean
+        
+        priceRange: { 
+            min: '', 
+            max: '' 
+        },
+    
+        guestLimitPerDay: '', // Matches guestLimitPerDay in schema
+        guestPricePerDay: '', // Added to match schema
+    
+        cancellationPolicy: '',
+        
+        pricePerGroupSize: [{ guests: '', price: '' }], // Adjusted key from groupSize to guests
+        
+        images: [],
+    
         details: {
             acreage: '',
-            guided_hunt: '',
-            guest_limit: '',
-            lodging: '',
-            shooting_range: '',
-            extended_details: '',
+            guidedHunt: '', // Changed from guided_hunt to guidedHunt
+            guestLimitPerDay: '', // Nested under details to match schema
+            lodging: '', 
+            shootingRange: '',
+            optionalExtendedDetails: '' // Adjusted key from extended_details
         },
-        pricePerGroupSize: [{ groupSize: '', price: '' }],
-        cancellationPolicy: '',
-        images: []
+    
+        location: {
+            address: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            latitude: '', // Added to match schema
+            longitude: ''  // Added to match schema
+        },
+    
+        calendar: {
+            availableDates: [
+                {
+                    from: '', 
+                    to: ''
+                }
+            ]
+        },
+    
+        isApproveByAdmin: false // Added to match schema
     });
-
+    
 
     const autocompleteRef = useRef(null);
 
@@ -186,26 +216,56 @@ const PropertyManagement = () => {
 
     const handleAddProperty = () => {
         setCurrentProperty({
-            propery_nickname: '',
+            propertyNickname: '', // Updated name
             category: '',
-            property_description: '',
-            priceRange: { min: '', max: '' },
-            location: { address: '', city: '', state: '', postalCode: '' },
-            instant_booking: '',
+            propertyDescription: '', // Updated name
+            instantBooking: false, // Set default as false and match boolean type
+            
+            priceRange: { 
+                min: '', 
+                max: '' 
+            },
+    
+            guestLimitPerDay: '', // Matches schema
+            guestPricePerDay: '', // Added to match schema
+    
+            cancellationPolicy: '',
+            
+            pricePerGroupSize: [{ guests: '', price: '' }], // Updated name for guests
+            
+            images: [],
+    
             details: {
                 acreage: '',
-                guided_hunt: '',
-                guest_limit: '',
-                lodging: '',
-                shooting_range: '',
-                extended_details: '',
+                guidedHunt: '', // Updated name
+                guestLimitPerDay: '', // Nested to match schema
+                lodging: '', 
+                shootingRange: '',
+                optionalExtendedDetails: '' // Updated name
             },
-            pricePerGroupSize: [{ groupSize: '', price: '' }],
-            cancellationPolicy: '',
-            images: [],
+    
+            location: {
+                address: '',
+                city: '',
+                state: '',
+                postalCode: '',
+                latitude: '', // Added to match schema
+                longitude: ''  // Added to match schema
+            },
+    
+            calendar: {
+                availableDates: [
+                    {
+                        from: '', 
+                        to: ''
+                    }
+                ]
+            },
         });
+        
         setModalVisible(true);
     };
+    
 
 
     const handleEditProperty = (property) => {
@@ -243,34 +303,13 @@ const PropertyManagement = () => {
         }
     };
 
-    const handleImageChange = (e) => {
-        const files = Array.from(e.target.files); // Convert FileList to an array
-    
-        if (files.length > 0) {
-            const validFiles = files.slice(0, 5); // Limit to the first 5 files
-            const fileURLs = validFiles.map((file) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                return new Promise((resolve) => {
-                    reader.onloadend = () => {
-                        resolve(reader.result);
-                    };
-                });
-            });
-    
-            Promise.all(fileURLs).then((urls) => {
-                setImageFile(validFiles); // Store the valid image files in the state
-                setCurrentProperty((prev) => {
-                    const updatedProperty = {
-                        ...prev,
-                        imagePreview: urls, // Update imagePreview with the array of URLs
-                        images: validFiles, // Store valid files in the images property
-                    };
-                    console.log(updatedProperty); // Log the updated property
-                    return updatedProperty;
-                });
-            });
+    const handleImageChange = (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length > 5) {
+            alert('You can only upload a maximum of 5 images.');
+            return;
         }
+        setSelectedImages(files); // Set selected files to state
     };
     
     
@@ -340,20 +379,40 @@ const PropertyManagement = () => {
                     </CModalHeader>
                     <CModalBody>
 
-                        {/* images */}
-                        <div className="row mb-3">
-                            <div className="col-md-12">
-                                <h5>Images</h5>
-                                <CFormInput
-                                    type="file"
-                                    label="Upload Images (Max 5)"
-                                    multiple // Allows multiple file selection
-                                    accept="image/*" // Only images
-                                    onChange={handleImageChange} // Handles file selection
+                       {/* Images */}
+<div className="row mb-3">
+    <div className="col-md-12">
+        <h5>Images</h5>
+        <CFormInput
+    type="file"
+    label="Upload Images (Max 5)"
+    multiple
+    accept="image/*"
+    onChange={handleImageChange} // Handles file selection
+/>
+        <small className="text-muted">You can select up to 5 images.</small>
+        {/* Display selected images */}
+        <div className="mt-2">
+            {selectedImages && selectedImages.length > 0 && (
+                <div>
+                    <h6>Selected Images:</h6>
+                    <div className="d-flex flex-wrap">
+                        {selectedImages.map((image, index) => (
+                            <div key={index} className="me-2 mb-2">
+                                <img
+                                    src={URL.createObjectURL(image)}
+                                    alt={`Selected Image ${index + 1}`}
+                                    style={{ width: '100px', height: '100px', objectFit: 'cover' }} // Display image thumbnail
                                 />
-                                <small className="text-muted">You can select up to 5 images.</small>
                             </div>
-                        </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    </div>
+</div>
+
 
 
                         {/* Basic details*/}
