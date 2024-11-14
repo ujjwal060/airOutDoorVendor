@@ -53,12 +53,12 @@ const _nav = [
     to: '/review',
     icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'My Reservations',
-    to: '/reservation',
-    icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'My Reservations',
+  //   to: '/reservation',
+  //   icon: <CIcon icon={cilCursor} customClassName="nav-icon" />,
+  // },
   {
     component: CNavItem,
     name: 'My Favourite',
@@ -79,12 +79,12 @@ const _nav = [
     to: '/legal',
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'My Inbox',
-    to: '/inbox',
-    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'My Inbox',
+  //   to: '/inbox',
+  //   icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
+  // },
   {
     component: CNavItem,
     name: 'My Chat',
