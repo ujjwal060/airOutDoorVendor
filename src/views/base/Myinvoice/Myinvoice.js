@@ -15,7 +15,7 @@ import {
   CBadge,
   CPagination,
   CPaginationItem,
-  CFormInput,  // Updated import here
+  CFormInput,
   CButton,
   CModal,
   CModalBody,
@@ -29,7 +29,7 @@ const VendorPayoutTable = () => {
   const [remainingAmount, setRemainingAmount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [vendorId, setVendorId] = useState(null);
-  const [amountToCashout, setAmountToCashout] = useState(0);
+  const [amountToCashout, setAmountToCashout] = useState();
   const [stripeAccountId, setStripeAccountId] = useState('');
   const [cashoutModalVisible, setCashoutModalVisible] = useState(false);
 
@@ -43,21 +43,21 @@ const VendorPayoutTable = () => {
   }, []);
 
   useEffect(() => {
-    const fetchPayoutData = async () => {
-      if (!vendorId) return;
-
-      try {
-        const response = await axios.get(`http://localhost:8000/payouts/getVendorPay/${vendorId}`);
-        setPayouts(response.data.payouts);
-        setRemainingAmount(response.data.remainingAmount);
-        toast.success('Payout data fetched successfully!');
-      } catch (error) {
-        toast.error('Error fetching payout data!');
-      }
-    };
-
     fetchPayoutData();
   }, [vendorId]);
+
+  const fetchPayoutData = async () => {
+    if (!vendorId) return;
+
+    try {
+      const response = await axios.get(`http://44.196.192.232:8000/payouts/getVendorPay/${vendorId}`);
+      setPayouts(response.data.cashoutRequests);
+      setRemainingAmount(response.data.remainingAmount);
+      toast.success('Payout data fetched successfully!');
+    } catch (error) {
+      toast.error('Error fetching payout data!');
+    }
+  };
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -75,7 +75,7 @@ const VendorPayoutTable = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/payouts/cashoutRequest', {
+      const response = await axios.post('http://44.196.192.232:8000/payouts/cashoutRequest', {
         vendorId,
         amountRequested: amountToCashout,
         stripeAccountId
@@ -86,6 +86,7 @@ const VendorPayoutTable = () => {
         setAmountToCashout(0);
         setStripeAccountId('');
         setCashoutModalVisible(false);
+        fetchPayoutData();
       } else {
         toast.error('Failed to request cashout!');
       }
@@ -101,7 +102,7 @@ const VendorPayoutTable = () => {
       <CCard>
         <CCardHeader>Payout History</CCardHeader>
         <CCardBody>
-          <div class="mb-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+          <div className="mb-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
             <h5>
               Remaining Amount: <CBadge color="info">${remainingAmount}</CBadge>
             </h5>
@@ -109,15 +110,17 @@ const VendorPayoutTable = () => {
               color="primary"
               onClick={() => setCashoutModalVisible(true)}
             >
-            Cashout
+              Cashout
             </CButton>
           </div>
           <CTable hover responsive>
             <CTableHead color="light">
               <CTableRow>
                 <CTableHeaderCell scope="col">S.No</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Amount Paid</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Amount Requested</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Request Date</CTableHeaderCell>
                 <CTableHeaderCell scope="col">Payment Date</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Status</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
@@ -125,13 +128,23 @@ const VendorPayoutTable = () => {
                 currentPayouts.map((payout, index) => (
                   <CTableRow key={index}>
                     <CTableDataCell>{indexOfFirstItem + index + 1}</CTableDataCell>
-                    <CTableDataCell>${payout.amountPaid}</CTableDataCell>
-                    <CTableDataCell>{new Date(payout.paymentDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>${payout.amountRequested}</CTableDataCell>
+                    <CTableDataCell>{new Date(payout.requestDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>
+                      {['paid', 'rejected'].includes(payout.status) && payout.paymentDate
+                        ? new Date(payout.paymentDate).toLocaleDateString()
+                        : 'Pending'}
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <CBadge color={payout.status === 'pending' ? 'warning' : payout.status === 'paid' ? 'success' : 'danger'}>
+                        {payout.status}
+                      </CBadge>
+                    </CTableDataCell>
                   </CTableRow>
                 ))
               ) : (
                 <CTableRow>
-                  <CTableDataCell colSpan="3" className="text-center">
+                  <CTableDataCell colSpan="5" className="text-center">
                     No Payout History Found
                   </CTableDataCell>
                 </CTableRow>
@@ -139,7 +152,6 @@ const VendorPayoutTable = () => {
             </CTableBody>
           </CTable>
 
-          {/* Pagination */}
           <CPagination className="mt-3" align="end">
             <CPaginationItem
               disabled={currentPage === 1}
@@ -166,7 +178,6 @@ const VendorPayoutTable = () => {
         </CCardBody>
       </CCard>
 
-      {/* Cashout Request Modal */}
       <CModal visible={cashoutModalVisible} onClose={() => setCashoutModalVisible(false)}>
         <CModalHeader>
           <CModalTitle>Request Cashout</CModalTitle>
@@ -191,7 +202,7 @@ const VendorPayoutTable = () => {
             Close
           </CButton>
           <CButton color="primary" onClick={handleCashoutRequest}>
-          Cashout Request
+            Cashout Request
           </CButton>
         </CModalFooter>
       </CModal>
