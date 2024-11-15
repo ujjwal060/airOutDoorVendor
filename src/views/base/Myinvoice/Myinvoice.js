@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   CCard,
   CCardBody,
@@ -12,140 +15,199 @@ import {
   CBadge,
   CPagination,
   CPaginationItem,
+  CFormInput,
   CButton,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle
 } from '@coreui/react';
-import { cilTrash, cilCloudDownload, cilChevronLeft, cilChevronRight } from '@coreui/icons';
-import CIcon from '@coreui/icons-react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for styling
 
-const InvoiceTable = () => {
-  // Sample invoice data
-  const invoiceData = [
-    { id: 1, date: '2024-09-01', status: 'Paid', invoiceUrl: '/path/to/invoice1.pdf' },
-    { id: 2, date: '2024-09-03', status: 'Unpaid', invoiceUrl: '/path/to/invoice2.pdf' },
-    { id: 3, date: '2024-09-05', status: 'Paid', invoiceUrl: '/path/to/invoice3.pdf' },
-    { id: 4, date: '2024-09-07', status: 'Unpaid', invoiceUrl: '/path/to/invoice4.pdf' },
-    { id: 5, date: '2024-09-10', status: 'Paid', invoiceUrl: '/path/to/invoice5.pdf' },
-    { id: 6, date: '2024-09-12', status: 'Unpaid', invoiceUrl: '/path/to/invoice6.pdf' },
-    { id: 7, date: '2024-09-15', status: 'Paid', invoiceUrl: '/path/to/invoice7.pdf' },
-    { id: 8, date: '2024-09-17', status: 'Unpaid', invoiceUrl: '/path/to/invoice8.pdf' },
-    { id: 9, date: '2024-09-20', status: 'Paid', invoiceUrl: '/path/to/invoice9.pdf' },
-    { id: 10, date: '2024-09-22', status: 'Unpaid', invoiceUrl: '/path/to/invoice10.pdf' },
-    { id: 11, date: '2024-09-25', status: 'Paid', invoiceUrl: '/path/to/invoice11.pdf' },
-    { id: 12, date: '2024-09-27', status: 'Unpaid', invoiceUrl: '/path/to/invoice12.pdf' },
-  ];
-
-  // Pagination states
-  const itemsPerPage = 10;
+const VendorPayoutTable = () => {
+  const [payouts, setPayouts] = useState([]);
+  const [remainingAmount, setRemainingAmount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [vendorId, setVendorId] = useState(null);
+  const [amountToCashout, setAmountToCashout] = useState();
+  const [stripeAccountId, setStripeAccountId] = useState('');
+  const [cashoutModalVisible, setCashoutModalVisible] = useState(false);
 
-  const handleDelete = (id) => {
-    // Show toast notification
-    toast.success(`Invoice with ID ${id} deleted!`);
+  const itemsPerPage = 5;
+
+  useEffect(() => {
+    const storedVendorId = localStorage.getItem('vendorId');
+    if (storedVendorId) {
+      setVendorId(storedVendorId);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPayoutData();
+  }, [vendorId]);
+
+  const fetchPayoutData = async () => {
+    if (!vendorId) return;
+
+    try {
+      const response = await axios.get(`http://44.196.192.232:8000/payouts/getVendorPay/${vendorId}`);
+      setPayouts(response.data.cashoutRequests);
+      setRemainingAmount(response.data.remainingAmount);
+      toast.success('Payout data fetched successfully!');
+    } catch (error) {
+      toast.error('Error fetching payout data!');
+    }
   };
 
-  const handleDownload = (url) => {
-    window.open(url, '_blank'); // Opens the invoice PDF in a new tab
-    // Show toast notification
-    toast.info('Invoice downloaded successfully!');
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPayouts = payouts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(payouts.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
-  // Get current invoices for pagination
-  const indexOfLastInvoice = currentPage * itemsPerPage;
-  const indexOfFirstInvoice = indexOfLastInvoice - itemsPerPage;
-  const currentInvoices = invoiceData.slice(indexOfFirstInvoice, indexOfLastInvoice);
+  const handleCashoutRequest = async () => {
+    if (amountToCashout <= 0 || amountToCashout > remainingAmount || !stripeAccountId) {
+      toast.error('Invalid input! Ensure the amount is correct and Stripe account ID is provided.');
+      return;
+    }
 
-  const totalPages = Math.ceil(invoiceData.length / itemsPerPage);
+    try {
+      const response = await axios.post('http://44.196.192.232:8000/payouts/cashoutRequest', {
+        vendorId,
+        amountRequested: amountToCashout,
+        stripeAccountId
+      });
+
+      if (response.data.success) {
+        toast.success('Cashout request successful!');
+        setAmountToCashout(0);
+        setStripeAccountId('');
+        setCashoutModalVisible(false);
+        fetchPayoutData();
+      } else {
+        toast.error('Failed to request cashout!');
+      }
+    } catch (error) {
+      toast.error('Error requesting cashout!');
+    }
+  };
 
   return (
-    <CCard>
-      <CCardHeader>Invoices</CCardHeader>
-      <CCardBody>
-        <CTable hover responsive>
-          <CTableHead color="light">
-            <CTableRow>
-              <CTableHeaderCell scope="col">S.No</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Date</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Status</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Invoice</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Action</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {currentInvoices.map((invoice, index) => (
-              <CTableRow key={invoice.id}>
-                {/* Serial Number */}
-                <CTableDataCell>{indexOfFirstInvoice + index + 1}</CTableDataCell>
+    <>
+      <ToastContainer />
 
-                {/* Invoice Date */}
-                <CTableDataCell>{invoice.date}</CTableDataCell>
-
-                {/* Status with Equal Button Size */}
-                <CTableDataCell>
-                  <CBadge
-                    color={invoice.status === 'Paid' ? 'success' : 'warning'}
-                    style={{ width: '80px', padding: '10px', textAlign: 'center' }}
-                  >
-                    {invoice.status}
-                  </CBadge>
-                </CTableDataCell>
-
-                {/* Invoice Download Button */}
-                <CTableDataCell>
-                  <CButton
-                    color="primary"
-                    variant="ghost"
-                    onClick={() => handleDownload(invoice.invoiceUrl)}
-                  >
-                    <CIcon icon={cilCloudDownload} /> Download
-                  </CButton>
-                </CTableDataCell>
-
-                {/* Action (Delete) */}
-                <CTableDataCell>
-                  <CIcon
-                    icon={cilTrash}
-                    size="lg"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleDelete(invoice.id)}
-                  />
-                </CTableDataCell>
+      <CCard>
+        <CCardHeader>Payout History</CCardHeader>
+        <CCardBody>
+          <div className="mb-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+            <h5>
+              Remaining Amount: <CBadge color="info">${remainingAmount}</CBadge>
+            </h5>
+            <CButton
+              color="primary"
+              onClick={() => setCashoutModalVisible(true)}
+            >
+              Cashout
+            </CButton>
+          </div>
+          <CTable hover responsive>
+            <CTableHead color="light">
+              <CTableRow>
+                <CTableHeaderCell scope="col">S.No</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Amount Requested</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Request Date</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Payment Date</CTableHeaderCell>
+                <CTableHeaderCell scope="col">Status</CTableHeaderCell>
               </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
+            </CTableHead>
+            <CTableBody>
+              {currentPayouts.length > 0 ? (
+                currentPayouts.map((payout, index) => (
+                  <CTableRow key={index}>
+                    <CTableDataCell>{indexOfFirstItem + index + 1}</CTableDataCell>
+                    <CTableDataCell>${payout.amountRequested}</CTableDataCell>
+                    <CTableDataCell>{new Date(payout.requestDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>
+                      {['paid', 'rejected'].includes(payout.status) && payout.paymentDate
+                        ? new Date(payout.paymentDate).toLocaleDateString()
+                        : 'Pending'}
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <CBadge color={payout.status === 'pending' ? 'warning' : payout.status === 'paid' ? 'success' : 'danger'}>
+                        {payout.status}
+                      </CBadge>
+                    </CTableDataCell>
+                  </CTableRow>
+                ))
+              ) : (
+                <CTableRow>
+                  <CTableDataCell colSpan="5" className="text-center">
+                    No Payout History Found
+                  </CTableDataCell>
+                </CTableRow>
+              )}
+            </CTableBody>
+          </CTable>
 
-        {/* Centered Pagination */}
-        <div className="d-flex justify-content-center">
-          <CPagination aria-label="Page navigation" className="mt-3">
+          <CPagination className="mt-3" align="end">
             <CPaginationItem
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
+              onClick={() => handlePageChange(currentPage - 1)}
             >
-              <CIcon icon={cilChevronLeft} />
+              Previous
             </CPaginationItem>
-            {[...Array(totalPages)].map((_, page) => (
+            {[...Array(totalPages).keys()].map((page) => (
               <CPaginationItem
-                key={page}
+                key={page + 1}
                 active={page + 1 === currentPage}
-                onClick={() => setCurrentPage(page + 1)}
+                onClick={() => handlePageChange(page + 1)}
               >
                 {page + 1}
               </CPaginationItem>
             ))}
             <CPaginationItem
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
+              onClick={() => handlePageChange(currentPage + 1)}
             >
-              <CIcon icon={cilChevronRight} />
+              Next
             </CPaginationItem>
           </CPagination>
-        </div>
-      </CCardBody>
-      <ToastContainer /> {/* Toast Container for notifications */}
-    </CCard>
+        </CCardBody>
+      </CCard>
+
+      <CModal visible={cashoutModalVisible} onClose={() => setCashoutModalVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Request Cashout</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CFormInput
+            type="number"
+            value={amountToCashout}
+            onChange={(e) => setAmountToCashout(e.target.value)}
+            placeholder="Enter amount to cash out"
+          />
+          <CFormInput
+            type="text"
+            value={stripeAccountId}
+            onChange={(e) => setStripeAccountId(e.target.value)}
+            placeholder="Enter Stripe Account ID"
+            className="mt-2"
+          />
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setCashoutModalVisible(false)}>
+            Close
+          </CButton>
+          <CButton color="primary" onClick={handleCashoutRequest}>
+            Cashout Request
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </>
   );
 };
 
-export default InvoiceTable;
+export default VendorPayoutTable;
