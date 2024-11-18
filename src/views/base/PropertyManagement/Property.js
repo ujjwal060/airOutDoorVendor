@@ -37,16 +37,29 @@ const Tables = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [selectedPropertyId, setSelectedPropertyId] = useState(null);
-    const [newProperty, setNewProperty] = useState({ 
-        name: '',
+    const [newProperty, setNewProperty] = useState({
+        property_name: '',
         description: '',
+        category: '',
+        priceRange: '',
+        image: null,
         amenities: '',
-        pricing: '',
         availability: 'No',
         startDate: null,
         endDate: null,
-        category: '',
-        image: null,
+        propery_nickname: "",
+        acreage: "",
+        guided_hunt: "",
+        guest_limit: "",
+        lodging: "",
+        shooting_range: "",
+        extended_details: null,
+        address: "",
+        city: "",
+        zipCode: "",
+        state: "",
+        country: ""
+
     });
 
     const categories = [
@@ -74,9 +87,9 @@ const Tables = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
-        if (name === 'pricing') {
+        if (name === 'priceRange') {
             const updatedValue = value.startsWith('$') ? value : `$${value}`;
-            setNewProperty((prev) => ({ ...prev, pricing: updatedValue }));
+            setNewProperty((prev) => ({ ...prev, priceRange: updatedValue }));
         } else {
             setNewProperty((prev) => ({ ...prev, [name]: value }));
         }
@@ -100,6 +113,7 @@ const Tables = () => {
     const fetchProperties = async () => {
         try {
             const vendorId = localStorage.getItem('vendorId');
+            // const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`);
             const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`);
             setProperties(response.data);
         } catch (error) {
@@ -108,6 +122,7 @@ const Tables = () => {
     };
 
     const addOrUpdateProperty = async () => {
+        console.log(newProperty.state,newProperty.  country)
         const formData = new FormData();
         Object.keys(newProperty).forEach((key) => {
             formData.append(key, newProperty[key]);
@@ -131,7 +146,10 @@ const Tables = () => {
                 await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
                 toast.success('Property updated successfully');
             } else {
-                await axios.post('http://44.196.192.232:8000/property/post', formData);
+                // await axios.post('http://44.196.192.232:8000/property/post', formData);
+                const respounce=await axios.post('http://44.196.192.232:8000/host/add', formData);
+                console.log(respounce);
+                
                 toast.success('Property added successfully');
             }
 
@@ -149,15 +167,27 @@ const Tables = () => {
         setEditMode(false);
         setSelectedPropertyId(null);
         setNewProperty({
-            name: '',
+            property_name: '',
             description: '',
-            amenities: '',
-            pricing: '',
+            priceRange: '',
+            image: null,
             availability: 'No',
             startDate: null,
             endDate: null,
             category: '',
-            image: null,
+            amenities: '',
+            propery_nickname: "",
+            acreage: "",
+            guided_hunt: "",
+            guest_limit: "",
+            lodging: "",
+            shooting_range: "",
+            extended_details: null,
+            address: "",
+            city: "",
+            zipCode: "",
+            state: "",
+            country: ""
         });
     };
 
@@ -173,21 +203,33 @@ const Tables = () => {
 
     const updateProperty = (property) => {
         setNewProperty({
-            name: property.name,
+            property_name: property.property_name,
             description: property.description,
+            category: property.category,
+            priceRange: property.priceRange,
+            image: property.image,
             amenities: property.amenities,
-            pricing: property.pricing,
             availability: property.availability,
             startDate: property.startDate ? new Date(property.startDate) : null,
             endDate: property.endDate ? new Date(property.endDate) : null,
-            category: property.category,
-            image: property.image,
+            propery_nickname: property.propery_nickname,
+            acreage: property.acreage,
+            guided_hunt: property.guided_hunt,
+            guest_limit: property.guest_limit,
+            lodging: property.lodging,
+            shooting_range: property.shooting_range,
+            extended_details: property.extended_details,
+            address: property.address,
+            city: property.city,
+            zipCode: property.zipCode,
+            state: property.state,
+            country: property.country,
         });
         setSelectedPropertyId(property._id);
         setEditMode(true);
         setModalVisible(true);
     };
-    
+
 
     return (
         <>
@@ -230,7 +272,7 @@ const Tables = () => {
                                             <CTableDataCell>{property.category}</CTableDataCell>
                                             <CTableDataCell>{property.description}</CTableDataCell>
                                             <CTableDataCell>{property.amenities}</CTableDataCell>
-                                            <CTableDataCell>{property.pricing}</CTableDataCell>
+                                            <CTableDataCell>{property.priceRange}</CTableDataCell>
                                             {/* <CTableDataCell>{property.availability}</CTableDataCell> */}
                                             <CTableDataCell>
                                                 {new Date(property.startDate).toLocaleDateString()}
@@ -302,8 +344,8 @@ const Tables = () => {
                         <CFormLabel >Property Name</CFormLabel>
                         <CFormInput className="mb-3"
                             type="text"
-                            name="name"
-                            value={newProperty.name}
+                            name="property_name"
+                            value={newProperty.property_name}
                             onChange={handleInputChange}
                         />
 
@@ -314,18 +356,46 @@ const Tables = () => {
                             onChange={handleInputChange}
                         />
 
-                        <CFormLabel>Amenities</CFormLabel>
+                        {/* <CFormLabel>Amenities</CFormLabel>
                         <CFormTextarea className="mb-3"
                             name="amenities"
                             value={newProperty.amenities}
                             onChange={handleInputChange}
-                        />
+                        /> */}
+                        <CCardHeader className=' fw-bold'>Property Details</CCardHeader>
+                        <CFormLabel>Property name</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name='propery_nickname' value={newProperty.propery_nickname}/>
+                        <CFormLabel>Acreage</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name='acreage' value={newProperty.acreage}/>
+                        <CFormLabel>Guided Hunt</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="guided_hunt" value={newProperty.guided_hunt}/>
+                        <CFormLabel>Guest Limit</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="guest_limit" value={newProperty.guest_limit}/>
+                        <CFormLabel>Lodging</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="lodging" value={newProperty.lodging}/>
+                        <CFormLabel>Shooting Range</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="shooting_range" value={newProperty.shooting_range}/>
+                        <CFormLabel>Optional Details</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name='extended_details' value={newProperty.extended_details}/>
+                        <CCardHeader className=' fw-bold'>Address Details</CCardHeader>
+                       
+                        <CFormLabel>Address</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="address" value={newProperty.address}/>
+                        <CFormLabel>City</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="city" value={newProperty.city}/>
+                        <CFormLabel>Zip Code</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="zipCode" type='number' value={newProperty.zipCode}/>
+                        <CFormLabel>State</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="state"  value={newProperty.state}/>
+                        <CFormLabel>Country</CFormLabel>
+                        <CFormInput onChange={handleInputChange} name="country" value={newProperty.country}/>
+                        
 
                         <CFormLabel>Pricing</CFormLabel>
                         <CFormInput className="mb-3"
                             type="text"
-                            name="pricing"
-                            value={newProperty.pricing}
+                            name="priceRange"
+                            value={newProperty.priceRange}
                             onChange={handleInputChange}
                         />
 
