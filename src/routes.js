@@ -28,7 +28,7 @@ const routes = [
   { path: '/mylisting', name: 'Mylisting', element: Mylisting },
   { path: '/mybooking', name: 'Mybooking', element: Mybooking },
   { path: '/profile', name: 'Profile', element: Profile },
-  { path: '/property', name: 'Property', element: Property },
+  { path: '/property1', name: 'Property', element: Property },
   { path: '/review', name: 'Myreview', element: Myreview },
   { path: '/reservation', name: 'Myreservation', element: Myreservation },
   { path: '/legal', name: 'Mylegal', element: Mylegal },
@@ -39,7 +39,7 @@ const routes = [
   { path: '/invoice', name: 'Myinvoice', element: Myinvoice },
   { path: '/inbox', name: 'Myinbox', element: Myinbox },
   { path: '/chat', name: 'ChatBox', element: ChatBox },
-  { path: '44.196.192.232', name: 'MessageList', element: MessageList },
+  { path: '/property', name: 'MessageList', element: MessageList },
 
 ]
 

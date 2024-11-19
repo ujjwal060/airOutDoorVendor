@@ -42,7 +42,7 @@ const Tables = () => {
         description: '',
         category: '',
         priceRange: '',
-        image: null,
+        images: null,
         amenities: '',
         availability: 'No',
         startDate: null,
