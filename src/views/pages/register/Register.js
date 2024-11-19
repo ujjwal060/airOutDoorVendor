@@ -64,7 +64,7 @@ const Register = () => {
     formData.append('phone', register.mobile); // Ensure this matches backend field 'phone'
     formData.append('address', register.address); // Ensure this matches backend field 'address'
     formData.append('password', register.password); // Ensure this matches backend field 'password'
-    formData.append('profileImage', imageFile); // Ensure this matches backend field 'profileImage'
+    formData.append('images', imageFile); // Ensure this matches backend field 'profileImage'
   
     try {
       const response = await axios.post('http://44.196.192.232:8000/vendor/signup', formData, {
