@@ -180,7 +180,6 @@ const PropertyManagement = () => {
             Add Property
           </CButton>
         </CCardHeader>
-
         <CModal visible={modalVisible} onClose={() => setModalVisible(false)} size="lg">
           <CModalHeader>
             <CModalTitle>{editMode ? 'Edit Property' : 'Add Property'}</CModalTitle>
