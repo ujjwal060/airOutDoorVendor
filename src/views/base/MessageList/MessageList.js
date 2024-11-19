@@ -13,12 +13,19 @@ import {
   CFormInput,
   CFormLabel,
   CFormCheck,
+  CRow,
+  CCol,
 } from '@coreui/react' // CoreUI components
 import axios from 'axios' // For HTTP requests
 import { toast } from 'react-toastify' // For notifications
 import 'react-toastify/dist/ReactToastify.css' // Toastify styles
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import { FaCalendarAlt } from 'react-icons/fa'
 
 // toast.configure(); // Initialize Toastify
+
+const apiKey = 'AIzaSyAHWgq2_Us0Dq7UcVoP4FRGYcDqDh6XH_M'
 
 const PropertyManagement = () => {
   const [properties, setProperties] = useState([])
@@ -28,11 +35,15 @@ const PropertyManagement = () => {
   const [selectedPropertyId, setSelectedPropertyId] = useState(null)
   const [viewModalVisible, setViewModalVisible] = useState(false)
   const [availableDateRange, setAvailableDateRange] = useState({ start: '', end: '' })
+  const [coordinates, setCoordinates] = useState(null)
+  const [error, setError] = useState(null)
 
   const [newProperty, setNewProperty] = useState({
     propery_nickname: '',
     category: '',
     property_description: '',
+    startDate: '',
+    endDate: '',
     priceRange: { min: '', max: '' },
     location: { address: '', city: '', state: '', zip_code: '' },
     instant_booking: active,
@@ -56,6 +67,26 @@ const PropertyManagement = () => {
         [name]: value,
       },
     }))
+  }
+
+  const formatToDDMMYYYY = (date) => {
+    const d = new Date(date); // Ensure it's a Date object
+    const day = String(d.getDate()).padStart(2, '0'); // Add leading zero
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  // data formating handleer  
+  
+  const handleStartDateChange = (date) => {
+    const formattedDate = formatToDDMMYYYY(date);
+    setNewProperty((prev) => ({ ...prev, startDate: formattedDate }))
+  }
+
+  const handleEndDateChange = (date) => {
+    const formattedDate = formatToDDMMYYYY(date);
+    setNewProperty((prev) => ({ ...prev, endDate: formattedDate }))
   }
 
   const handleChange = (e) => {
@@ -99,7 +130,66 @@ const PropertyManagement = () => {
     setNewProperty((prev) => ({ ...prev, images: files }))
   }
 
+  const handlePricePerGroupSizeChange = (index, field, value) => {
+    setNewProperty((prev) => {
+      const updatedArray = [...prev.pricePerGroupSize];
+      updatedArray[index][field] = value;
+      return { ...prev, pricePerGroupSize: updatedArray };
+    });
+  };
+
+  const addPricePerGroupSize = () => {
+    setNewProperty((prev) => ({
+      ...prev,
+      pricePerGroupSize: [...prev.pricePerGroupSize, { groupSize: '', price: '' }],
+    }));
+  };
+  
+  const removePricePerGroupSize = (index) => {
+    setNewProperty((prev) => ({
+      ...prev,
+      pricePerGroupSize: prev.pricePerGroupSize.filter((_, i) => i !== index),
+    }));
+  };
+  
+  
+
+  // creating logitude and latitude of the addresss
+
+  const geocodeAddress = async (address, city, zipCode) => {
+    const fullAddress = `${address}, ${city}, ${zipCode}`
+    console.log('full address', fullAddress)
+    try {
+      const response = await axios.get(
+        // `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${apiKey}`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${apiKey}`,
+      )
+      console.log('gapi', response)
+      if (response.data.status === 'OK') {
+        const location = response.data.results[0].geometry.location
+        setCoordinates(location)
+
+        setError(null)
+        return location // Ensure to return the coordinates here
+      } else {
+        setError('Address not found')
+        setCoordinates(null)
+        return null // Return null if no coordinates are found
+      }
+    } catch (err) {
+      setError('Error fetching data')
+      setCoordinates(null)
+      return null // Return null in case of an error
+    }
+  }
+
   const addOrUpdateProperty = async () => {
+    const coordinates = await geocodeAddress(
+      newProperty.location.address,
+      newProperty.location.city,
+      newProperty.location.zip_code,
+    )
+    console.log('printing coordinates', coordinates)
     const formData = new FormData()
 
     // Append all keys from the newProperty object
@@ -145,6 +235,7 @@ const PropertyManagement = () => {
 
     // Append vendorId to FormData
     formData.append('vendorId', vendorId)
+    formData.append('coodinates', coordinates)
 
     try {
       if (editMode) {
@@ -313,6 +404,45 @@ const PropertyManagement = () => {
                 />
               </div>
 
+              {/* pricew according to group sizze  */}
+
+              <div className="mt-3">
+                <h5>Price Per Group Size</h5>
+                {newProperty.pricePerGroupSize.map((item, index) => (
+                  <CRow key={index} className="align-items-center mb-3">
+                    <CCol md={5}>
+                      <CFormInput
+                        label={`Group Size (${index + 1})`}
+                        value={item.groupSize}
+                        onChange={(e) =>
+                          handlePricePerGroupSizeChange(index, 'groupSize', e.target.value)
+                        }
+                        placeholder="Enter group size"
+                      />
+                    </CCol>
+                    <CCol md={5}>
+                      <CFormInput
+                        label="Price"
+                        value={item.price}
+                        onChange={(e) =>
+                          handlePricePerGroupSizeChange(index, 'price', e.target.value)
+                        }
+                        placeholder="Enter price"
+                      />
+                    </CCol>
+                    <CCol md={2} className="d-flex mt-[15px] align-items-end">
+                      <CButton color="secondary" onClick={() => removePricePerGroupSize(index)}>
+                        Remove
+                      </CButton>
+                    </CCol>
+                  </CRow>
+                ))}
+
+                <CButton color="warning" onClick={addPricePerGroupSize}>
+                  Add New Group Size
+                </CButton>
+              </div>
+
               {/* Cancellation Policy Checkbox */}
               <div className="col-md-12">
                 <CFormCheck
@@ -326,6 +456,43 @@ const PropertyManagement = () => {
 
             <CFormLabel>Images</CFormLabel>
             <CFormInput type="file" multiple onChange={handleFileChange} />
+            <CRow className="my-3">
+              <CCol md={6}>
+                <CFormLabel className="mx-3">Start Date:</CFormLabel>
+                <div className="input-group">
+                  <DatePicker
+                    selected={newProperty.startDate}
+                    onChange={handleStartDateChange}
+                    placeholderText="dd/MM/yyyy"
+                    dateFormat="dd/MM/yyyy"
+                    className="form-control"
+                    customInput={<CFormInput />}
+                    // Trigger the calendar on icon click
+                    onClickOutside={() => {}}
+                  />
+                  <span className="input-group-text date-picker-icon">
+                    <FaCalendarAlt />
+                  </span>
+                </div>
+              </CCol>
+
+              <CCol md={6}>
+                <CFormLabel className="mx-3">End Date:</CFormLabel>
+                <div className="input-group">
+                  <DatePicker
+                    selected={newProperty.endDate}
+                    onChange={handleEndDateChange}
+                    placeholderText="dd/MM/yyyy"
+                    dateFormat="dd/MM/yyyy"
+                    className="form-control"
+                    customInput={<CFormInput />}
+                  />
+                  <span className="input-group-text date-picker-icon">
+                    <FaCalendarAlt />
+                  </span>
+                </div>
+              </CCol>
+            </CRow>
           </CModalBody>
 
           <CModalFooter>
