@@ -69,7 +69,6 @@ const PropertyManagement = () => {
   const getCatgory = async () => {
     try {
       const responce = await axios.post('http://44.196.192.232:8000/catogries/get');
-      console.log(responce.data.data);
       setCategoryAll(responce.data.data)
     } catch (error) {
       console.log(error);
@@ -150,6 +149,39 @@ const PropertyManagement = () => {
   };
 
   const addOrUpdateProperty = async () => {
+    const formData = new FormData();
+    formData.append('property_nickname', newProperty.property_nickname);
+    formData.append('category', newProperty.category);
+    formData.append('property_description', newProperty.property_description);
+    formData.append('instant_booking', newProperty.instant_booking);
+    formData.append('property_name', newProperty.property_name);
+    formData.append('acreage', newProperty.acreage);
+    formData.append('guided_hunt', newProperty.guided_hunt);
+    formData.append('guest_limit', newProperty.guest_limit);
+    formData.append('lodging', newProperty.lodging);
+    formData.append('shooting_range', newProperty.shooting_range);
+    formData.append('extended_details', newProperty.extended_details);
+    formData.append('address', newProperty.address);
+    formData.append('city', newProperty.city);
+    formData.append('zip_code', newProperty.zip_code);
+    formData.append('state', newProperty.state);
+    formData.append('country', newProperty.country);
+    formData.append('latitude', newProperty.latitude);
+    formData.append('longitude', newProperty.longitude);
+    formData.append('checkIn', newProperty.startDate);
+    formData.append('checkOut', newProperty.endDate);
+    formData.append('priceRange', JSON.stringify(newProperty.priceRange));
+    if (newProperty.images && newProperty.images.length > 0) {
+      newProperty.images.forEach((image, index) => {
+        formData.append(`images[${index}]`, image);
+      });
+    }
+    try {
+      const response = await axios.post('http://localhost:8000/host/add', formData);
+      console.log('Property added/updated successfully:', response.data);
+    } catch (error) {
+      console.error('Error adding/updating property:', error);
+    }
   }
 
   const handlePlaceSelect = () => {
