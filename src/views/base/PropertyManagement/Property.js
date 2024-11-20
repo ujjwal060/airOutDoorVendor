@@ -127,7 +127,7 @@ const PropertyManagement = () => {
 
     const fetchProperties = async () => {
         try {
-            const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`)
+            const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
             setProperties(Array.isArray(response.data) ? response.data : [])
         } catch (error) {
             console.error('Error fetching properties:', error)
@@ -171,7 +171,7 @@ const PropertyManagement = () => {
         }
 
         try {
-            const response = await axios.post('http://localhost:8000/property/post', formData, {
+            const response = await axios.post('http://44.196.192.232:8000/property/post', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
