@@ -1,402 +1,514 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react'
 import {
     CCard,
-    CCardBody,
     CCardHeader,
-    CCol,
-    CRow,
+    CCardBody,
+    CCardFooter,
     CTable,
-    CTableBody,
     CTableHead,
-    CTableHeaderCell,
     CTableRow,
+    CTableHeaderCell,
+    CTableBody,
     CTableDataCell,
-    CButton,
     CModal,
     CModalHeader,
     CModalBody,
     CModalFooter,
-    CForm,
+    CModalTitle,
+    CButton,
     CFormInput,
-    CFormTextarea,
-    CFormSelect,
-    CPagination,
     CFormLabel,
-    CPaginationItem
-} from '@coreui/react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
-import { ToastContainer, toast } from 'react-toastify';
-import DatePicker from 'react-datepicker';
-import 'react-toastify/dist/ReactToastify.css';
-import 'react-datepicker/dist/react-datepicker.css';
+    CFormCheck,
+    CRow,
+    CCol,
+    CFormTextarea,
+} from '@coreui/react' // CoreUI components
+import axios from 'axios' // For HTTP requests
+import { toast, ToastContainer } from 'react-toastify' // For notifications
+import 'react-toastify/dist/ReactToastify.css' // Toastify styles
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import { FaCalendarAlt } from 'react-icons/fa'
+import { LoadScript, Autocomplete } from '@react-google-maps/api'
+import './property.css'
 
-const Tables = () => {
-    const [properties, setProperties] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    const [selectedPropertyId, setSelectedPropertyId] = useState(null);
-    const [newProperty, setNewProperty] = useState({ 
-        name: '',
-        description: '',
-        amenities: '',
-        pricing: '',
-        availability: 'No',
-        startDate: null,
-        endDate: null,
+const libraries = ['places']
+
+
+const PropertyManagement = () => {
+    const [properties, setProperties] = useState([])
+    const [editMode, setEditMode] = useState(false)
+    const [active, setIsActive] = useState(true)
+    const [modalVisible, setModalVisible] = useState(false)
+    const [categoryAll, setCategoryAll] = useState([])
+    const autocompleteRef = useRef(null)
+    const [detailsModal, setDetailsModal] = useState(false);
+    const [selectedProperty, setSelectedProperty] = useState(null);
+    const [newProperty, setNewProperty] = useState({
+        property_nickname: '',
         category: '',
-        image: null,
-    });
+        property_name: '',
+        property_description: '',
+        startDate: '',
+        endDate: '',
+        priceRange: { min: '', max: '' },
+        address: '',
+        latitude: '',
+        longitude: '',
+        instant_booking: active,
+        images: [],
+        acreage: '',
+        guided_hunt: '',
+        guest_limit: '',
+        lodging: '',
+        shooting_range: '',
+        extended_details: '',
+        groupPrice: '',
+        groupSize: '',
+        cancellation_policy: false,
+    })
 
-    const categories = [
-        'Terrestrial Animals',
-        'Aquatic Animals',
-        'Aerial Animals',
-        'Adventure Activities',
-        'Special Events',
-        'Other Activities'
-    ];
+    const vendorId=localStorage.getItem('vendorId')
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const handleViewDetails = (property) => {
+        setSelectedProperty(property);
+        setDetailsModal(true);
+    };
 
-    useEffect(() => {
-        fetchProperties();
-    }, []);
+    const handleCategoryChange = (e) => {
+        const selectedCategoryId = e.target.value
+        setNewProperty((prev) => ({
+            ...prev,
+            category: selectedCategoryId,
+        }))
+    }
 
-    const indexOfLastProperty = currentPage * itemsPerPage;
-    const indexOfFirstProperty = indexOfLastProperty - itemsPerPage;
-    const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-
-        if (name === 'pricing') {
-            const updatedValue = value.startsWith('$') ? value : `$${value}`;
-            setNewProperty((prev) => ({ ...prev, pricing: updatedValue }));
-        } else {
-            setNewProperty((prev) => ({ ...prev, [name]: value }));
+    const getCatgory = async () => {
+        try {
+            const responce = await axios.post('http://44.196.192.232:8000/catogries/get')
+            setCategoryAll(responce.data.data)
+        } catch (error) {
+            console.log(error)
         }
-    };
-
-    const handleFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        setNewProperty((prev) => ({ ...prev, images: files }));
-        // setNewProperty((prev) => ({ ...prev, image: e.target.files[0] }));
-    };
-
-    // Handle start date and end date changes
+    }
     const handleStartDateChange = (date) => {
-        setNewProperty((prev) => ({ ...prev, startDate: date }));
-    };
+        setNewProperty((prev) => ({ ...prev, startDate: date }))
+    }
 
     const handleEndDateChange = (date) => {
-        setNewProperty((prev) => ({ ...prev, endDate: date }));
-    };
+        setNewProperty((prev) => ({ ...prev, endDate: date })) // Keep as a Date object
+    }
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target
+        const fieldValue = type === 'checkbox' ? checked : value
+
+        if (name.includes('.')) {
+            const [parent, child] = name.split('.')
+            setNewProperty((prev) => ({
+                ...prev,
+                [parent]: {
+                    ...prev[parent],
+                    [child]: fieldValue,
+                },
+            }))
+        } else {
+            setNewProperty((prev) => ({
+                ...prev,
+                [name]: fieldValue,
+            }))
+        }
+    }
+
+    useEffect(() => {
+        fetchProperties()
+        getCatgory()
+    }, [])
 
     const fetchProperties = async () => {
         try {
-            const vendorId = localStorage.getItem('vendorId');
-            const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`);
-            setProperties(response.data);
+            const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
+            setProperties(Array.isArray(response.data) ? response.data : [])
         } catch (error) {
-            console.error('Error fetching properties:', error);
+            console.error('Error fetching properties:', error)
+            setProperties([]) // Fallback to an empty array on error
         }
-    };
+    }
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files)
+        setNewProperty((prev) => ({ ...prev, images: files }))
+    }
 
     const addOrUpdateProperty = async () => {
-        const formData = new FormData();
-        Object.keys(newProperty).forEach((key) => {
-            formData.append(key, newProperty[key]);
-        });
-
+        const formData = new FormData()
+        formData.append('vendorId', vendorId)
+        formData.append('property_nickname', newProperty.property_nickname)
+        formData.append('category', newProperty.category)
+        formData.append('property_description', newProperty.property_description)
+        formData.append('instant_booking', newProperty.instant_booking)
+        formData.append('property_name', newProperty.property_name)
+        formData.append('acreage', newProperty.acreage)
+        formData.append('guided_hunt', newProperty.guided_hunt)
+        formData.append('guest_limit', newProperty.guest_limit)
+        formData.append('lodging', newProperty.lodging)
+        formData.append('shooting_range', newProperty.shooting_range)
+        formData.append('extended_details', newProperty.extended_details)
+        formData.append('address', newProperty.address)
+        formData.append('groupPrice', newProperty.groupPrice)
+        formData.append('groupSize', newProperty.groupSize)
+        // formData.append('state', newProperty.state)
+        // formData.append('country', newProperty.country)
+        formData.append('latitude', newProperty.latitude)
+        formData.append('longitude', newProperty.longitude)
+        formData.append('checkIn', newProperty.startDate)
+        formData.append('checkOut', newProperty.endDate)
+        formData.append('priceRange', JSON.stringify(newProperty.priceRange))
         if (newProperty.images && newProperty.images.length > 0) {
-            newProperty.images.forEach((image, index) => {
-                formData.append('images', image);
-            });
+            newProperty.images.forEach((image) => {
+                formData.append('images', image)
+            })
         }
-
-        const vendorId = localStorage.getItem('vendorId');
-        if (!vendorId) {
-            toast.error('Vendor ID not found in local storage');
-            return;
-        }
-        formData.append('vendorId', vendorId);
 
         try {
-            if (editMode) {
-                await axios.put(`http://44.196.192.232:8000/property/update/${selectedPropertyId}`, formData);
-                toast.success('Property updated successfully');
-            } else {
-                await axios.post('http://44.196.192.232:8000/property/post', formData);
-                toast.success('Property added successfully');
-            }
-
-            fetchProperties();
+            const response = await axios.post('http://44.196.192.232:8000/property/post', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            })
+            setModalVisible(false)
+            fetchProperties()
         } catch (error) {
-            console.error('Error adding/updating property:', error);
-            toast.error(error.response?.data?.message || 'Error adding/updating property');
+            console.error('Error adding/updating property:', error)
         }
+    }
 
-        closeModal();
-    };
+    const handlePlaceSelect = () => {
+        const place = autocompleteRef.current.getPlace()
+        const address = place.formatted_address
+        const latitude = place.geometry.location.lat()
+        const longitude = place.geometry.location.lng()
 
-    const closeModal = () => {
-        setModalVisible(false);
-        setEditMode(false);
-        setSelectedPropertyId(null);
         setNewProperty({
-            name: '',
-            description: '',
-            amenities: '',
-            pricing: '',
-            availability: 'No',
-            startDate: null,
-            endDate: null,
-            category: '',
-            image: null,
-        });
-    };
-
-    const deleteProperty = async (id) => {
-        try {
-            await axios.delete(`http://44.196.192.232:8000/property/delete/${id}`);
-            setProperties(properties.filter((property) => property._id !== id));
-            toast.success('Property deleted successfully');
-        } catch (error) {
-            toast.error('Error deleting property');
-        }
-    };
-
-    const updateProperty = (property) => {
-        setNewProperty({
-            name: property.name,
-            description: property.description,
-            amenities: property.amenities,
-            pricing: property.pricing,
-            availability: property.availability,
-            startDate: property.startDate ? new Date(property.startDate) : null,
-            endDate: property.endDate ? new Date(property.endDate) : null,
-            category: property.category,
-            image: property.image,
-        });
-        setSelectedPropertyId(property._id);
-        setEditMode(true);
-        setModalVisible(true);
-    };
-    
+            ...newProperty,
+            address,
+            latitude,
+            longitude,
+        })
+    }
 
     return (
-        <>
-            <CRow>
-                <CCol xs={12}>
-                    <CCard className="mb-4">
-                        <CCardHeader>
-                            <strong>Property Management</strong>
-                            <CButton color="warning" className="float-end" onClick={() => setModalVisible(true)}>
-                                {editMode ? 'Edit Property' : 'Add Property'}
-                            </CButton>
-                        </CCardHeader>
-                        <CCardBody>
-                            <CTable>
-                                <CTableHead color="dark">
-                                    <CTableRow>
-                                        <CTableHeaderCell>S.No</CTableHeaderCell>
-                                        <CTableHeaderCell>Image</CTableHeaderCell>
-                                        <CTableHeaderCell>Property Name</CTableHeaderCell>
-                                        <CTableHeaderCell>Category</CTableHeaderCell>
-                                        <CTableHeaderCell>Description</CTableHeaderCell>
-                                        <CTableHeaderCell>Amenities</CTableHeaderCell>
-                                        <CTableHeaderCell>Pricing</CTableHeaderCell>
-                                        {/* <CTableHeaderCell>Availability</CTableHeaderCell> */}
-                                        <CTableHeaderCell>Start Date</CTableHeaderCell>
-                                        <CTableHeaderCell>End Date</CTableHeaderCell>
-                                        <CTableHeaderCell>Actions</CTableHeaderCell>
+        <div>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+            />
+            <CCard>
+                <CCardHeader>
+                    Property Management
+                    <CButton color="warning" onClick={() => setModalVisible(true)} style={{ float: 'right' }}>
+                        Add Property
+                    </CButton>
+                </CCardHeader>
+                <CCardBody>
+                    {properties.length > 0 ? (
+                        <CTable hover responsive>
+                            <CTableHead>
+                                <CTableRow>
+                                    <CTableHeaderCell>S.No.</CTableHeaderCell>
+                                    <CTableHeaderCell>Image</CTableHeaderCell>
+                                    <CTableHeaderCell>Property Name</CTableHeaderCell>
+                                    <CTableHeaderCell>Address</CTableHeaderCell>
+                                    <CTableHeaderCell>Actions</CTableHeaderCell>
+                                </CTableRow>
+                            </CTableHead>
+                            <CTableBody>
+                                {properties.map((property, index) => (
+                                    <CTableRow key={index}>
+                                        <CTableDataCell>{index + 1}</CTableDataCell>
+                                        <CTableDataCell>
+                                            <img
+                                                src={property.images[0]} // Display the first image
+                                                alt={property.propertyName}
+                                                style={{ width: '80px', height: 'auto' }}
+                                            />
+                                        </CTableDataCell>
+                                        <CTableDataCell>{property.propertyName}</CTableDataCell>
+                                        <CTableDataCell>{property.location.address}</CTableDataCell>
+                                        <CTableDataCell>
+                                            <CButton
+                                                color="primary"
+                                                onClick={() => handleViewDetails(property)}
+                                            >
+                                                View Details
+                                            </CButton>
+                                        </CTableDataCell>
                                     </CTableRow>
-                                </CTableHead>
-                                <CTableBody>
-                                    {currentProperties.map((property, index) => (
-                                        <CTableRow key={property._id}>
-                                            <CTableHeaderCell scope="row">
-                                                {indexOfFirstProperty + index + 1}
-                                            </CTableHeaderCell>
-                                            <CTableDataCell>
-                                                <img src={property.imageUrl[0]} alt={property.name} width="50" />
-                                            </CTableDataCell>
-                                            <CTableDataCell>{property.name}</CTableDataCell>
-                                            <CTableDataCell>{property.category}</CTableDataCell>
-                                            <CTableDataCell>{property.description}</CTableDataCell>
-                                            <CTableDataCell>{property.amenities}</CTableDataCell>
-                                            <CTableDataCell>{property.pricing}</CTableDataCell>
-                                            {/* <CTableDataCell>{property.availability}</CTableDataCell> */}
-                                            <CTableDataCell>
-                                                {new Date(property.startDate).toLocaleDateString()}
-                                            </CTableDataCell>
-                                            <CTableDataCell>
-                                                {new Date(property.endDate).toLocaleDateString()}
-                                            </CTableDataCell>
-                                            <CTableDataCell>
-                                                <FontAwesomeIcon
-                                                    icon={faEdit}
-                                                    onClick={() => updateProperty(property)}
-                                                    style={{ cursor: 'pointer', marginRight: '10px', color: 'blue' }}
-                                                />
-                                                <FontAwesomeIcon
-                                                    icon={faTrash}
-                                                    onClick={() => deleteProperty(property._id)}
-                                                    style={{ cursor: 'pointer', color: 'red' }}
-                                                />
-                                            </CTableDataCell>
-                                        </CTableRow>
-                                    ))}
-                                </CTableBody>
-                            </CTable>
+                                ))}
+                            </CTableBody>
+                        </CTable>
+                    ) : (
+                        <p>No properties available</p>
+                    )}
 
-                        </CCardBody>
-                    </CCard>
-                </CCol>
-            </CRow>
-
-            <CPagination
-                aria-label="Page navigation example"
-                className="mt-3"
-                align="center"
-                size="sm"
-            >
-
-                <CPaginationItem
-                    disabled={currentPage === 1}
-                    onClick={() => paginate(currentPage - 1)}
+                    {/* Details Modal */}
+                    {selectedProperty && (
+                        <CModal visible={detailsModal} onClose={() => setDetailsModal(false)}>
+                            <CModalHeader>
+                                <CModalTitle>Property Details</CModalTitle>
+                            </CModalHeader>
+                            <CModalBody>
+                                <p><strong>Property Name:</strong> {selectedProperty.propertyName}</p>
+                                <p><strong>Property Nickname:</strong> {selectedProperty.propertyNickname}</p>
+                                <p><strong>Description:</strong> {selectedProperty.propertyDescription}</p>
+                                <p><strong>Acreage:</strong> {selectedProperty.details.acreage}</p>
+                                <p><strong>Guest Limit Per Day:</strong> {selectedProperty.details.guestLimitPerDay}</p>
+                                <p><strong>Guided Hunt:</strong> {selectedProperty.details.guidedHunt}</p>
+                                <p><strong>Price Range:</strong> ${selectedProperty.priceRange.min} - ${selectedProperty.priceRange.max}</p>
+                                <p><strong>Instant Booking:</strong> {selectedProperty.details.instantBooking ? "Yes" : "No"}</p>
+                            </CModalBody>
+                            <CModalFooter>
+                                <CButton color="secondary" onClick={() => setDetailsModal(false)}>
+                                    Close
+                                </CButton>
+                            </CModalFooter>
+                        </CModal>
+                    )}
+                </CCardBody>
+                <CModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    size="lg"
+                    className="hello"
                 >
-                    &laquo;
-                </CPaginationItem>
-
-
-                {[...Array(Math.ceil(properties.length / itemsPerPage))].map((_, idx) => (
-                    <CPaginationItem
-                        key={idx}
-                        active={currentPage === idx + 1}
-                        onClick={() => paginate(idx + 1)}
-                    >
-                        {idx + 1}
-                    </CPaginationItem>
-                ))}
-
-
-                <CPaginationItem
-                    disabled={currentPage === Math.ceil(properties.length / itemsPerPage)}
-                    onClick={() => paginate(currentPage + 1)}
-                >
-                    &raquo;
-                </CPaginationItem>
-            </CPagination>
-
-
-            <CModal visible={modalVisible} onClose={closeModal}>
-                <CModalHeader>{editMode ? 'Edit Property' : 'Add Property'}</CModalHeader>
-                <CModalBody>
-                    <CForm>
-                        <CFormLabel >Property Name</CFormLabel>
-                        <CFormInput className="mb-3"
-                            type="text"
-                            name="name"
-                            value={newProperty.name}
-                            onChange={handleInputChange}
-                        />
-
-                        <CFormLabel>Description</CFormLabel>
-                        <CFormTextarea className="mb-3"
-                            name="description"
-                            value={newProperty.description}
-                            onChange={handleInputChange}
-                        />
-
-                        <CFormLabel>Amenities</CFormLabel>
-                        <CFormTextarea className="mb-3"
-                            name="amenities"
-                            value={newProperty.amenities}
-                            onChange={handleInputChange}
-                        />
-
-                        <CFormLabel>Pricing</CFormLabel>
-                        <CFormInput className="mb-3"
-                            type="text"
-                            name="pricing"
-                            value={newProperty.pricing}
-                            onChange={handleInputChange}
-                        />
-
-                        <CFormLabel>Availability</CFormLabel>
-                        <CFormSelect className="mb-3"
-                            name="availability"
-                            value={newProperty.availability}
-                            onChange={handleInputChange}
-                        >
-                            <option value="No">No</option>
-                            <option value="Yes">Yes</option>
-                        </CFormSelect>
-
-                        <CRow className="mb-3">
-                            <CCol md={6}>
-                                <CFormLabel>Start Date</CFormLabel>
-                                <DatePicker
-                                    selected={newProperty.startDate}
-                                    onChange={handleStartDateChange}
-                                    dateFormat="dd/MM/yyyy"
-                                    className="form-control"
+                    <CModalHeader>
+                        <CModalTitle>{editMode ? 'Edit Property' : 'Add Property'}</CModalTitle>
+                    </CModalHeader>
+                    <CModalBody>
+                        <div className="row">
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Property Name"
+                                    name="property_name"
+                                    value={newProperty.property_name}
+                                    onChange={handleChange}
                                 />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Property nick Name"
+                                    name="property_nickname"
+                                    value={newProperty.property_nickname}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <label htmlFor="categoryDropdown">Category</label>
+                                <select
+                                    id="categoryDropdown"
+                                    className="form-control"
+                                    value={newProperty.category || ''}
+                                    onChange={handleCategoryChange}
+                                >
+                                    <option value="">Select a Category</option>
+                                    {categoryAll.map((category) => (
+                                        <option key={category._id} value={category._id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="col-md-6">
+                                <CFormTextarea
+                                    label="Description"
+                                    name="property_description"
+                                    value={newProperty.property_description}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Min Price"
+                                    name="priceRange.min"
+                                    value={newProperty.priceRange.min}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Max Price"
+                                    name="priceRange.max"
+                                    value={newProperty.priceRange.max}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            {/* Additional Fields */}
+                            <h5>Additional Details</h5>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Acreage"
+                                    name="acreage"
+                                    value={newProperty.acreage}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Guided Hunt"
+                                    name="guided_hunt"
+                                    value={newProperty.guided_hunt}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Guest Limit"
+                                    name="guest_limit"
+                                    value={newProperty.guest_limit}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Lodging"
+                                    name="lodging"
+                                    value={newProperty.lodging}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Shooting Range"
+                                    name="shooting_range"
+                                    value={newProperty.shooting_range}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Extended Details"
+                                    name="extended_details"
+                                    value={newProperty.extended_details}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <h5>Price Per Group Size</h5>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="groupSize"
+                                    name="groupSize"
+                                    value={newProperty.groupSize}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="group per price"
+                                    name="groupPrice"
+                                    value={newProperty.groupPrice}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            {/* Cancellation Policy Checkbox */}
+                            <div className="col-md-12">
+                                <CFormCheck
+                                    label="Cancellation Policy"
+                                    name="cancellation_policy"
+                                    checked={newProperty.cancellation_policy}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <CFormLabel>Images</CFormLabel>
+                        <CFormInput type="file" multiple onChange={handleFileChange} />
+                        <CRow className="my-3">
+                            <CCol md={6}>
+                                <CFormLabel className="mx-3">Start Date:</CFormLabel>
+                                <div className="input-group">
+                                    <DatePicker
+                                        selected={newProperty.startDate}
+                                        onChange={handleStartDateChange}
+                                        placeholderText="dd/MM/yyyy"
+                                        dateFormat="dd/MM/yyyy"
+                                        className="form-control"
+                                        customInput={<CFormInput />}
+                                        // Trigger the calendar on icon click
+                                        onClickOutside={() => { }}
+                                    />
+                                    <span className="input-group-text date-picker-icon">
+                                        <FaCalendarAlt />
+                                    </span>
+                                </div>
                             </CCol>
 
                             <CCol md={6}>
-                                <CFormLabel>End Date</CFormLabel>
-                                <DatePicker
-                                    selected={newProperty.endDate}
-                                    onChange={handleEndDateChange}
-                                    dateFormat="dd/MM/yyyy"
-                                    className="form-control"
-                                />
+                                <CFormLabel className="mx-3">End Date:</CFormLabel>
+                                <div className="input-group">
+                                    <DatePicker
+                                        selected={newProperty.endDate}
+                                        onChange={handleEndDateChange}
+                                        placeholderText="dd/MM/yyyy"
+                                        dateFormat="dd/MM/yyyy"
+                                        className="form-control"
+                                        customInput={<CFormInput />}
+                                    />
+                                    <span className="input-group-text date-picker-icon">
+                                        <FaCalendarAlt />
+                                    </span>
+                                </div>
                             </CCol>
                         </CRow>
-
-
-                        <CFormLabel>Category</CFormLabel>
-                        <CFormSelect className="mb-3"
-                            name="category"
-                            value={newProperty.category}
-                            onChange={handleInputChange}
+                        <h5>Location</h5>
+                        <LoadScript
+                            googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s"
+                            libraries={libraries}
                         >
-                            <option>Select Category</option>
-                            {categories.map((category, idx) => (
-                                <option key={idx} value={category}>
-                                    {category}
-                                </option>
-                            ))}
-                        </CFormSelect>
+                            <div className="mb-2">
+                                <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>
+                                    Address
+                                </CFormLabel>
+                                <Autocomplete
+                                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                                    onPlaceChanged={handlePlaceSelect}
+                                >
+                                    <CFormInput
+                                        id="address"
+                                        name="address"
+                                        placeholder="Enter shop address"
+                                        value={newProperty.address}
+                                        onChange={handleChange}
+                                        required
+                                        style={{ fontSize: '0.875rem', height: '2rem' }}
+                                    />
+                                </Autocomplete>
+                            </div>
+                        </LoadScript>
+                    </CModalBody>
 
-                        <CFormLabel>Image</CFormLabel>
-                        <CFormInput className="mb-3"
-                            type="file"
-                            name="images"
-                            multiple
-                            onChange={handleFileChange}
-                        />
-                    </CForm>
-                </CModalBody>
-                <CModalFooter>
-                    <CButton color="secondary" onClick={closeModal}>
-                        Close
-                    </CButton>
-                    <CButton color="warning" onClick={addOrUpdateProperty}>
-                        {editMode ? 'Update Property' : 'Add Property'}
-                    </CButton>
-                </CModalFooter>
-            </CModal>
-            <ToastContainer />
-        </>
-    );
-};
+                    <CModalFooter>
+                        <CButton color="secondary" onClick={() => setModalVisible(false)}>
+                            Close
+                        </CButton>
+                        <CButton color="warning" onClick={addOrUpdateProperty}>
+                            {editMode ? 'Update Property' : 'Add Property'}
+                        </CButton>
+                    </CModalFooter>
+                </CModal>
+            </CCard>
+        </div>
+    )
+}
 
-export default Tables;
+export default PropertyManagement
