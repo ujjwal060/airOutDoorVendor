@@ -22,10 +22,10 @@ import {
     CRow,
     CCol,
     CFormTextarea,
-} from '@coreui/react' // CoreUI components
-import axios from 'axios' // For HTTP requests
-import { toast, ToastContainer } from 'react-toastify' // For notifications
-import 'react-toastify/dist/ReactToastify.css' // Toastify styles
+} from '@coreui/react'
+import axios from 'axios'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { FaCalendarAlt } from 'react-icons/fa'
@@ -96,7 +96,7 @@ const PropertyManagement = () => {
     }
 
     const handleEndDateChange = (date) => {
-        setNewProperty((prev) => ({ ...prev, endDate: date })) // Keep as a Date object
+        setNewProperty((prev) => ({ ...prev, endDate: date }))
     }
 
     const handleChange = (e) => {
@@ -131,7 +131,7 @@ const PropertyManagement = () => {
             setProperties(Array.isArray(response.data) ? response.data : [])
         } catch (error) {
             console.error('Error fetching properties:', error)
-            setProperties([]) // Fallback to an empty array on error
+            setProperties([])
         }
     }
 
@@ -234,7 +234,7 @@ const PropertyManagement = () => {
                                         <CTableDataCell>{index + 1}</CTableDataCell>
                                         <CTableDataCell>
                                             <img
-                                                src={property.images[0]} // Display the first image
+                                                src={property.images[0]}
                                                 alt={property.propertyName}
                                                 style={{ width: '80px', height: 'auto' }}
                                             />
