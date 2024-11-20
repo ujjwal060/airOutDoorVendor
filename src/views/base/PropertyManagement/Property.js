@@ -68,7 +68,7 @@ const PropertyManagement = () => {
         cancellation_policy: false,
     })
 
-    const vendorId=localStorage.getItem('vendorId')
+    const vendorId = localStorage.getItem('vendorId')
 
     const handleViewDetails = (property) => {
         setSelectedProperty(property);
@@ -157,8 +157,6 @@ const PropertyManagement = () => {
         formData.append('address', newProperty.address)
         formData.append('groupPrice', newProperty.groupPrice)
         formData.append('groupSize', newProperty.groupSize)
-        // formData.append('state', newProperty.state)
-        // formData.append('country', newProperty.country)
         formData.append('latitude', newProperty.latitude)
         formData.append('longitude', newProperty.longitude)
         formData.append('checkIn', newProperty.startDate)
