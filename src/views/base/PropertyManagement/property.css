@@ -1,0 +1,8 @@
+.modal-backdrop {
+    background-color: transparent;
+    opacity: 1 !important;
+    z-index: 1;
+  }
+  .hello {
+    z-index: 999;
+  }
