@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect,useRef } from 'react'
 import {
   CCard,
   CCardHeader,
@@ -22,8 +22,10 @@ import 'react-toastify/dist/ReactToastify.css' // Toastify styles
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { FaCalendarAlt } from 'react-icons/fa'
+import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import './messagelist.css'
 
-// toast.configure(); // Initialize Toastify
+const libraries = ['places'];
 
 const apiKey = 'AIzaSyAHWgq2_Us0Dq7UcVoP4FRGYcDqDh6XH_M'
 
@@ -32,13 +34,8 @@ const PropertyManagement = () => {
   const [editMode, setEditMode] = useState(false)
   const [active, setIsActive] = useState(true)
   const [modalVisible, setModalVisible] = useState(false)
-  const [selectedPropertyId, setSelectedPropertyId] = useState(null)
-  const [viewModalVisible, setViewModalVisible] = useState(false)
   const [categoryAll, setCategoryAll] = useState([])
-  const [availableDateRange, setAvailableDateRange] = useState({ start: '', end: '' })
-  const [coordinates, setCoordinates] = useState(null)
-  const [error, setError] = useState(null)
-
+  const autocompleteRef = useRef(null);
   const [newProperty, setNewProperty] = useState({
     property_nickname: '',
     category: '',
@@ -46,7 +43,9 @@ const PropertyManagement = () => {
     startDate: '',
     endDate: '',
     priceRange: { min: '', max: '' },
-    location: { address: '', city: '', state: '', zip_code: '' },
+    address: '',
+    latitude: '',
+    longitude: '',
     instant_booking: active,
     images: null,
     acreage: '',
@@ -59,17 +58,6 @@ const PropertyManagement = () => {
     cancellation_policy: false,
   })
 
-  const handleLocationChange = (e) => {
-    const { name, value } = e.target
-    setNewProperty((prev) => ({
-      ...prev,
-      location: {
-        ...prev.location,
-        [name]: value,
-      },
-    }))
-  }
-
   const handleCategoryChange = (e) => {
     const selectedCategoryId = e.target.value;
     setNewProperty((prev) => ({
@@ -77,7 +65,7 @@ const PropertyManagement = () => {
       category: selectedCategoryId,
     }));
   };
-  
+
   const getCatgory = async () => {
     try {
       const responce = await axios.post('http://44.196.192.232:8000/catogries/get');
@@ -88,11 +76,11 @@ const PropertyManagement = () => {
     }
   }
   // data formating handleer  
-  
+
   const handleStartDateChange = (date) => {
     setNewProperty((prev) => ({ ...prev, startDate: date })); // Keep as a Date object
   };
-  
+
   const handleEndDateChange = (date) => {
     setNewProperty((prev) => ({ ...prev, endDate: date })); // Keep as a Date object
   };
@@ -153,125 +141,30 @@ const PropertyManagement = () => {
       pricePerGroupSize: [...prev.pricePerGroupSize, { groupSize: '', price: '' }],
     }));
   };
-  
+
   const removePricePerGroupSize = (index) => {
     setNewProperty((prev) => ({
       ...prev,
       pricePerGroupSize: prev.pricePerGroupSize.filter((_, i) => i !== index),
     }));
   };
-  
-  
-
-  // creating logitude and latitude of the addresss
-
-  const geocodeAddress = async (address, city, zipCode) => {
-    const fullAddress = `${address}, ${city}, ${zipCode}`
-    console.log('full address', fullAddress)
-    try {
-      const response = await axios.get(
-        // `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${apiKey}`
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${apiKey}`,
-      )
-      console.log('gapi', response)
-      if (response.data.status === 'OK') {
-        const location = response.data.results[0].geometry.location
-        setCoordinates(location)
-
-        setError(null)
-        return location // Ensure to return the coordinates here
-      } else {
-        setError('Address not found')
-        setCoordinates(null)
-        return null // Return null if no coordinates are found
-      }
-    } catch (err) {
-      setError('Error fetching data')
-      setCoordinates(null)
-      return null // Return null in case of an error
-    }
-  }
 
   const addOrUpdateProperty = async () => {
-    const coordinates = await geocodeAddress(
-      newProperty.location.address,
-      newProperty.location.city,
-      newProperty.location.zip_code,
-    )
-    console.log('printing coordinates', coordinates)
-    const formData = new FormData()
-
-    // Append all keys from the newProperty object
-    Object.keys(newProperty).forEach((key) => {
-      if (key === 'location' && typeof newProperty[key] === 'object') {
-        Object.keys(newProperty.location).forEach((locationKey) => {
-          formData.append(`location[${locationKey}]`, newProperty.location[locationKey])
-        })
-      } else if (Array.isArray(newProperty[key])) {
-        newProperty[key].forEach((item, index) => {
-          if (typeof item === 'object') {
-            Object.keys(item).forEach((subKey) => {
-              formData.append(`${key}[${index}][${subKey}]`, item[subKey])
-            })
-          } else {
-            formData.append(`${key}[${index}]`, item)
-          }
-        })
-      } else if (key !== 'images') {
-        formData.append(key, newProperty[key])
-      }
-    })
-
-    // Append images array if it exists
-    if (newProperty.images && newProperty.images.length > 0) {
-      newProperty.images.forEach((image) => {
-        formData.append('images', image)
-      })
-    }
-
-    // Log FormData content for debugging
-    console.log('FormData latest')
-    formData.forEach((value, key) => {
-      console.log(`${key}:`, value)
-    })
-
-    // Retrieve vendorId from local storage
-    const vendorId = localStorage.getItem('vendorId')
-    if (!vendorId) {
-      toast.error('Vendor ID not found in local storage')
-      return
-    }
-
-    // Append vendorId to FormData
-    formData.append('vendorId', vendorId)
-    formData.append('coodinates', coordinates)
-
-    try {
-      if (editMode) {
-        // Update property if edit mode is enabled
-        await axios.put(
-          `http://44.196.192.232:8000/property/update/${selectedPropertyId}`,
-          formData,
-        )
-        toast.success('Property updated successfully')
-      } else {
-        // Add new property
-        console.log("hitting route")
-       const res= await axios.post('http://localhost:8000/host/add', formData)
-       console.log("after api result",res)
-       toast.success('Property added successfully')
-      }
-
-      // Refresh the property list
-      fetchProperties()
-    } catch (error) {
-      console.error('Error adding/updating property:', error)
-      toast.error(error.response?.data?.message || 'Error adding/updating property')
-    } finally {
-      // Close modal after submission
-      setModalVisible(false)
-    }
   }
+
+  const handlePlaceSelect = () => {
+    const place = autocompleteRef.current.getPlace();
+    const address = place.formatted_address;
+    const latitude = place.geometry.location.lat();
+    const longitude = place.geometry.location.lng();
+
+    setNewProperty({
+        ...newProperty,
+        address,
+        latitude,
+        longitude,
+    });
+};
 
   return (
     <div>
@@ -294,7 +187,7 @@ const PropertyManagement = () => {
             Add Property
           </CButton>
         </CCardHeader>
-        <CModal visible={modalVisible} onClose={() => setModalVisible(false)} size="lg">
+        <CModal visible={modalVisible} onClose={() => setModalVisible(false)} size="lg" className='hello'>
           <CModalHeader>
             <CModalTitle>{editMode ? 'Edit Property' : 'Add Property'}</CModalTitle>
           </CModalHeader>
@@ -352,41 +245,7 @@ const PropertyManagement = () => {
                 />
               </div>
 
-              <h5>Location</h5>
-              <div className="row">
-                <div className="col-md-6">
-                  <CFormInput
-                    label="Address"
-                    name="address"
-                    value={newProperty.location.address}
-                    onChange={(e) => handleLocationChange(e)}
-                  />
-                </div>
-                {/* <div className="col-md-6">
-                  <CFormInput
-                    label="City"
-                    name="city"
-                    value={newProperty.location.city}
-                    onChange={(e) => handleLocationChange(e)}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <CFormInput
-                    label="State"
-                    name="state"
-                    value={newProperty.location.state}
-                    onChange={(e) => handleLocationChange(e)}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <CFormInput
-                    label="Zip Code"
-                    name="zip_code"
-                    value={newProperty.location.zip_code}
-                    onChange={(e) => handleLocationChange(e)}
-                  />
-                </div> */}
-              </div>
+              
 
               {/* Additional Fields */}
               <h5>Additional Details</h5>
@@ -503,7 +362,7 @@ const PropertyManagement = () => {
                     className="form-control"
                     customInput={<CFormInput />}
                     // Trigger the calendar on icon click
-                    onClickOutside={() => {}}
+                    onClickOutside={() => { }}
                   />
                   <span className="input-group-text date-picker-icon">
                     <FaCalendarAlt />
@@ -528,6 +387,26 @@ const PropertyManagement = () => {
                 </div>
               </CCol>
             </CRow>
+            <h5>Location</h5>
+              <LoadScript googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s" libraries={libraries}>
+                <div className="mb-2">
+                  <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>Address</CFormLabel>
+                  <Autocomplete
+                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                    onPlaceChanged={handlePlaceSelect}
+                  >
+                    <CFormInput
+                      id="address"
+                      name="address"
+                      placeholder="Enter shop address"
+                      value={newProperty.address}
+                      onChange={handleChange}
+                      required
+                      style={{ fontSize: '0.875rem', height: '2rem'}}
+                    />
+                  </Autocomplete>
+                </div>
+              </LoadScript>
           </CModalBody>
 
           <CModalFooter>
