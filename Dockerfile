@@ -26,7 +26,7 @@ WORKDIR /app
 RUN npm install -g serve
 
 # Copy build files from the build stage
-COPY --from=build /app/dist /app
+COPY --from=build /app/build /app
 
 # Expose the desired port
 EXPOSE 2032
