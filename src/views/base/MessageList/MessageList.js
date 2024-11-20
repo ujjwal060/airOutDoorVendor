@@ -17,7 +17,7 @@ import {
   CCol,
 } from '@coreui/react' // CoreUI components
 import axios from 'axios' // For HTTP requests
-import { toast } from 'react-toastify' // For notifications
+import { toast, ToastContainer } from 'react-toastify' // For notifications
 import 'react-toastify/dist/ReactToastify.css' // Toastify styles
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
@@ -34,12 +34,13 @@ const PropertyManagement = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedPropertyId, setSelectedPropertyId] = useState(null)
   const [viewModalVisible, setViewModalVisible] = useState(false)
+  const [categoryAll, setCategoryAll] = useState([])
   const [availableDateRange, setAvailableDateRange] = useState({ start: '', end: '' })
   const [coordinates, setCoordinates] = useState(null)
   const [error, setError] = useState(null)
 
   const [newProperty, setNewProperty] = useState({
-    propery_nickname: '',
+    property_nickname: '',
     category: '',
     property_description: '',
     startDate: '',
@@ -69,25 +70,32 @@ const PropertyManagement = () => {
     }))
   }
 
-  const formatToDDMMYYYY = (date) => {
-    const d = new Date(date); // Ensure it's a Date object
-    const day = String(d.getDate()).padStart(2, '0'); // Add leading zero
-    const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
+  const handleCategoryChange = (e) => {
+    const selectedCategoryId = e.target.value;
+    setNewProperty((prev) => ({
+      ...prev,
+      category: selectedCategoryId,
+    }));
   };
-
+  
+  const getCatgory = async () => {
+    try {
+      const responce = await axios.post('http://44.196.192.232:8000/catogries/get');
+      console.log(responce.data.data);
+      setCategoryAll(responce.data.data)
+    } catch (error) {
+      console.log(error);
+    }
+  }
   // data formating handleer  
   
   const handleStartDateChange = (date) => {
-    const formattedDate = formatToDDMMYYYY(date);
-    setNewProperty((prev) => ({ ...prev, startDate: formattedDate }))
-  }
-
+    setNewProperty((prev) => ({ ...prev, startDate: date })); // Keep as a Date object
+  };
+  
   const handleEndDateChange = (date) => {
-    const formattedDate = formatToDDMMYYYY(date);
-    setNewProperty((prev) => ({ ...prev, endDate: formattedDate }))
-  }
+    setNewProperty((prev) => ({ ...prev, endDate: date })); // Keep as a Date object
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -113,6 +121,7 @@ const PropertyManagement = () => {
   // Fetch properties from the server
   useEffect(() => {
     fetchProperties()
+    getCatgory()
   }, [])
 
   const fetchProperties = async () => {
@@ -247,8 +256,10 @@ const PropertyManagement = () => {
         toast.success('Property updated successfully')
       } else {
         // Add new property
-        await axios.post('http://localhost:8000/host/add', formData)
-        toast.success('Property added successfully')
+        console.log("hitting route")
+       const res= await axios.post('http://localhost:8000/host/add', formData)
+       console.log("after api result",res)
+       toast.success('Property added successfully')
       }
 
       // Refresh the property list
@@ -264,6 +275,18 @@ const PropertyManagement = () => {
 
   return (
     <div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <CCard>
         <CCardHeader>
           Property Management
@@ -280,19 +303,30 @@ const PropertyManagement = () => {
               <div className="col-md-6">
                 <CFormInput
                   label="Name"
-                  name="propery_nickname"
-                  value={newProperty.propery_nickname}
+                  name="property_nickname"
+                  value={newProperty.property_nickname}
                   onChange={handleChange}
                 />
               </div>
               <div className="col-md-6">
-                <CFormInput
-                  label="Category"
-                  name="category"
-                  value={newProperty.category}
-                  onChange={handleChange}
-                />
+                <label htmlFor="categoryDropdown">Category</label>
+                <select
+                  id="categoryDropdown"
+                  className="form-control"
+                  value={newProperty.category || ""}
+                  onChange={handleCategoryChange}
+                >
+                  <option value="">Select a Category</option>
+                  {categoryAll.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+
+
               <div className="col-md-6">
                 <CFormInput
                   label="Description"
@@ -328,7 +362,7 @@ const PropertyManagement = () => {
                     onChange={(e) => handleLocationChange(e)}
                   />
                 </div>
-                <div className="col-md-6">
+                {/* <div className="col-md-6">
                   <CFormInput
                     label="City"
                     name="city"
@@ -351,10 +385,11 @@ const PropertyManagement = () => {
                     value={newProperty.location.zip_code}
                     onChange={(e) => handleLocationChange(e)}
                   />
-                </div>
+                </div> */}
               </div>
 
               {/* Additional Fields */}
+              <h5>Additional Details</h5>
               <div className="col-md-6">
                 <CFormInput
                   label="Acreage"
