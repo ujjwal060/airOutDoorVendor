@@ -1,9 +1,15 @@
-import React, { useState, useEffect,useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   CCard,
   CCardHeader,
   CCardBody,
   CCardFooter,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
   CModal,
   CModalHeader,
   CModalBody,
@@ -15,6 +21,7 @@ import {
   CFormCheck,
   CRow,
   CCol,
+  CFormTextarea,
 } from '@coreui/react' // CoreUI components
 import axios from 'axios' // For HTTP requests
 import { toast, ToastContainer } from 'react-toastify' // For notifications
@@ -22,12 +29,11 @@ import 'react-toastify/dist/ReactToastify.css' // Toastify styles
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { FaCalendarAlt } from 'react-icons/fa'
-import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import { LoadScript, Autocomplete } from '@react-google-maps/api'
 import './messagelist.css'
 
-const libraries = ['places'];
+const libraries = ['places']
 
-const apiKey = 'AIzaSyAHWgq2_Us0Dq7UcVoP4FRGYcDqDh6XH_M'
 
 const PropertyManagement = () => {
   const [properties, setProperties] = useState([])
@@ -35,10 +41,11 @@ const PropertyManagement = () => {
   const [active, setIsActive] = useState(true)
   const [modalVisible, setModalVisible] = useState(false)
   const [categoryAll, setCategoryAll] = useState([])
-  const autocompleteRef = useRef(null);
+  const autocompleteRef = useRef(null)
   const [newProperty, setNewProperty] = useState({
     property_nickname: '',
     category: '',
+    property_name: '',
     property_description: '',
     startDate: '',
     endDate: '',
@@ -47,7 +54,7 @@ const PropertyManagement = () => {
     latitude: '',
     longitude: '',
     instant_booking: active,
-    images: null,
+    images: [],
     acreage: '',
     guided_hunt: '',
     guest_limit: '',
@@ -59,30 +66,30 @@ const PropertyManagement = () => {
   })
 
   const handleCategoryChange = (e) => {
-    const selectedCategoryId = e.target.value;
+    const selectedCategoryId = e.target.value
     setNewProperty((prev) => ({
       ...prev,
       category: selectedCategoryId,
-    }));
-  };
+    }))
+  }
 
   const getCatgory = async () => {
     try {
-      const responce = await axios.post('http://44.196.192.232:8000/catogries/get');
+      const responce = await axios.post('http://44.196.192.232:8000/catogries/get')
       setCategoryAll(responce.data.data)
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
-  // data formating handleer  
+  // data formating handleer
 
   const handleStartDateChange = (date) => {
-    setNewProperty((prev) => ({ ...prev, startDate: date })); // Keep as a Date object
-  };
+    setNewProperty((prev) => ({ ...prev, startDate: date })) // Keep as a Date object
+  }
 
   const handleEndDateChange = (date) => {
-    setNewProperty((prev) => ({ ...prev, endDate: date })); // Keep as a Date object
-  };
+    setNewProperty((prev) => ({ ...prev, endDate: date })) // Keep as a Date object
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -111,10 +118,18 @@ const PropertyManagement = () => {
     getCatgory()
   }, [])
 
+  const handleEditProperty = (propertyId) => {
+    const propertyToEdit = properties.find((property) => property._id === propertyId);
+    setNewProperty(propertyToEdit);
+    setEditMode(true);
+    setModalVisible(true);
+  };
+
   const fetchProperties = async () => {
     try {
       const response = await axios.get('http://localhost:8000/host/getproperty')
       setProperties(Array.isArray(response.data.data) ? response.data.data : [])
+      console.log("responce",response)
     } catch (error) {
       console.error('Error fetching properties:', error)
       setProperties([]) // Fallback to an empty array on error
@@ -128,75 +143,91 @@ const PropertyManagement = () => {
 
   const handlePricePerGroupSizeChange = (index, field, value) => {
     setNewProperty((prev) => {
-      const updatedArray = [...prev.pricePerGroupSize];
-      updatedArray[index][field] = value;
-      return { ...prev, pricePerGroupSize: updatedArray };
-    });
-  };
+      const updatedArray = [...prev.pricePerGroupSize]
+      updatedArray[index][field] = value
+      return { ...prev, pricePerGroupSize: updatedArray }
+    })
+  }
 
   const addPricePerGroupSize = () => {
     setNewProperty((prev) => ({
       ...prev,
       pricePerGroupSize: [...prev.pricePerGroupSize, { groupSize: '', price: '' }],
-    }));
-  };
+    }))
+  }
 
   const removePricePerGroupSize = (index) => {
     setNewProperty((prev) => ({
       ...prev,
       pricePerGroupSize: prev.pricePerGroupSize.filter((_, i) => i !== index),
-    }));
-  };
+    }))
+  }
 
   const addOrUpdateProperty = async () => {
-    const formData = new FormData();
-    formData.append('property_nickname', newProperty.property_nickname);
-    formData.append('category', newProperty.category);
-    formData.append('property_description', newProperty.property_description);
-    formData.append('instant_booking', newProperty.instant_booking);
-    formData.append('property_name', newProperty.property_name);
-    formData.append('acreage', newProperty.acreage);
-    formData.append('guided_hunt', newProperty.guided_hunt);
-    formData.append('guest_limit', newProperty.guest_limit);
-    formData.append('lodging', newProperty.lodging);
-    formData.append('shooting_range', newProperty.shooting_range);
-    formData.append('extended_details', newProperty.extended_details);
-    formData.append('address', newProperty.address);
-    formData.append('city', newProperty.city);
-    formData.append('zip_code', newProperty.zip_code);
-    formData.append('state', newProperty.state);
-    formData.append('country', newProperty.country);
-    formData.append('latitude', newProperty.latitude);
-    formData.append('longitude', newProperty.longitude);
-    formData.append('checkIn', newProperty.startDate);
-    formData.append('checkOut', newProperty.endDate);
-    formData.append('priceRange', JSON.stringify(newProperty.priceRange));
-    if (newProperty.images && newProperty.images.length > 0) {
-      newProperty.images.forEach((image, index) => {
-        formData.append(`images[${index}]`, image);
-      });
+    console.log('newProperty', newProperty)
+
+    const formData = new FormData()
+    formData.append('property_nickname', newProperty.property_nickname)
+    formData.append('category', newProperty.category)
+    formData.append('property_description', newProperty.property_description)
+    formData.append('instant_booking', newProperty.instant_booking)
+    formData.append('property_name', newProperty.property_name)
+    formData.append('acreage', newProperty.acreage)
+    formData.append('guided_hunt', newProperty.guided_hunt)
+    formData.append('guest_limit', newProperty.guest_limit)
+    formData.append('lodging', newProperty.lodging)
+    formData.append('shooting_range', newProperty.shooting_range)
+    formData.append('extended_details', newProperty.extended_details)
+    formData.append('address', newProperty.address)
+    formData.append('city', newProperty.city)
+    formData.append('zip_code', newProperty.zip_code)
+    formData.append('state', newProperty.state)
+    formData.append('country', newProperty.country)
+    formData.append('latitude', newProperty.latitude)
+    formData.append('longitude', newProperty.longitude)
+    formData.append('checkIn', newProperty.startDate)
+    formData.append('checkOut', newProperty.endDate)
+    formData.append('priceRange', JSON.stringify(newProperty.priceRange))
+
+    // Make sure pricePerGroupSize is properly formatted
+    if (newProperty.pricePerGroupSize && newProperty.pricePerGroupSize.length > 0) {
+      console.log('Appending pricePerGroupSize:', JSON.stringify(newProperty.pricePerGroupSize))
+      formData.append('pricePerGroupSize', JSON.stringify(newProperty.pricePerGroupSize))
+    } else {
+      console.log('pricePerGroupSize is empty or not defined.')
     }
+
+    if (newProperty.images && newProperty.images.length > 0) {
+      newProperty.images.forEach((image) => {
+        formData.append('images', image)
+      })
+    }
+
     try {
-      const response = await axios.post('http://localhost:8000/host/add', formData);
-      console.log('Property added/updated successfully:', response.data);
+      const response = await axios.post('http://localhost:8000/host/add', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      console.log('Property added/updated successfully:', response.data)
     } catch (error) {
-      console.error('Error adding/updating property:', error);
+      console.error('Error adding/updating property:', error)
     }
   }
 
   const handlePlaceSelect = () => {
-    const place = autocompleteRef.current.getPlace();
-    const address = place.formatted_address;
-    const latitude = place.geometry.location.lat();
-    const longitude = place.geometry.location.lng();
+    const place = autocompleteRef.current.getPlace()
+    const address = place.formatted_address
+    const latitude = place.geometry.location.lat()
+    const longitude = place.geometry.location.lng()
 
     setNewProperty({
-        ...newProperty,
-        address,
-        latitude,
-        longitude,
-    });
-};
+      ...newProperty,
+      address,
+      latitude,
+      longitude,
+    })
+  }
 
   return (
     <div>
@@ -219,7 +250,57 @@ const PropertyManagement = () => {
             Add Property
           </CButton>
         </CCardHeader>
-        <CModal visible={modalVisible} onClose={() => setModalVisible(false)} size="lg" className='hello'>
+        <CCardBody>
+          {properties.length > 0 ? (
+            <CTable hover responsive>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>S.No.</CTableHeaderCell>
+                  <CTableHeaderCell>Image</CTableHeaderCell>
+                  <CTableHeaderCell>Property Name</CTableHeaderCell>
+                  <CTableHeaderCell>Description</CTableHeaderCell>
+                  <CTableHeaderCell>Actions</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {properties.map((property, index) => (
+                  <CTableRow key={index}>
+                    <CTableDataCell>{index + 1}</CTableDataCell>
+                    <CTableDataCell>
+                      <img
+                        src={property.images[0]} // Assuming the first image in the array is the one to display
+                        alt={property.propertyName}
+                        style={{ width: '80px', height: 'auto' }}
+                      />
+                    </CTableDataCell>
+                    <CTableDataCell>{property.property_name}</CTableDataCell>
+                    <CTableDataCell>{property.propertyDescription}</CTableDataCell>
+                    <CTableDataCell>
+                      <CButton
+                        color="primary"
+                        onClick={() => handleEditProperty(property._id)}
+                        className="mr-2"
+                      >
+                        <i className="fas fa-edit"></i> Edit
+                      </CButton>
+                      <CButton color="danger" onClick={() => handleDeleteProperty(property._id)}>
+                        <i className="fas fa-trash"></i> Delete
+                      </CButton>
+                    </CTableDataCell>
+                  </CTableRow>
+                ))}
+              </CTableBody>
+            </CTable>
+          ) : (
+            <p>No properties available</p>
+          )}
+        </CCardBody>
+        <CModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          size="lg"
+          className="hello"
+        >
           <CModalHeader>
             <CModalTitle>{editMode ? 'Edit Property' : 'Add Property'}</CModalTitle>
           </CModalHeader>
@@ -227,7 +308,15 @@ const PropertyManagement = () => {
             <div className="row">
               <div className="col-md-6">
                 <CFormInput
-                  label="Name"
+                  label="Property Name"
+                  name="property_name"
+                  value={newProperty.property_name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <CFormInput
+                  label="Property nick Name"
                   name="property_nickname"
                   value={newProperty.property_nickname}
                   onChange={handleChange}
@@ -238,7 +327,7 @@ const PropertyManagement = () => {
                 <select
                   id="categoryDropdown"
                   className="form-control"
-                  value={newProperty.category || ""}
+                  value={newProperty.category || ''}
                   onChange={handleCategoryChange}
                 >
                   <option value="">Select a Category</option>
@@ -250,10 +339,8 @@ const PropertyManagement = () => {
                 </select>
               </div>
 
-
-
               <div className="col-md-6">
-                <CFormInput
+                <CFormTextarea
                   label="Description"
                   name="property_description"
                   value={newProperty.property_description}
@@ -276,8 +363,6 @@ const PropertyManagement = () => {
                   onChange={handleChange}
                 />
               </div>
-
-              
 
               {/* Additional Fields */}
               <h5>Additional Details</h5>
@@ -394,7 +479,7 @@ const PropertyManagement = () => {
                     className="form-control"
                     customInput={<CFormInput />}
                     // Trigger the calendar on icon click
-                    onClickOutside={() => { }}
+                    onClickOutside={() => {}}
                   />
                   <span className="input-group-text date-picker-icon">
                     <FaCalendarAlt />
@@ -420,25 +505,30 @@ const PropertyManagement = () => {
               </CCol>
             </CRow>
             <h5>Location</h5>
-              <LoadScript googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s" libraries={libraries}>
-                <div className="mb-2">
-                  <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>Address</CFormLabel>
-                  <Autocomplete
-                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-                    onPlaceChanged={handlePlaceSelect}
-                  >
-                    <CFormInput
-                      id="address"
-                      name="address"
-                      placeholder="Enter shop address"
-                      value={newProperty.address}
-                      onChange={handleChange}
-                      required
-                      style={{ fontSize: '0.875rem', height: '2rem'}}
-                    />
-                  </Autocomplete>
-                </div>
-              </LoadScript>
+            <LoadScript
+              googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s"
+              libraries={libraries}
+            >
+              <div className="mb-2">
+                <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>
+                  Address
+                </CFormLabel>
+                <Autocomplete
+                  onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                  onPlaceChanged={handlePlaceSelect}
+                >
+                  <CFormInput
+                    id="address"
+                    name="address"
+                    placeholder="Enter shop address"
+                    value={newProperty.address}
+                    onChange={handleChange}
+                    required
+                    style={{ fontSize: '0.875rem', height: '2rem' }}
+                  />
+                </Autocomplete>
+              </div>
+            </LoadScript>
           </CModalBody>
 
           <CModalFooter>
