@@ -193,7 +193,7 @@ const VendorPayoutTable = () => {
             type="text"
             value={stripeAccountId}
             onChange={(e) => setStripeAccountId(e.target.value)}
-            placeholder="Enter Stripe Account ID"
+            placeholder="Enter Account details"
             className="mt-2"
           />
         </CModalBody>
