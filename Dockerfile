@@ -1,10 +1,11 @@
-FROM node:18 as build
+# Stage 1: Build the application
+FROM node:18 AS build
 
 # Set working directory inside the container
 WORKDIR /app
 
-# Copy the package.json and vite.config.mjs files
-COPY package.json  ./
+# Copy only package.json and package-lock.json to install dependencies
+COPY package.json ./
 
 # Install dependencies
 RUN npm install
@@ -16,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Serve the built app using a simple Node.js server
-FROM node:18
+FROM node:18 AS production
 
 # Set working directory
 WORKDIR /app
@@ -24,10 +25,10 @@ WORKDIR /app
 # Install 'serve' globally to serve static files
 RUN npm install -g serve
 
-# Copy build files from the previous stage
+# Copy build files from the build stage
 COPY --from=build /app/build /app
 
-# Expose port 3000 to serve the app
+# Expose the desired port
 EXPOSE 2032
 
 # Start the app with 'serve'
