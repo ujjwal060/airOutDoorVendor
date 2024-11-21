@@ -66,6 +66,7 @@ const PropertyManagement = () => {
         groupPrice: '',
         groupSize: '',
         cancellation_policy: false,
+        guest_perPrice:''
     })
 
     const vendorId = localStorage.getItem('vendorId')
@@ -162,6 +163,7 @@ const PropertyManagement = () => {
         formData.append('checkIn', newProperty.startDate)
         formData.append('checkOut', newProperty.endDate)
         formData.append('priceRange', JSON.stringify(newProperty.priceRange))
+        formData.append('guest_perPrice', newProperty.guest_perPrice)
         if (newProperty.images && newProperty.images.length > 0) {
             newProperty.images.forEach((image) => {
                 formData.append('images', image)
@@ -373,6 +375,14 @@ const PropertyManagement = () => {
                                     label="Guest Limit"
                                     name="guest_limit"
                                     value={newProperty.guest_limit}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <CFormInput
+                                    label="Guest per price"
+                                    name="guest_perPrice"
+                                    value={newProperty.guest_perPrice}
                                     onChange={handleChange}
                                 />
                             </div>
