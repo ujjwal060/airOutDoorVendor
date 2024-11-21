@@ -51,7 +51,7 @@ const PropertyManagement = () => {
 
     try {
       // Make API call to mark as favorite
-      const res = await axios.post('http://localhost:8000/property/favorite', {
+      const res = await axios.post('http://44.196.192.232:8000/property/favorite', {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
@@ -182,9 +182,9 @@ const PropertyManagement = () => {
       toast.error('Error deleting property')
     }
   }
-  
+
   const handleEditProperty = (property) => {
-    console.log("printing in edit property",property)
+    console.log("printing in edit property", property)
     setNewProperty({
       property_nickname: property.propertyNickname || '',
       category: property.category || '',
@@ -197,7 +197,7 @@ const PropertyManagement = () => {
       latitude: property.location.latitude || '',
       longitude: property.location.longitude || '',
       instant_booking: property.instant_booking || false,
-      images: [], 
+      images: [],
       acreage: property.details.acreage || '',
       guided_hunt: property.details.guided_hunt || '',
       guest_limit: property.details.guestLimitPerDay || '',
@@ -212,7 +212,7 @@ const PropertyManagement = () => {
     setEditMode(true) // Enable edit mode
     setModalVisible(true) // Show the modal
   }
-  
+
 
   const addOrUpdateProperty = async () => {
     const formData = new FormData()
@@ -312,7 +312,7 @@ const PropertyManagement = () => {
                       <img
                         src={property.images[0]}
                         alt={property.propertyName}
-                        style={{ width: '80px', height: 'auto' }}
+                        style={{ width: '50px', height: 'auto' }}
                       />
                     </CTableDataCell>
                     <CTableDataCell>{property.propertyName}</CTableDataCell>
@@ -322,14 +322,14 @@ const PropertyManagement = () => {
                     <CTableDataCell>
                       <CButton
                         color={property.isFavorite ? 'success' : 'secondary'}
-                        onClick={() => handleToggle(property._id)}
+                        onClick={() => handleToggle(property._id, !property.isFavorite)}
                         style={{
-                          width: '80px',
+                          width: '40px',
                           borderRadius: '20px',
                           display: 'flex',
                           justifyContent: property.isFavorite ? 'flex-end' : 'flex-start',
                           alignItems: 'center',
-                          padding: '5px',
+                          padding: '2px',
                         }}
                       >
                         <span
@@ -582,7 +582,7 @@ const PropertyManagement = () => {
                     className="form-control"
                     customInput={<CFormInput />}
                     // Trigger the calendar on icon click
-                    onClickOutside={() => {}}
+                    onClickOutside={() => { }}
                   />
                   <span className="input-group-text date-picker-icon">
                     <FaCalendarAlt />

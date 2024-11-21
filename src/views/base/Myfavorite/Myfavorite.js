@@ -35,10 +35,10 @@ const FavouriteBookingsTable = () => {
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
-  const handleDelete = (id) => {
-    // Display toast notification
-    toast.success(`Booking with ID ${id} deleted!`);
-  };
+  // const handleDelete = (id) => {
+  //   // Display toast notification
+  //   toast.success(`Booking with ID ${id} deleted!`);
+  // };
   const fetchProperties = async () => {
     try {
       const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
@@ -53,7 +53,7 @@ const FavouriteBookingsTable = () => {
 
     try {
       // Make API call to mark as favorite
-      const res = await axios.post('http://localhost:8000/property/favorite', {
+      const res = await axios.post('http://44.196.192.232:8000/property/favorite', {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
@@ -71,7 +71,7 @@ const FavouriteBookingsTable = () => {
 
   const fetchFavoriteProperties = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/property/getfavorite')
+      const response = await axios.get('http://44.196.192.232:8000/property/getfavorite')
   
       if (response.status === 200) {
         setProperties(response.data.favProperty || []) // Assuming the response contains an array of favorites
@@ -131,12 +131,12 @@ useEffect(()=>{
                         color={booking.isFavorite ? 'success' : 'secondary'}
                         onClick={() => handleToggle(booking._id)}
                         style={{
-                          width: '80px',
+                          width: '40px',
                           borderRadius: '20px',
                           display: 'flex',
                           justifyContent: booking.isFavorite ? 'flex-end' : 'flex-start',
                           alignItems: 'center',
-                          padding: '5px',
+                          padding: '2px',
                         }}
                       >
                         <span
@@ -151,14 +151,14 @@ useEffect(()=>{
                       </CButton>
                     </CTableDataCell>
 
-                <CTableDataCell>
+                {/* <CTableDataCell>
                   <CIcon
                     icon={cilTrash}
                     size="lg"
                     style={{ cursor: 'pointer' }}
                     onClick={() => handleDelete(booking.id)}
                   />
-                </CTableDataCell>
+                </CTableDataCell> */}
               </CTableRow>
             ))}
           </CTableBody>
