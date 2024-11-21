@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CCard,
   CCardBody,
@@ -13,28 +13,23 @@ import {
   CImage,
   CPagination,
   CPaginationItem,
+  CButton,
 } from '@coreui/react';
 import { cilTrash, cilChevronLeft, cilChevronRight } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
 import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for Toastify
+import axios from 'axios';
 
 const FavouriteBookingsTable = () => {
-  // Sample data for favourite bookings
-  const bookingsData = [
-    { id: 1, image: 'https://via.placeholder.com/100', productName: 'Product 1', price: '$100', status: 'Confirmed' },
-    { id: 2, image: 'https://via.placeholder.com/100', productName: 'Product 2', price: '$150', status: 'Pending' },
-    { id: 3, image: 'https://via.placeholder.com/100', productName: 'Product 3', price: '$200', status: 'Confirmed' },
-    { id: 4, image: 'https://via.placeholder.com/100', productName: 'Product 4', price: '$120', status: 'Pending' },
-    { id: 5, image: 'https://via.placeholder.com/100', productName: 'Product 5', price: '$300', status: 'Confirmed' },
-    { id: 6, image: 'https://via.placeholder.com/100', productName: 'Product 6', price: '$90', status: 'Pending' },
-    { id: 7, image: 'https://via.placeholder.com/100', productName: 'Product 7', price: '$220', status: 'Confirmed' },
-    { id: 8, image: 'https://via.placeholder.com/100', productName: 'Product 8', price: '$110', status: 'Pending' },
-    { id: 9, image: 'https://via.placeholder.com/100', productName: 'Product 9', price: '$400', status: 'Confirmed' },
-    { id: 10, image: 'https://via.placeholder.com/100', productName: 'Product 10', price: '$250', status: 'Pending' },
-    { id: 11, image: 'https://via.placeholder.com/100', productName: 'Product 11', price: '$320', status: 'Confirmed' },
-    { id: 12, image: 'https://via.placeholder.com/100', productName: 'Product 12', price: '$450', status: 'Pending' },
-  ];
+  const [favProperties,setProperties]=useState([])
+  const [favorites, setFavorites] = useState(
+    favProperties.reduce((acc, property) => {
+      acc[property._id] = property.isFavorite || false // assuming you have a `isFavorite` property
+      return acc
+    }, {}),
+  )
+  
 
   // Pagination states
   const itemsPerPage = 10;
@@ -44,13 +39,57 @@ const FavouriteBookingsTable = () => {
     // Display toast notification
     toast.success(`Booking with ID ${id} deleted!`);
   };
+  const fetchProperties = async () => {
+    try {
+      const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
+      setProperties(Array.isArray(response.data) ? response.data : [])
+    } catch (error) {
+      console.error('Error fetching properties:', error)
+      setProperties([])
+    }
+  }
+  const handleToggle = async (propertyId) => {
+    const newFavoriteStatus = !favorites[propertyId] // Toggle the status
 
-  // Get current bookings for pagination
-  const indexOfLastBooking = currentPage * itemsPerPage;
-  const indexOfFirstBooking = indexOfLastBooking - itemsPerPage;
-  const currentBookings = bookingsData.slice(indexOfFirstBooking, indexOfLastBooking);
+    try {
+      // Make API call to mark as favorite
+      const res = await axios.post('http://localhost:8000/property/favorite', {
+        propertyId,
+        isFavorite: newFavoriteStatus,
+      })
+      console.log('responce after favorite', res)
+      toast.success(res.data.message)
+      fetchProperties()
+      setFavorites((prevFavorites) => ({
+        ...prevFavorites,
+        [propertyId]: newFavoriteStatus,
+      }))
+    } catch (error) {
+      console.error('Error updating favorite status', error)
+    }
+  }
 
-  const totalPages = Math.ceil(bookingsData.length / itemsPerPage);
+  const fetchFavoriteProperties = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/property/getfavorite')
+  
+      if (response.status === 200) {
+        setProperties(response.data.favProperty || []) // Assuming the response contains an array of favorites
+        console.log(response.data.favProperty)
+        toast.success('Favorite properties loaded successfully')
+      } else {
+        toast.error('Failed to load favorite properties')
+      }
+    } catch (error) {
+      console.error('Error fetching favorite properties:', error)
+      toast.error('Error fetching favorite properties')
+    }
+  }
+  
+
+useEffect(()=>{
+  fetchFavoriteProperties()
+},[])
 
   return (
     <CCard>
@@ -62,21 +101,20 @@ const FavouriteBookingsTable = () => {
               <CTableHeaderCell scope="col">S.No</CTableHeaderCell>
               <CTableHeaderCell scope="col">Image</CTableHeaderCell>
               <CTableHeaderCell scope="col">Product Name</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Price</CTableHeaderCell>
+              <CTableHeaderCell scope="col">Description</CTableHeaderCell>
               <CTableHeaderCell scope="col">Status</CTableHeaderCell>
               <CTableHeaderCell scope="col">Action</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {currentBookings.map((booking, index) => (
-              <CTableRow key={booking.id}>
-                {/* Serial Number */}
-                <CTableDataCell>{indexOfFirstBooking + index + 1}</CTableDataCell>
-
-                {/* Product Image */}
+            {favProperties.map((booking, index) => (
+              <CTableRow key={booking._id}>
+               
+                {/* <CTableDataCell>{indexOfFirstBooking + index + 1}</CTableDataCell> */}
+                <CTableDataCell>{index+1}</CTableDataCell>
                 <CTableDataCell>
                   <CImage
-                    src={booking.image}
+                    src={booking.images[0]}
                     alt={booking.productName}
                     width="50"
                     height="50"
@@ -84,23 +122,35 @@ const FavouriteBookingsTable = () => {
                   />
                 </CTableDataCell>
 
-                {/* Product Name */}
-                <CTableDataCell>{booking.productName}</CTableDataCell>
+                <CTableDataCell>{booking.propertyName}</CTableDataCell>
 
-                {/* Price */}
-                <CTableDataCell>{booking.price}</CTableDataCell>
+                <CTableDataCell>{booking.propertyDescription}</CTableDataCell>
 
-                {/* Status */}
                 <CTableDataCell>
-                  <CBadge
-                    color={booking.status === 'Confirmed' ? 'success' : 'warning'}
-                    style={{ width: '100px', textAlign: 'center', padding:"10px" }} // Equal width for badges
-                  >
-                    {booking.status}
-                  </CBadge>
-                </CTableDataCell>
+                      <CButton
+                        color={booking.isFavorite ? 'success' : 'secondary'}
+                        onClick={() => handleToggle(booking._id)}
+                        style={{
+                          width: '80px',
+                          borderRadius: '20px',
+                          display: 'flex',
+                          justifyContent: booking.isFavorite ? 'flex-end' : 'flex-start',
+                          alignItems: 'center',
+                          padding: '5px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            height: '20px',
+                            width: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: 'white',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          }}
+                        ></span>
+                      </CButton>
+                    </CTableDataCell>
 
-                {/* Action Icons */}
                 <CTableDataCell>
                   <CIcon
                     icon={cilTrash}
@@ -114,35 +164,9 @@ const FavouriteBookingsTable = () => {
           </CTableBody>
         </CTable>
 
-        {/* Centered Pagination */}
-        <div className="d-flex justify-content-center">
-          <CPagination aria-label="Page navigation" className="mt-3">
-            <CPaginationItem
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
-            >
-              <CIcon icon={cilChevronLeft} />
-            </CPaginationItem>
-            {[...Array(totalPages)].map((_, page) => (
-              <CPaginationItem
-                key={page}
-                active={page + 1 === currentPage}
-                onClick={() => setCurrentPage(page + 1)}
-              >
-                {page + 1}
-              </CPaginationItem>
-            ))}
-            <CPaginationItem
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
-            >
-              <CIcon icon={cilChevronRight} />
-            </CPaginationItem>
-          </CPagination>
-        </div>
+       
       </CCardBody>
 
-      {/* Toast Container */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable />
     </CCard>
   );
