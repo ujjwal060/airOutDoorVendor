@@ -29,27 +29,21 @@ const FavouriteBookingsTable = () => {
       return acc
     }, {}),
   )
-  
+  const vendorId = localStorage.getItem('vendorId')
+  // const fetchProperties = async () => {
+  //   try {
+  //     const response = await axios.get(`http://44.196.192.232:8000/property/getfavorite`)
 
-  // Pagination states
-  const itemsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // const handleDelete = (id) => {
-  //   // Display toast notification
-  //   toast.success(`Booking with ID ${id} deleted!`);
-  // };
-  const fetchProperties = async () => {
-    try {
-      const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
-      setProperties(Array.isArray(response.data) ? response.data : [])
-    } catch (error) {
-      console.error('Error fetching properties:', error)
-      setProperties([])
-    }
-  }
+  //     console.log(response)
+  //     setProperties(Array.isArray(response.data) ? response.data : [])
+  //   } catch (error) {
+  //     console.error('Error fetching properties:', error)
+  //     setProperties([])
+  //   }
+  // }
   const handleToggle = async (propertyId) => {
     const newFavoriteStatus = !favorites[propertyId] // Toggle the status
+    console.log("new fav status",newFavoriteStatus)
 
     try {
       // Make API call to mark as favorite
@@ -57,13 +51,11 @@ const FavouriteBookingsTable = () => {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
-      console.log('responce after favorite', res)
-      toast.success(res.data.message)
-      fetchProperties()
       setFavorites((prevFavorites) => ({
         ...prevFavorites,
         [propertyId]: newFavoriteStatus,
       }))
+      fetchFavoriteProperties()
     } catch (error) {
       console.error('Error updating favorite status', error)
     }
@@ -73,10 +65,10 @@ const FavouriteBookingsTable = () => {
     try {
       const response = await axios.get('http://44.196.192.232:8000/property/getfavorite')
   
+      console.log("properties",response)
       if (response.status === 200) {
-        setProperties(response.data.favProperty || []) // Assuming the response contains an array of favorites
-        console.log(response.data.favProperty)
-        toast.success('Favorite properties loaded successfully')
+        setProperties(response.data.favProperty || []) 
+        // toast.success('Favorite properties loaded successfully')
       } else {
         toast.error('Failed to load favorite properties')
       }
@@ -102,8 +94,8 @@ useEffect(()=>{
               <CTableHeaderCell scope="col">Image</CTableHeaderCell>
               <CTableHeaderCell scope="col">Product Name</CTableHeaderCell>
               <CTableHeaderCell scope="col">Description</CTableHeaderCell>
+              <CTableHeaderCell scope="col">Location</CTableHeaderCell>
               <CTableHeaderCell scope="col">Status</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Action</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
@@ -125,6 +117,7 @@ useEffect(()=>{
                 <CTableDataCell>{booking.propertyName}</CTableDataCell>
 
                 <CTableDataCell>{booking.propertyDescription}</CTableDataCell>
+                <CTableDataCell>{booking.location.address}</CTableDataCell>
 
                 <CTableDataCell>
                       <CButton
@@ -151,14 +144,6 @@ useEffect(()=>{
                       </CButton>
                     </CTableDataCell>
 
-                {/* <CTableDataCell>
-                  <CIcon
-                    icon={cilTrash}
-                    size="lg"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleDelete(booking.id)}
-                  />
-                </CTableDataCell> */}
               </CTableRow>
             ))}
           </CTableBody>
