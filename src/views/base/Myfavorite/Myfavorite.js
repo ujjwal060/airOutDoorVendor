@@ -41,7 +41,7 @@ const FavouriteBookingsTable = () => {
   // };
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
+      const response = await axios.get(`http://18.209.197.35:8000/property/get/${vendorId}`)
       setProperties(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Error fetching properties:', error)
@@ -53,7 +53,7 @@ const FavouriteBookingsTable = () => {
 
     try {
       // Make API call to mark as favorite
-      const res = await axios.post('http://44.196.192.232:8000/property/favorite', {
+      const res = await axios.post('http://18.209.197.35:8000/property/favorite', {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
@@ -71,7 +71,7 @@ const FavouriteBookingsTable = () => {
 
   const fetchFavoriteProperties = async () => {
     try {
-      const response = await axios.get('http://44.196.192.232:8000/property/getfavorite')
+      const response = await axios.get('http://18.209.197.35:8000/property/getfavorite')
   
       if (response.status === 200) {
         setProperties(response.data.favProperty || []) // Assuming the response contains an array of favorites

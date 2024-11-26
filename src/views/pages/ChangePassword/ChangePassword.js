@@ -52,7 +52,7 @@ const Change = () => {
   const verifyOtp = async () => {
     try {
       const otpString = otp.join('');
-      const response = await axios.post('http://44.196.192.232:8000/vendor/verifyOTP', { email, otp: otpString });
+      const response = await axios.post('http://18.209.197.35:8000/vendor/verifyOTP', { email, otp: otpString });
         toast.success('OTP verified successfully!');
         setIsOtpVerified(true);
     } catch (error) {
@@ -62,7 +62,7 @@ const Change = () => {
 
   const resendOtp = async () => {
     try {
-      const response = await axios.post('http://44.196.192.232:8000/vendor/sendOTP', { email });
+      const response = await axios.post('http://18.209.197.35:8000/vendor/sendOTP', { email });
         toast.success('OTP has been resent to your email.');
     } catch (error) {
       toast.error(error.response?.data?.message);
@@ -71,7 +71,7 @@ const Change = () => {
 
   const handlePasswordChange = async () => {
     try {
-      const response = await axios.post('http://44.196.192.232:8000/vendor/forgate', { email, newPassword });
+      const response = await axios.post('http://18.209.197.35:8000/vendor/forgate', { email, newPassword });
         toast.success('Password has been reset successfully!');
         setTimeout(() => {
           navigate('/login');
