@@ -19,53 +19,53 @@ const TaxForm = () => {
   return (
     <>
 
-<div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 2fr 1fr',
-        alignItems: 'center',
-        borderBottom: '1px solid #000',
-        paddingBottom: '8px',
-        marginBottom: '16px',
-      }}
-    >
-      <div style={{ textAlign: 'left', fontSize: '12px' }}>
-        <div style={{ fontWeight: 'bold' }}>Form W-9</div>
-        <div style={{ fontStyle: 'italic' }}>(Rev. March 2024)</div>
-        <div>
-          Department of the Treasury<br />
-          Internal Revenue Service
-        </div>
-      </div>
-
-      <div style={{ textAlign: 'center', fontSize: '14px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-          Request for Taxpayer
-        </div>
-        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-          Identification Number and Certification
-        </div>
-        <div style={{ marginTop: '4px' }}>
-          Go to <a href="https://www.irs.gov/FormW9">www.irs.gov/FormW9</a> for instructions and the latest information.
-        </div>
-      </div>
-
-      <div style={{ textAlign: 'right', fontSize: '12px' }}>
-        <strong>Give form to the requester. Do not send to the IRS.</strong>
-      </div>
-
       <div
         style={{
-          gridColumn: '1 / -1',
-          fontSize: '12px',
-          marginTop: '8px',
-          textAlign: 'left',
+          display: 'grid',
+          gridTemplateColumns: '1fr 2fr 1fr',
+          alignItems: 'center',
+          borderBottom: '1px solid #000',
+          paddingBottom: '8px',
+          marginBottom: '16px',
         }}
       >
-        <em>Before you begin.</em> For guidance related to the purpose of Form W-9, see <strong>Purpose of Form</strong>, below.
+        <div style={{ textAlign: 'left', fontSize: '12px' }}>
+          <div style={{ fontWeight: 'bold' }}>Form W-9</div>
+          <div style={{ fontStyle: 'italic' }}>(Rev. March 2024)</div>
+          <div>
+            Department of the Treasury<br />
+            Internal Revenue Service
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'center', fontSize: '14px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+            Request for Taxpayer
+          </div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+            Identification Number and Certification
+          </div>
+          <div style={{ marginTop: '4px' }}>
+            Go to <a href="https://www.irs.gov/FormW9">www.irs.gov/FormW9</a> for instructions and the latest information.
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'right', fontSize: '12px' }}>
+          <strong>Give form to the requester. Do not send to the IRS.</strong>
+        </div>
+
+        <div
+          style={{
+            gridColumn: '1 / -1',
+            fontSize: '12px',
+            marginTop: '8px',
+            textAlign: 'left',
+          }}
+        >
+          <em>Before you begin.</em> For guidance related to the purpose of Form W-9, see <strong>Purpose of Form</strong>, below.
+        </div>
       </div>
-    </div>
-    
+
       <CForm>
         {/* 1. Name of entity/individual */}
         <CRow className="mb-3">
@@ -116,7 +116,7 @@ const TaxForm = () => {
             <CFormLabel htmlFor="exemptPayee">4.Exemptions (codes apply only to
               certain entities, not individuals;
               see instructions on page 3):</CFormLabel>
-            <CFormInput id="exemptPayee" placeholder='Exempt payee code (if any)'/>
+            <CFormInput id="exemptPayee" placeholder='Exempt payee code (if any)' />
           </CCol>
           <CCol md="6">
             <CFormLabel htmlFor="fatcaCode">Exemption from Foreign Account Tax
