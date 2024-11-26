@@ -6,12 +6,9 @@ import {
   CDropdownMenu,
   CDropdownToggle,
 } from '@coreui/react'
-import {
-  cilSettings,
-  cilUser,
-} from '@coreui/icons'
+import { cilSettings, cilUser } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import profile from './img/profile.webp'
 
@@ -20,12 +17,12 @@ const AppHeaderDropdown = () => {
 
   const handleLogout = async () => {
     try {
-      localStorage.removeItem('token');
-      navigate('/login');
+      localStorage.removeItem('token')
+      navigate('/login')
     } catch (error) {
-      console.error('Logout Error:', error);
+      console.error('Logout Error:', error)
     }
-  };
+  }
 
   return (
     <CDropdown variant="nav-item">
@@ -34,14 +31,12 @@ const AppHeaderDropdown = () => {
       </CDropdownToggle>
 
       <CDropdownMenu className="pt-0" placement="bottom-end">
-        <CDropdownItem href="#">
+        <CDropdownItem to="/profile" component="a">
           <CIcon icon={cilUser} className="me-2" />
-          <Link to='/profile' style={{ textDecoration: 'none', color: 'black' }}>
-            Profile
-          </Link>
+          Profile
         </CDropdownItem>
         <CDropdownItem onClick={handleLogout}>
-          <CIcon  className="me-2" />
+          <CIcon className="me-2" />
           Log Out
         </CDropdownItem>
       </CDropdownMenu>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { CiEdit } from 'react-icons/ci'
 import { MdDeleteForever } from 'react-icons/md'
+import { FaEye } from 'react-icons/fa'
 
 import {
   CCard,
@@ -55,8 +56,6 @@ const PropertyManagement = () => {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
-      console.log('responce after favorite', res)
-      toast.success(res.data.message)
       fetchProperties()
       setFavorites((prevFavorites) => ({
         ...prevFavorites,
@@ -82,7 +81,7 @@ const PropertyManagement = () => {
     instant_booking: active,
     images: [],
     acreage: '',
-    guided_hunt: '',
+    guided_hunt: 'Optional',
     guest_limit: '',
     lodging: '',
     shooting_range: '',
@@ -101,6 +100,7 @@ const PropertyManagement = () => {
     }, {}),
   )
   const handleViewDetails = (property) => {
+    console.log("in view property",property)
     setSelectedProperty(property)
     setDetailsModal(true)
   }
@@ -157,8 +157,30 @@ const PropertyManagement = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`http://18.209.197.35:8000/property/get/${vendorId}`)
-      setProperties(Array.isArray(response.data) ? response.data : [])
+      const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
+
+      const result = await response.data
+      console.log('result data', result)
+      const formattedProperties = result.map((property) => {
+        const formattedStartDate = new Intl.DateTimeFormat('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric',
+        }).format(new Date(property.startDate))
+
+        const formattedEndDate = new Intl.DateTimeFormat('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric',
+        }).format(new Date(property.endDate))
+
+        return {
+          ...property,
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+        }
+      })
+      setProperties(formattedProperties)
     } catch (error) {
       console.error('Error fetching properties:', error)
       setProperties([])
@@ -184,7 +206,7 @@ const PropertyManagement = () => {
   }
 
   const handleEditProperty = (property) => {
-    console.log("printing in edit property", property)
+    console.log('printing in edit property', property)
     setNewProperty({
       property_nickname: property.propertyNickname || '',
       category: property.category || '',
@@ -208,14 +230,15 @@ const PropertyManagement = () => {
       groupSize: property.pricePerGroupSize.groupSize || '',
       cancellation_policy: property.cancellation_policy || false,
       guest_perPrice: property.details.guestPricePerDay || '',
+      _id: property._id || '',
     })
     setEditMode(true) // Enable edit mode
     setModalVisible(true) // Show the modal
   }
-
-
   const addOrUpdateProperty = async () => {
     const formData = new FormData()
+
+    // Append shared fields
     formData.append('vendorId', vendorId)
     formData.append('property_nickname', newProperty.property_nickname)
     formData.append('category', newProperty.category)
@@ -237,6 +260,8 @@ const PropertyManagement = () => {
     formData.append('checkOut', newProperty.endDate)
     formData.append('priceRange', JSON.stringify(newProperty.priceRange))
     formData.append('guest_perPrice', newProperty.guest_perPrice)
+
+    // Append images, if any
     if (newProperty.images && newProperty.images.length > 0) {
       newProperty.images.forEach((image) => {
         formData.append('images', image)
@@ -244,13 +269,23 @@ const PropertyManagement = () => {
     }
 
     try {
-      const response = await axios.post('http://18.209.197.35:8000/property/post', formData, {
+      const url = newProperty._id
+        ? `http://44.196.192.232:8000/property/update/${newProperty._id}` // Update endpoint
+        : `http://44.196.192.232:8000/property/post` // Add endpoint
+
+      const method = newProperty._id ? 'put' : 'post'
+      console.log('urll', newProperty._id)
+      const response = await axios({
+        method: method,
+        url: url,
+        data: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
+
       setModalVisible(false)
-      fetchProperties()
+      fetchProperties() // Refresh the property list
     } catch (error) {
       console.error('Error adding/updating property:', error)
     }
@@ -300,6 +335,9 @@ const PropertyManagement = () => {
                   <CTableHeaderCell>Image</CTableHeaderCell>
                   <CTableHeaderCell>Property Name</CTableHeaderCell>
                   <CTableHeaderCell>Address</CTableHeaderCell>
+                  <CTableHeaderCell>Guest Limit/Day</CTableHeaderCell>
+                  <CTableHeaderCell>Guest Price/Day</CTableHeaderCell>
+                  <CTableHeaderCell>Acreage</CTableHeaderCell>
                   <CTableHeaderCell>Favourite</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
@@ -307,19 +345,47 @@ const PropertyManagement = () => {
               <CTableBody>
                 {properties.map((property, index) => (
                   <CTableRow key={index}>
-                    <CTableDataCell>{index + 1}</CTableDataCell>
-                    <CTableDataCell>
+                    {/* Index */}
+                    <CTableDataCell className="text-center align-middle">
+                      {index + 1}
+                    </CTableDataCell>
+
+                    {/* Image */}
+                    <CTableDataCell className="text-center align-middle">
                       <img
                         src={property.images[0]}
                         alt={property.propertyName}
                         style={{ width: '50px', height: 'auto' }}
                       />
                     </CTableDataCell>
-                    <CTableDataCell>{property.propertyName}</CTableDataCell>
-                    <CTableDataCell>{property.location.address}</CTableDataCell>
+
+                    {/* Property Name */}
+                    <CTableDataCell className="text-center align-middle">
+                      {property.propertyName}
+                    </CTableDataCell>
+
+                    {/* Address */}
+                    <CTableDataCell className="text-center align-middle">
+                      {property.location.address}
+                    </CTableDataCell>
+
+                    {/* Guest Limit */}
+                    <CTableDataCell className="text-center align-middle">
+                      {property.details.guestLimitPerDay}
+                    </CTableDataCell>
+
+                    {/* Guest Price */}
+                    <CTableDataCell className="text-center align-middle">
+                      {property.details.guestPricePerDay}
+                    </CTableDataCell>
+
+                    {/* Acreage */}
+                    <CTableDataCell className="text-center align-middle">
+                      {property.details.acreage}
+                    </CTableDataCell>
 
                     {/* Toggle Button */}
-                    <CTableDataCell>
+                    <CTableDataCell className="text-center align-middle">
                       <CButton
                         color={property.isFavorite ? 'success' : 'secondary'}
                         onClick={() => handleToggle(property._id, !property.isFavorite)}
@@ -330,6 +396,7 @@ const PropertyManagement = () => {
                           justifyContent: property.isFavorite ? 'flex-end' : 'flex-start',
                           alignItems: 'center',
                           padding: '2px',
+                          margin: '0 auto', // Center the button
                         }}
                       >
                         <span
@@ -345,16 +412,18 @@ const PropertyManagement = () => {
                     </CTableDataCell>
 
                     {/* Action Buttons */}
-                    <CTableDataCell>
-                      <CButton color="primary" onClick={() => handleViewDetails(property)}>
-                        View Details
-                      </CButton>
-                      <CButton color="warning" onClick={() => handleEditProperty(property)}>
-                        <CiEdit />
-                      </CButton>
-                      <CButton color="warning" onClick={() => handleDeleteProperty(property._id)}>
-                        <MdDeleteForever />
-                      </CButton>
+                    <CTableDataCell className="text-center align-middle">
+                      <div className="d-flex justify-content-center gap-2">
+                        <CButton color="primary" onClick={() => handleViewDetails(property)}>
+                          <FaEye />
+                        </CButton>
+                        <CButton color="warning" onClick={() => handleEditProperty(property)}>
+                          <CiEdit />
+                        </CButton>
+                        <CButton color="danger" onClick={() => handleDeleteProperty(property._id)}>
+                          <MdDeleteForever />
+                        </CButton>
+                      </div>
                     </CTableDataCell>
                   </CTableRow>
                 ))}
@@ -366,38 +435,153 @@ const PropertyManagement = () => {
 
           {/* Details Modal */}
           {selectedProperty && (
-            <CModal visible={detailsModal} onClose={() => setDetailsModal(false)}>
+            <CModal
+              visible={detailsModal}
+              // style={{ marginTop: '50px', zIndex: 9999 }} 
+              onClose={() => setDetailsModal(false)}
+            >
               <CModalHeader>
                 <CModalTitle>Property Details</CModalTitle>
               </CModalHeader>
               <CModalBody>
+                {/* Property Name and Nickname */}
                 <p>
                   <strong>Property Name:</strong> {selectedProperty.propertyName}
                 </p>
                 <p>
                   <strong>Property Nickname:</strong> {selectedProperty.propertyNickname}
                 </p>
+
+                {/* Description */}
                 <p>
                   <strong>Description:</strong> {selectedProperty.propertyDescription}
                 </p>
+
+                {/* Acreage */}
                 <p>
                   <strong>Acreage:</strong> {selectedProperty.details.acreage}
                 </p>
+
+                {/* Guest Details */}
                 <p>
                   <strong>Guest Limit Per Day:</strong> {selectedProperty.details.guestLimitPerDay}
                 </p>
                 <p>
+                  <strong>Guest Price Per Day:</strong> ${selectedProperty.details.guestPricePerDay}
+                </p>
+
+                {/* Guided Hunt */}
+                <p>
                   <strong>Guided Hunt:</strong> {selectedProperty.details.guidedHunt}
                 </p>
+
+                {/* Lodging */}
+                <p>
+                  <strong>Lodging:</strong> {selectedProperty.details.lodging}
+                </p>
+
+                {/* Shooting Range */}
+                <p>
+                  <strong>Shooting Range:</strong> {selectedProperty.details.shootingRange}
+                </p>
+
+                {/* Optional Extended Details */}
+                <p>
+                  <strong>Optional Extended Details:</strong>{' '}
+                  {selectedProperty.details.optionalExtendedDetails}
+                </p>
+
+                {/* Price Range */}
                 <p>
                   <strong>Price Range:</strong> ${selectedProperty.priceRange.min} - $
                   {selectedProperty.priceRange.max}
                 </p>
+
+                {/* Price Per Group Size */}
+                <p>
+                  <strong>Price Per Group Size:</strong>
+                  {selectedProperty.pricePerGroupSize.groupPrice
+                    ? `$${selectedProperty.pricePerGroupSize.groupPrice} for ${selectedProperty.pricePerGroupSize.groupSize} guests`
+                    : `N/A`}
+                </p>
+
+                {/* Instant Booking */}
                 <p>
                   <strong>Instant Booking:</strong>{' '}
                   {selectedProperty.details.instantBooking ? 'Yes' : 'No'}
                 </p>
+
+                {/* Address */}
+                <p>
+                  <strong>Address:</strong> {selectedProperty.location.address}
+                </p>
+
+                {/* Coordinates */}
+                <p>
+                  <strong>Coordinates:</strong> Latitude: {selectedProperty.location.latitude},
+                  Longitude: {selectedProperty.location.longitude}
+                </p>
+
+                {/* Vendor ID */}
+                <p>
+                  <strong>Vendor ID:</strong> {selectedProperty.vendorId}
+                </p>
+
+                {/* Category */}
+                <p>
+                  <strong>Category:</strong> {selectedProperty.category}
+                </p>
+
+                {/* Images */}
+                <div>
+                  <strong>Images:</strong>
+                  <div
+                    style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}
+                  >
+                    {selectedProperty.images.map((image, idx) => (
+                      <img
+                        key={idx}
+                        src={image}
+                        alt={`Property image ${idx + 1}`}
+                        style={{
+                          width: '100px',
+                          height: 'auto',
+                          borderRadius: '5px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Availability */}
+                <p>
+                  <strong>Start Date:</strong>{' '}
+                  {new Date(selectedProperty.startDate).toLocaleDateString()}
+                </p>
+                <p>
+                  <strong>End Date:</strong>{' '}
+                  {new Date(selectedProperty.endDate).toLocaleDateString()}
+                </p>
+
+                {/* Approval */}
+                <p>
+                  <strong>Approved by Admin:</strong>{' '}
+                  {selectedProperty.isApproveByAdmin ? 'Yes' : 'No'}
+                </p>
+
+                {/* Favorite */}
+                <p>
+                  <strong>Favorite:</strong> {selectedProperty.isFavorite ? 'Yes' : 'No'}
+                </p>
+
+                {/* Created At */}
+                <p>
+                  <strong>Created At:</strong>{' '}
+                  {new Date(selectedProperty.createdAt).toLocaleString()}
+                </p>
               </CModalBody>
+
               <CModalFooter>
                 <CButton color="secondary" onClick={() => setDetailsModal(false)}>
                   Close
@@ -490,15 +674,16 @@ const PropertyManagement = () => {
                 <CFormSelect
                   id="guided_hunt"
                   name="guided_hunt"
-                  value={newProperty.guided_hunt}
+                  value={newProperty.guided_hunt} 
                   onChange={handleChange}
                 >
                   <option value="">Select an option</option>
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
-                  <option value="Optional">Optional</option>
+                  <option value="Optional">Optional</option> 
                 </CFormSelect>
               </div>
+
               <div className="col-md-6">
                 <CFormInput
                   label="Guest Limit"
@@ -550,7 +735,7 @@ const PropertyManagement = () => {
               </div>
               <div className="col-md-6">
                 <CFormInput
-                  label="group per price"
+                  label="Price Per Group"
                   name="groupPrice"
                   value={newProperty.groupPrice}
                   onChange={handleChange}
@@ -582,7 +767,7 @@ const PropertyManagement = () => {
                     className="form-control"
                     customInput={<CFormInput />}
                     // Trigger the calendar on icon click
-                    onClickOutside={() => { }}
+                    onClickOutside={() => {}}
                   />
                   <span className="input-group-text date-picker-icon">
                     <FaCalendarAlt />
