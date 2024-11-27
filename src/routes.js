@@ -19,8 +19,9 @@ const Myinvoice= React.lazy(() => import('./views/base/Myinvoice/Myinvoice'))
 const Myinbox= React.lazy(() => import('./views/base/Myinbox/Myinbox'))
 const ChatBox= React.lazy(() => import('./views/base/ChatBox/ChatBox'))
 const MessageList= React.lazy(() => import('./views/base/MessageList/MessageList'))
+const Notification=React.lazy(()=>import('./views/base/Notification/Notification'))
 
-const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
+// const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -39,6 +40,7 @@ const routes = [
   { path: '/invoice', name: 'Myinvoice', element: Myinvoice },
   { path: '/inbox', name: 'Myinbox', element: Myinbox },
   { path: '/chat', name: 'ChatBox', element: ChatBox },
+  { path: '/Notification', name: 'Notification', element: Notification },
   { path: '18.209.197.35', name: 'MessageList', element: MessageList },
 
 ]
