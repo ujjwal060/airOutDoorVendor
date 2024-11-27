@@ -91,6 +91,12 @@ const _nav = [
     to: '/chat',
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
+  {
+    component: CNavItem,
+    name: 'Notification',
+    to: '/Notification',
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
+  },
 
 ]
 
