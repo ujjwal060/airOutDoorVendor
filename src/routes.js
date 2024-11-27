@@ -39,7 +39,7 @@ const routes = [
   { path: '/invoice', name: 'Myinvoice', element: Myinvoice },
   { path: '/inbox', name: 'Myinbox', element: Myinbox },
   { path: '/chat', name: 'ChatBox', element: ChatBox },
-  { path: '18.209.197.35', name: 'MessageList', element: MessageList },
+  { path: '44.196.64.110', name: 'MessageList', element: MessageList },
 
 ]
 

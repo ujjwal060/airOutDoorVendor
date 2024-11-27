@@ -29,7 +29,7 @@ const Login = () => {
   const handleLogin = async (e) => { 
     e.preventDefault();
     try {
-      const response = await axios.post('http://18.209.197.35:8000/vendor/login', { email, password });
+      const response = await axios.post('http://44.196.64.110:8000/vendor/login', { email, password });
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('vendorId', response.data.vendor.id);
       toast.success('Login successful!');

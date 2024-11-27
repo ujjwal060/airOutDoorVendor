@@ -53,7 +53,7 @@ const PropertyManagement = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get('http://18.209.197.35:8000/host/getproperty');
+      const response = await axios.get('http://44.196.64.110:8000/host/getproperty');
       console.log("111", response.data.data)
       setProperties(Array.isArray(response.data.data) ? response.data.data : []);
     } catch (error) {
@@ -92,7 +92,7 @@ const PropertyManagement = () => {
 
   const handleDeleteProperty = async (id) => {
     try {
-      await axios.delete(`http://18.209.197.35:8000/host/deleteproperty/${id}`);
+      await axios.delete(`http://44.196.64.110:8000/host/deleteproperty/${id}`);
       fetchProperties();
     } catch (error) {
       console.error('Error deleting property:', error);
@@ -108,10 +108,10 @@ const PropertyManagement = () => {
     try {
       if (currentProperty._id) {
         // Update existing property
-        await axios.put(`http://18.209.197.35:8000/host/updateproperty/${currentProperty._id}`, currentProperty);
+        await axios.put(`http://44.196.64.110:8000/host/updateproperty/${currentProperty._id}`, currentProperty);
       } else {
         // Add new property
-        await axios.post('http://18.209.197.35:8000/host/add', currentProperty);
+        await axios.post('http://44.196.64.110:8000/host/add', currentProperty);
       }
       fetchProperties();
       setModalVisible(false);
