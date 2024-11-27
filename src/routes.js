@@ -19,7 +19,6 @@ const Myinvoice= React.lazy(() => import('./views/base/Myinvoice/Myinvoice'))
 const Myinbox= React.lazy(() => import('./views/base/Myinbox/Myinbox'))
 const ChatBox= React.lazy(() => import('./views/base/ChatBox/ChatBox'))
 const MessageList= React.lazy(() => import('./views/base/MessageList/MessageList'))
-const W9Test= React.lazy(() => import('./views/base/W9/W9Test'))
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
@@ -34,7 +33,6 @@ const routes = [
   { path: '/reservation', name: 'Myreservation', element: Myreservation },
   { path: '/legal', name: 'Mylegal', element: Mylegal },
   { path: '/w9', name: 'W9', element: W9 },
-  { path: '/w9test', name: 'W9test', element: W9Test },
   { path: '/general', name: 'Generalinstruction', element: Generalinstruction },
   { path: '/general2', name: 'Generalinstruction2', element: Generalinstruction2 },
   { path: '/favorite', name: 'Myfavorite', element: Myfavorite },

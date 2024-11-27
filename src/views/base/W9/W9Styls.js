@@ -175,8 +175,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 4, 
   },
   row: {
+    
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
 
   // TIN Section
@@ -240,10 +241,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 2,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
+  
+  
   signatureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
