@@ -797,7 +797,7 @@ const PropertyManagement = () => {
               libraries={libraries}
             >
               <div className="mb-2">
-                <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>x
+                <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>
                   Address
                 </CFormLabel>
                 <Autocomplete
