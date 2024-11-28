@@ -50,7 +50,7 @@ const VendorPayoutTable = () => {
     if (!vendorId) return;
 
     try {
-      const response = await axios.get(`http://localhost:8000/payouts/getVendorPay/${vendorId}`);
+      const response = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPay/${vendorId}`);
       setPayouts(response.data.cashoutRequests);
       setRemainingAmount(response.data.remainingAmount);
       toast.success('Payout data fetched successfully!');
@@ -75,7 +75,7 @@ const VendorPayoutTable = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/payouts/cashoutRequest', {
+      const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
         vendorId,
         amountRequested: amountToCashout,
         stripeAccountId

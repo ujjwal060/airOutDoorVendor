@@ -46,7 +46,7 @@ const ChatSection = () => {
       const uniqueUserIds = [...new Set(userIds)];
 
       axios
-        .post('http://localhost:8000/vendor/getUsers', { userIds: uniqueUserIds })
+        .post('http://44.196.64.110:8000/vendor/getUsers', { userIds: uniqueUserIds })
         .then((response) => {
           const enrichedChatsData = chatsData.map((chat) => {
             const user = response.data.data.find((user) => user._id === chat.userId);

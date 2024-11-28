@@ -21,7 +21,7 @@ function Notification() {
   const fetchNotifications = (type, page) => {
     setLoading(true);
     axios
-      .post("http://localhost:8000/notification/getVendor", {
+      .post("http://44.196.64.110:8000/notification/getVendor", {
         vendorId,
         page,
         limit: 10,
@@ -48,7 +48,7 @@ function Notification() {
 
   const handleChangeRead = (id) => {
     axios
-      .patch(`http://localhost:8000/notification/readVendor/${id}`, { vendorId })
+      .patch(`http://44.196.64.110:8000/notification/readVendor/${id}`, { vendorId })
       .then(() => {
         setNotifications((prevNotifications) =>
           prevNotifications.map((notification) => {

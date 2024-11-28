@@ -49,7 +49,7 @@ const TaxForm = () => {
       formDataToSend.append('vendorId',vendorId);
 
       const response = await axios.post(
-        'http://localhost:8000/pdf/generate-tax-form',
+        'http://44.196.64.110:8000/pdf/generate-tax-form',
         formDataToSend,
         {
           headers: { 'Content-Type': 'multipart/form-data' },

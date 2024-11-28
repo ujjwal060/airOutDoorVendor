@@ -53,7 +53,7 @@ const PropertyManagement = () => {
 
     try {
       // Make API call to mark as favorite
-      const res = await axios.post('http://localhost:8000/property/favorite', {
+      const res = await axios.post('http://44.196.64.110:8000/property/favorite', {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
@@ -115,7 +115,7 @@ const PropertyManagement = () => {
 
   const getCatgory = async () => {
     try {
-      const responce = await axios.post('http://localhost:8000/catogries/get')
+      const responce = await axios.post('http://44.196.64.110:8000/catogries/get')
       setCategoryAll(responce.data.data)
     } catch (error) {
       console.log(error)
@@ -157,7 +157,7 @@ const PropertyManagement = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`)
+      const response = await axios.get(`http://44.196.64.110:8000/property/get/${vendorId}`)
 
       const result = await response.data
       console.log('result data', result)
@@ -195,7 +195,7 @@ const PropertyManagement = () => {
   const handleDeleteProperty = async (id) => {
     try {
       console.log(`Deleting property with ID: ${id}`)
-      const res = await axios.delete(`http://localhost:8000/property/delete/${id}`)
+      const res = await axios.delete(`http://44.196.64.110:8000/property/delete/${id}`)
 
       toast.success(res.data.message)
       fetchProperties()
@@ -270,8 +270,8 @@ const PropertyManagement = () => {
 
     try {
       const url = newProperty._id
-        ? `http://localhost:8000/property/update/${newProperty._id}` 
-        : `http://localhost:8000/property/post` 
+        ? `http://44.196.64.110:8000/property/update/${newProperty._id}` 
+        : `http://44.196.64.110:8000/property/post` 
 
       const method = newProperty._id ? 'put' : 'post'
       console.log('urll', newProperty._id)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   CButton,
   CCard,
@@ -11,67 +11,67 @@ import {
   CTableDataCell,
   CPagination,
   CPaginationItem,
-} from '@coreui/react';
-import { CIcon } from '@coreui/icons-react';
-import { cilChevronLeft, cilChevronRight } from '@coreui/icons';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+} from '@coreui/react'
+import { CIcon } from '@coreui/icons-react'
+import { cilChevronLeft, cilChevronRight } from '@coreui/icons'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 const PayoutTable = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const [payoutData, setPayoutData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const itemsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
+  const [payoutData, setPayoutData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const itemsPerPage = 10
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    const vendorId = localStorage.getItem('vendorId');
+    const vendorId = localStorage.getItem('vendorId')
     const fetchPayoutData = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/pdf/get/${vendorId}`);
-        console.log(response.data.data);
-        
-        setPayoutData(response.data.data);
-        setLoading(false);
+        const response = await axios.get(`http://44.196.64.110:8000/pdf/get/${vendorId}`)
+        console.log(response.data.data)
+
+        setPayoutData(response.data.data)
+        setLoading(false)
       } catch (error) {
-        setError('Failed to fetch data');
-        setLoading(false);
+        setError('Failed to fetch data')
+        setLoading(false)
       }
-    };
+    }
 
-    fetchPayoutData();
-  }, []);
+    fetchPayoutData()
+  }, [])
 
-  const totalPages = Math.ceil(payoutData.length / itemsPerPage);
+  const totalPages = Math.ceil(payoutData.length / itemsPerPage)
 
   const handleW9Click = () => {
-    navigate('/w9');
-  };
+    navigate('/w9')
+  }
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage(currentPage + 1)
     }
-  };
+  }
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage(currentPage - 1)
     }
-  };
+  }
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = payoutData.slice(startIndex, startIndex + itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const currentItems = payoutData.slice(startIndex, startIndex + itemsPerPage)
 
   const handleViewClick = (pdfLink) => {
-    window.open(pdfLink, '_blank');
-  };
+    window.open(pdfLink, '_blank')
+  }
 
   return (
     <CCard>
-      <CCardHeader className='d-flex justify-content-between'>
+      <CCardHeader className="d-flex justify-content-between">
         <h4>Payout Information</h4>
         <CButton color="warning" onClick={handleW9Click}>
           Add W9 Form
@@ -89,15 +89,18 @@ const PayoutTable = () => {
                 <CTableRow>
                   <CTableHeaderCell>S.No</CTableHeaderCell>
                   <CTableHeaderCell>Date</CTableHeaderCell>
-                  <CTableHeaderCell>W9 Information</CTableHeaderCell>
+                  <CTableHeaderCell className=" d-flex justify-content-center">
+                    W9 Information
+                  </CTableHeaderCell>
                 </CTableRow>
               </thead>
               <CTableBody>
                 {currentItems.map((item, index) => (
                   <CTableRow key={item._id}>
                     <CTableDataCell>{startIndex + index + 1}</CTableDataCell>
-                    <CTableDataCell>{new Date(item.date).toLocaleDateString()}</CTableDataCell> {/* Format date */}
-                    <CTableDataCell>
+                    <CTableDataCell>{new Date(item.date).toLocaleDateString()}</CTableDataCell>{' '}
+                    {/* Format date */}
+                    <CTableDataCell className=" d-flex justify-content-center">
                       <CButton color="warning" onClick={() => handleViewClick(item.pdfLink)}>
                         View
                       </CButton>
@@ -123,7 +126,7 @@ const PayoutTable = () => {
         )}
       </CCardBody>
     </CCard>
-  );
-};
+  )
+}
 
-export default PayoutTable;
+export default PayoutTable
