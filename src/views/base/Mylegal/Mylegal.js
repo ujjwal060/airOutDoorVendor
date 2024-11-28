@@ -61,8 +61,11 @@ const PayoutTable = () => {
 
   return (
     <CCard>
-      <CCardHeader>
+      <CCardHeader className='d-flex justify-content-between'>
         <h4>Payout Information</h4>
+        <CButton color="warning" onClick={handleW9Click}>
+          Add W9 Form
+        </CButton>
       </CCardHeader>
       <CCardBody>
         <CTable striped bordered hover responsive>
