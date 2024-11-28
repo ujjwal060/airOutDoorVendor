@@ -359,10 +359,16 @@ outside the United States.)"
           </CCardBody>
         </CCard>
       </CForm>
+
+      <CForm>
+        <Generalinstruction />
+        <Generalinstruction2 />
+      </CForm>
       <PDFDownloadLink
         document={<FormPdf formData={formData} />}
         fileName={formData.name}
         style={{
+          float: 'right',
           margin: '20px',
           padding: '10px 20px',
           backgroundColor: '#0056b3',
@@ -373,11 +379,6 @@ outside the United States.)"
       >
         {({ loading }) => (loading ? 'Generating PDF...' : 'Submit Now')}
       </PDFDownloadLink>
-
-      <CForm>
-        <Generalinstruction />
-        <Generalinstruction2 />
-      </CForm>
     </>
   )
 }
