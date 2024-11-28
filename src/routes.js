@@ -41,7 +41,7 @@ const routes = [
   { path: '/inbox', name: 'Myinbox', element: Myinbox },
   { path: '/chat', name: 'ChatBox', element: ChatBox },
   { path: '/Notification', name: 'Notification', element: Notification },
-  { path: '44.196.64.110', name: 'MessageList', element: MessageList },
+  { path: 'localhost', name: 'MessageList', element: MessageList },
 
 ]
 

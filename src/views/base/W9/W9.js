@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { PDFDownloadLink } from '@react-pdf/renderer'
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer'
 import FormPdf from './FormPdf'
 import {
   CForm,
@@ -16,6 +16,7 @@ import {
 
 import Generalinstruction from '../Generalinstruction/Generalinstruction'
 import Generalinstruction2 from '../Generalinstruction2/Generalinstruction'
+import axios from 'axios'
 
 const TaxForm = () => {
   const [formData, setFormData] = useState({
@@ -37,6 +38,36 @@ const TaxForm = () => {
     signature: '',
     date: '',
   })
+  const handlePdfSubmit = async () => {
+    try {
+      // Generate PDF as a Blob using @react-pdf/renderer
+      const pdfBlob = await pdf(<FormPdf formData={formData} />).toBlob()
+      console.log('blob of pdf', pdfBlob)
+      // Create FormData and append the Blob
+      const formDataToSend = new FormData()
+      formDataToSend.append('file', pdfBlob, `${formData.name || 'document'}.pdf`)
+
+      // Send the PDF to the backend
+      const response = await axios.post(
+        'http://localhost:8000/pdf/generate-tax-form',
+        formDataToSend,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      )
+
+      if (response.status === 200) {
+        console.log('PDF uploaded successfully:', response.data)
+        alert('PDF submitted successfully!')
+      } else {
+        console.error('Failed to upload PDF:', response.data)
+        alert('Error submitting the PDF.')
+      }
+    } catch (error) {
+      console.error('Error during PDF submission:', error)
+      alert('Error submitting the PDF.')
+    }
+  }
   const handleChange = (e) => {
     const { id, value } = e.target
     setFormData((prevData) => ({
@@ -364,6 +395,22 @@ outside the United States.)"
         <Generalinstruction />
         <Generalinstruction2 />
       </CForm>
+      <button
+        onClick={handlePdfSubmit}
+        style={{
+          float: 'right',
+          margin: '20px',
+          padding: '10px 20px',
+          backgroundColor: '#0056b3',
+          color: '#fff',
+          textDecoration: 'none',
+          borderRadius: '5px',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        Submit Now
+      </button>
       <PDFDownloadLink
         document={<FormPdf formData={formData} />}
         fileName={formData.name}

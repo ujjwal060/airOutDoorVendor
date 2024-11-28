@@ -32,7 +32,7 @@ const FavouriteBookingsTable = () => {
   const vendorId = localStorage.getItem('vendorId')
   // const fetchProperties = async () => {
   //   try {
-  //     const response = await axios.get(`http://44.196.64.110:8000/property/getfavorite`)
+  //     const response = await axios.get(`http://localhost:8000/property/getfavorite`)
 
   // Pagination states
   const itemsPerPage = 10;
@@ -44,7 +44,7 @@ const FavouriteBookingsTable = () => {
   // };
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`http://44.196.64.110:8000/property/get/${vendorId}`)
+      const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`)
       setProperties(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Error fetching properties:', error)
@@ -53,11 +53,11 @@ const FavouriteBookingsTable = () => {
   }
   const handleToggle = async (propertyId) => {
     const newFavoriteStatus = !favorites[propertyId] // Toggle the status
-    console.log("new fav status",newFavoriteStatus)
+   
 
     try {
       // Make API call to mark as favorite
-      const res = await axios.post('http://44.196.64.110:8000/property/favorite', {
+      const res = await axios.post('http://localhost:8000/property/favorite', {
         propertyId,
         isFavorite: newFavoriteStatus,
       })
@@ -73,9 +73,8 @@ const FavouriteBookingsTable = () => {
 
   const fetchFavoriteProperties = async () => {
     try {
-      const response = await axios.get('http://44.196.64.110:8000/property/getfavorite')
+      const response = await axios.get('http://localhost:8000/property/getfavorite')
   
-      console.log("properties",response)
       if (response.status === 200) {
         setProperties(response.data.favProperty || []) 
         // toast.success('Favorite properties loaded successfully')
