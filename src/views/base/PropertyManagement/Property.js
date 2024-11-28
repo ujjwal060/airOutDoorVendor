@@ -27,7 +27,6 @@ import {
   CCol,
   CFormTextarea,
   CFormSelect,
-  
 } from '@coreui/react'
 import axios from 'axios'
 import { toast, ToastContainer } from 'react-toastify'
@@ -270,8 +269,8 @@ const PropertyManagement = () => {
 
     try {
       const url = newProperty._id
-        ? `http://44.196.64.110:8000/property/update/${newProperty._id}` 
-        : `http://44.196.64.110:8000/property/post` 
+        ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
+        : `http://44.196.64.110:8000/property/post`
 
       const method = newProperty._id ? 'put' : 'post'
       console.log('urll', newProperty._id)
@@ -437,7 +436,7 @@ const PropertyManagement = () => {
           {selectedProperty && (
             <CModal
               visible={detailsModal}
-              // style={{ marginTop: '50px', zIndex: 9999 }} 
+              // style={{ marginTop: '50px', zIndex: 9999 }}
               onClose={() => setDetailsModal(false)}
             >
               <CModalHeader>
@@ -674,13 +673,13 @@ const PropertyManagement = () => {
                 <CFormSelect
                   id="guided_hunt"
                   name="guided_hunt"
-                  value={newProperty.guided_hunt} 
+                  value={newProperty.guided_hunt}
                   onChange={handleChange}
                 >
                   <option value="">Select an option</option>
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
-                  <option value="Optional">Optional</option> 
+                  <option value="Optional">Optional</option>
                 </CFormSelect>
               </div>
 
@@ -798,7 +797,7 @@ const PropertyManagement = () => {
               libraries={libraries}
             >
               <div className="mb-2">
-                <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>
+                <CFormLabel htmlFor="address" style={{ fontSize: '0.875rem' }}>x
                   Address
                 </CFormLabel>
                 <Autocomplete
