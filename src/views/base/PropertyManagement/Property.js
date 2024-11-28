@@ -354,14 +354,14 @@ const PropertyManagement = () => {
                     <CTableDataCell className="text-center align-middle">
                       <img
                         src={property.images[0]}
-                        alt={property.propertyName}
+                        alt={property?.propertyName}
                         style={{ width: '50px', height: 'auto' }}
                       />
                     </CTableDataCell>
 
                     {/* Property Name */}
                     <CTableDataCell className="text-center align-middle">
-                      {property.propertyName}
+                      {property?.propertyName}
                     </CTableDataCell>
 
                     {/* Address */}
