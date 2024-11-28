@@ -27,6 +27,7 @@ import {
   CCol,
   CFormTextarea,
   CFormSelect,
+  
 } from '@coreui/react'
 import axios from 'axios'
 import { toast, ToastContainer } from 'react-toastify'
@@ -100,7 +101,6 @@ const PropertyManagement = () => {
     }, {}),
   )
   const handleViewDetails = (property) => {
-    console.log("in view property",property)
     setSelectedProperty(property)
     setDetailsModal(true)
   }
@@ -157,7 +157,7 @@ const PropertyManagement = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`http://44.196.192.232:8000/property/get/${vendorId}`)
+      const response = await axios.get(`http://44.196.64.110:8000/property/get/${vendorId}`)
 
       const result = await response.data
       console.log('result data', result)
@@ -270,8 +270,8 @@ const PropertyManagement = () => {
 
     try {
       const url = newProperty._id
-        ? `http://44.196.192.232:8000/property/update/${newProperty._id}` // Update endpoint
-        : `http://44.196.192.232:8000/property/post` // Add endpoint
+        ? `http://44.196.64.110:8000/property/update/${newProperty._id}` 
+        : `http://44.196.64.110:8000/property/post` 
 
       const method = newProperty._id ? 'put' : 'post'
       console.log('urll', newProperty._id)

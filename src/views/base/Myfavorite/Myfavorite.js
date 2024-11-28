@@ -32,7 +32,7 @@ const FavouriteBookingsTable = () => {
   const vendorId = localStorage.getItem('vendorId')
   // const fetchProperties = async () => {
   //   try {
-  //     const response = await axios.get(`http://44.196.192.232:8000/property/getfavorite`)
+  //     const response = await axios.get(`http://44.196.64.110:8000/property/getfavorite`)
 
   // Pagination states
   const itemsPerPage = 10;
