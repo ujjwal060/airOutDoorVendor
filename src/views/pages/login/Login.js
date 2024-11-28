@@ -33,7 +33,10 @@ const Login = () => {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('vendorId', response.data.vendor.id);
       toast.success('Login successful!');
-      navigate('/dashboard');
+      // navigate('/dashboard');
+      navigate('/property');
+      
+
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
       if (err.response?.data?.isApproved === false) {
