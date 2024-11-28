@@ -17,8 +17,10 @@ import {
 import Generalinstruction from '../Generalinstruction/Generalinstruction'
 import Generalinstruction2 from '../Generalinstruction2/Generalinstruction'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 
 const TaxForm = () => {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
     businessName: '',
@@ -40,31 +42,27 @@ const TaxForm = () => {
   })
   const handlePdfSubmit = async () => {
     try {
-      // Generate PDF as a Blob using @react-pdf/renderer
-      const pdfBlob = await pdf(<FormPdf formData={formData} />).toBlob()
-      console.log('blob of pdf', pdfBlob)
-      // Create FormData and append the Blob
-      const formDataToSend = new FormData()
-      formDataToSend.append('file', pdfBlob, `${formData.name || 'document'}.pdf`)
+      const vendorId = localStorage.getItem('vendorId')
+      const pdfBlob = await pdf(<FormPdf formData={formData} />).toBlob();
+      const formDataToSend = new FormData();
+      formDataToSend.append('images', pdfBlob, `${formData.name || 'document'}.pdf`);
+      formDataToSend.append('vendorId',vendorId);
 
-      // Send the PDF to the backend
       const response = await axios.post(
         'http://localhost:8000/pdf/generate-tax-form',
         formDataToSend,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
         },
-      )
+      );
 
       if (response.status === 200) {
-        console.log('PDF uploaded successfully:', response.data)
         alert('PDF submitted successfully!')
+        navigate('/legal')
       } else {
-        console.error('Failed to upload PDF:', response.data)
         alert('Error submitting the PDF.')
       }
     } catch (error) {
-      console.error('Error during PDF submission:', error)
       alert('Error submitting the PDF.')
     }
   }
@@ -411,7 +409,7 @@ outside the United States.)"
       >
         Submit Now
       </button>
-      <PDFDownloadLink
+      {/* <PDFDownloadLink
         document={<FormPdf formData={formData} />}
         fileName={formData.name}
         style={{
@@ -425,7 +423,7 @@ outside the United States.)"
         }}
       >
         {({ loading }) => (loading ? 'Generating PDF...' : 'Submit Now')}
-      </PDFDownloadLink>
+      </PDFDownloadLink> */}
     </>
   )
 }

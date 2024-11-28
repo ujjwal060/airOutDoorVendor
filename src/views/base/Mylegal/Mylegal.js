@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CButton,
   CCard,
@@ -12,30 +12,37 @@ import {
   CPagination,
   CPaginationItem,
 } from '@coreui/react';
-import { CIcon } from '@coreui/icons-react'; // Import CIcon from icons-react
-import { cilChevronLeft, cilChevronRight } from '@coreui/icons'; // Import specific icons
+import { CIcon } from '@coreui/icons-react';
+import { cilChevronLeft, cilChevronRight } from '@coreui/icons';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const PayoutTable = () => {
   const navigate = useNavigate();
 
-  const payoutData = [
-    { id: 1, date: '2024-10-01', amount: '$1000', status: 'Completed' },
-    { id: 2, date: '2024-10-02', amount: '$2000', status: 'Pending' },
-    { id: 3, date: '2024-10-03', amount: '$1500', status: 'Completed' },
-    { id: 4, date: '2024-10-04', amount: '$1200', status: 'Completed' },
-    { id: 5, date: '2024-10-05', amount: '$800', status: 'Pending' },
-    { id: 6, date: '2024-10-06', amount: '$3000', status: 'Completed' },
-    { id: 7, date: '2024-10-07', amount: '$1500', status: 'Completed' },
-    { id: 8, date: '2024-10-08', amount: '$200', status: 'Pending' },
-    { id: 9, date: '2024-10-09', amount: '$500', status: 'Completed' },
-    { id: 10, date: '2024-10-10', amount: '$900', status: 'Completed' },
-    { id: 11, date: '2024-10-11', amount: '$700', status: 'Pending' },
-    { id: 12, date: '2024-10-12', amount: '$1100', status: 'Completed' },
-  ];
-
+  const [payoutData, setPayoutData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const vendorId = localStorage.getItem('vendorId');
+    const fetchPayoutData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/pdf/get/${vendorId}`);
+        console.log(response.data.data);
+        
+        setPayoutData(response.data.data);
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to fetch data');
+        setLoading(false);
+      }
+    };
+
+    fetchPayoutData();
+  }, []);
 
   const totalPages = Math.ceil(payoutData.length / itemsPerPage);
 
@@ -55,9 +62,12 @@ const PayoutTable = () => {
     }
   };
 
-  // Calculate the current items to display
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = payoutData.slice(startIndex, startIndex + itemsPerPage);
+  // const currentItems = payoutData.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleViewClick = (pdfLink) => {
+    window.open(pdfLink, '_blank');
+  };
 
   return (
     <CCard>
@@ -68,45 +78,49 @@ const PayoutTable = () => {
         </CButton>
       </CCardHeader>
       <CCardBody>
-        <CTable striped bordered hover responsive>
-          <thead>
-            <CTableRow>
-              <CTableHeaderCell>S.No</CTableHeaderCell> {/* New header for Serial No */}
-              <CTableHeaderCell>Date</CTableHeaderCell>
-              <CTableHeaderCell>Amount</CTableHeaderCell>
-              <CTableHeaderCell>Status</CTableHeaderCell>
-              <CTableHeaderCell>W9 Information</CTableHeaderCell>
-            </CTableRow>
-          </thead>
-          <CTableBody>
-            {currentItems.map((item, index) => (
-              <CTableRow key={item.id}>
-                <CTableDataCell>{startIndex + index + 1}</CTableDataCell> {/* Automatic Serial Number */}
-                <CTableDataCell>{item.date}</CTableDataCell>
-                <CTableDataCell>{item.amount}</CTableDataCell>
-                <CTableDataCell>{item.status}</CTableDataCell>
-                <CTableDataCell>
-                  <CButton color="warning" onClick={handleW9Click}>
-                    View
-                  </CButton>
-                </CTableDataCell>
-              </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
+        {loading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p>{error}</p>
+        ) : (
+          <>
+            <CTable striped bordered hover responsive>
+              <thead>
+                <CTableRow>
+                  <CTableHeaderCell>S.No</CTableHeaderCell>
+                  <CTableHeaderCell>Date</CTableHeaderCell>
+                  <CTableHeaderCell>W9 Information</CTableHeaderCell>
+                </CTableRow>
+              </thead>
+              <CTableBody>
+                {payoutData.map((item, index) => (
+                  <CTableRow key={item._id}>
+                    <CTableDataCell>{startIndex + index + 1}</CTableDataCell>
+                    <CTableDataCell>{new Date(item.date).toLocaleDateString()}</CTableDataCell> {/* Format date */}
+                    <CTableDataCell>
+                      <CButton color="warning" onClick={() => handleViewClick(item.pdfLink)}>
+                        View
+                      </CButton>
+                    </CTableDataCell>
+                  </CTableRow>
+                ))}
+              </CTableBody>
+            </CTable>
 
-        {/* Centered Pagination controls */}
-        <CPagination aria-label="Page navigation" className="justify-content-center">
-          <CPaginationItem onClick={handlePreviousPage} disabled={currentPage === 1}>
-            <CIcon icon={cilChevronLeft} />
-          </CPaginationItem>
+            {/* Centered Pagination controls */}
+            <CPagination aria-label="Page navigation" className="justify-content-center">
+              <CPaginationItem onClick={handlePreviousPage} disabled={currentPage === 1}>
+                <CIcon icon={cilChevronLeft} />
+              </CPaginationItem>
 
-          <CPaginationItem active>{currentPage}</CPaginationItem>
+              <CPaginationItem active>{currentPage}</CPaginationItem>
 
-          <CPaginationItem onClick={handleNextPage} disabled={currentPage === totalPages}>
-            <CIcon icon={cilChevronRight} />
-          </CPaginationItem>
-        </CPagination>
+              <CPaginationItem onClick={handleNextPage} disabled={currentPage === totalPages}>
+                <CIcon icon={cilChevronRight} />
+              </CPaginationItem>
+            </CPagination>
+          </>
+        )}
       </CCardBody>
     </CCard>
   );
