@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import {
   CCard,
   CCardBody,
@@ -21,79 +21,89 @@ import {
   CModalBody,
   CModalFooter,
   CModalHeader,
-  CModalTitle
-} from '@coreui/react';
+  CModalTitle,
+} from '@coreui/react'
 
 const VendorPayoutTable = () => {
-  const [payouts, setPayouts] = useState([]);
-  const [remainingAmount, setRemainingAmount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [vendorId, setVendorId] = useState(null);
-  const [amountToCashout, setAmountToCashout] = useState();
-  const [stripeAccountId, setStripeAccountId] = useState('');
-  const [cashoutModalVisible, setCashoutModalVisible] = useState(false);
+  const [payouts, setPayouts] = useState([])
+  const [remainingAmount, setRemainingAmount] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [vendorId, setVendorId] = useState(null)
+  const [amountToCashout, setAmountToCashout] = useState()
+  const [stripeAccountId, setStripeAccountId] = useState({
+    BankName: '',
+    accountNo: '',
+    swiftCode: '',
+  })
+  const [cashoutModalVisible, setCashoutModalVisible] = useState(false)
 
-  const itemsPerPage = 5;
-
+  const itemsPerPage = 5
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setStripeAccountId((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }))
+  }
   useEffect(() => {
-    const storedVendorId = localStorage.getItem('vendorId');
+    const storedVendorId = localStorage.getItem('vendorId')
     if (storedVendorId) {
-      setVendorId(storedVendorId);
+      setVendorId(storedVendorId)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    fetchPayoutData();
-  }, [vendorId]);
+    fetchPayoutData()
+  }, [vendorId])
 
   const fetchPayoutData = async () => {
-    if (!vendorId) return;
+    if (!vendorId) return
 
     try {
-      const response = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPay/${vendorId}`);
-      setPayouts(response.data.cashoutRequests);
-      setRemainingAmount(response.data.remainingAmount);
-      toast.success('Payout data fetched successfully!');
+      const response = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPay/${vendorId}`)
+      setPayouts(response.data.cashoutRequests)
+      setRemainingAmount(response.data.remainingAmount)
+      toast.success('Payout data fetched successfully!')
     } catch (error) {
-      toast.error('Error fetching payout data!');
+      toast.error('Error fetching payout data!')
     }
-  };
+  }
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPayouts = payouts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(payouts.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentPayouts = payouts.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(payouts.length / itemsPerPage)
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
+    setCurrentPage(page)
+  }
 
   const handleCashoutRequest = async () => {
     if (amountToCashout <= 0 || amountToCashout > remainingAmount || !stripeAccountId) {
-      toast.error('Invalid input! Ensure the amount is correct and Stripe account ID is provided.');
-      return;
+      toast.error('Invalid input! Ensure the amount is correct and Stripe account ID is provided.')
+      return
     }
 
     try {
       const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
         vendorId,
         amountRequested: amountToCashout,
-        stripeAccountId
-      });
+        stripeAccountId,
+      })
 
       if (response.data.success) {
-        toast.success('Cashout request successful!');
-        setAmountToCashout(0);
-        setStripeAccountId('');
-        setCashoutModalVisible(false);
-        fetchPayoutData();
+        toast.success('Cashout request successful!')
+        setAmountToCashout(0)
+        setStripeAccountId('')
+        setCashoutModalVisible(false)
+        fetchPayoutData()
       } else {
-        toast.error('Failed to request cashout!');
+        toast.error('Failed to request cashout!')
       }
     } catch (error) {
-      toast.error('Error requesting cashout!');
+      toast.error('Error requesting cashout!')
     }
-  };
+  }
 
   return (
     <>
@@ -102,14 +112,19 @@ const VendorPayoutTable = () => {
       <CCard>
         <CCardHeader>Payout History</CCardHeader>
         <CCardBody>
-          <div className="mb-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+          <div
+            className="mb-2"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              position: 'relative',
+            }}
+          >
             <h5>
               Remaining Amount: <CBadge color="info">${remainingAmount}</CBadge>
             </h5>
-            <CButton
-              color="primary"
-              onClick={() => setCashoutModalVisible(true)}
-            >
+            <CButton color="primary" onClick={() => setCashoutModalVisible(true)}>
               Cashout
             </CButton>
           </div>
@@ -129,14 +144,24 @@ const VendorPayoutTable = () => {
                   <CTableRow key={index}>
                     <CTableDataCell>{indexOfFirstItem + index + 1}</CTableDataCell>
                     <CTableDataCell>${payout.amountRequested}</CTableDataCell>
-                    <CTableDataCell>{new Date(payout.requestDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>
+                      {new Date(payout.requestDate).toLocaleDateString()}
+                    </CTableDataCell>
                     <CTableDataCell>
                       {['paid', 'rejected'].includes(payout.status) && payout.paymentDate
                         ? new Date(payout.paymentDate).toLocaleDateString()
                         : 'Pending'}
                     </CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color={payout.status === 'pending' ? 'warning' : payout.status === 'paid' ? 'success' : 'danger'}>
+                      <CBadge
+                        color={
+                          payout.status === 'pending'
+                            ? 'warning'
+                            : payout.status === 'paid'
+                              ? 'success'
+                              : 'danger'
+                        }
+                      >
                         {payout.status}
                       </CBadge>
                     </CTableDataCell>
@@ -191,9 +216,26 @@ const VendorPayoutTable = () => {
           />
           <CFormInput
             type="text"
-            value={stripeAccountId}
-            onChange={(e) => setStripeAccountId(e.target.value)}
-            placeholder="Enter Account details"
+            name="BankName"
+            value={stripeAccountId.BankName}
+            onChange={handleChange}
+            placeholder="Enter Bank Name"
+            className="mt-2"
+          />
+          <CFormInput
+            type="text"
+            name="accountNo"
+            value={stripeAccountId.accountNo}
+            onChange={handleChange}
+            placeholder="Enter Account No"
+            className="mt-2"
+          />
+          <CFormInput
+            type="text"
+            name="swiftCode"
+            value={stripeAccountId.swiftCode}
+            onChange={handleChange}
+            placeholder="Enter Swift Code"
             className="mt-2"
           />
         </CModalBody>
@@ -207,7 +249,7 @@ const VendorPayoutTable = () => {
         </CModalFooter>
       </CModal>
     </>
-  );
-};
+  )
+}
 
-export default VendorPayoutTable;
+export default VendorPayoutTable
