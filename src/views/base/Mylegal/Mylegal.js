@@ -63,7 +63,7 @@ const PayoutTable = () => {
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  // const currentItems = payoutData.slice(startIndex, startIndex + itemsPerPage);
+  const currentItems = payoutData.slice(startIndex, startIndex + itemsPerPage);
 
   const handleViewClick = (pdfLink) => {
     window.open(pdfLink, '_blank');
@@ -93,7 +93,7 @@ const PayoutTable = () => {
                 </CTableRow>
               </thead>
               <CTableBody>
-                {payoutData.map((item, index) => (
+                {currentItems.map((item, index) => (
                   <CTableRow key={item._id}>
                     <CTableDataCell>{startIndex + index + 1}</CTableDataCell>
                     <CTableDataCell>{new Date(item.date).toLocaleDateString()}</CTableDataCell> {/* Format date */}
