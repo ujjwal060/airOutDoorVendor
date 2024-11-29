@@ -128,7 +128,7 @@ const ChatSection = () => {
           {chats.length > 0 ? (
             chats.map((chat) => (
               <CListGroupItem
-                key={chat.userId}
+                key={chat.c}
                 onClick={() => handleChatClick(chat)}
                 className="d-flex align-items-center chat-item"
               >

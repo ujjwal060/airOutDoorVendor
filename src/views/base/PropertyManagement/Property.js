@@ -27,6 +27,7 @@ import {
   CCol,
   CFormTextarea,
   CFormSelect,
+  CSpinner,
 } from '@coreui/react'
 import axios from 'axios'
 import { toast, ToastContainer } from 'react-toastify'
@@ -36,6 +37,7 @@ import 'react-datepicker/dist/react-datepicker.css'
 import { FaCalendarAlt } from 'react-icons/fa'
 import { LoadScript, Autocomplete } from '@react-google-maps/api'
 import './property.css'
+import { faHeartPulse } from '@fortawesome/free-solid-svg-icons'
 
 const libraries = ['places']
 
@@ -47,6 +49,17 @@ const PropertyManagement = () => {
   const [categoryAll, setCategoryAll] = useState([])
   const autocompleteRef = useRef(null)
   const [detailsModal, setDetailsModal] = useState(false)
+  const [loadingPropertyId, setLoadingPropertyId] = useState(null)
+  const [deletePropertyId, setdeletePropertyId] = useState(null)
+  const [IsLoading, SetIsLoading] = useState(false)
+  const fileInputRef = useRef()
+
+  const handleSuccess = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   const handleToggle = async (propertyId) => {
     const newFavoriteStatus = !favorites[propertyId] // Toggle the status
 
@@ -64,6 +77,18 @@ const PropertyManagement = () => {
     } catch (error) {
       console.error('Error updating favorite status', error)
     }
+  }
+  const handleRemoveImage = (indexToRemove) => {
+    setNewProperty((prevState) => ({
+      ...prevState,
+      images: prevState.images.filter((_, index) => index !== indexToRemove),
+    }));
+  };
+  
+  const handleToggleClick = async (propertyId, isFavorite) => {
+    setLoadingPropertyId(propertyId)
+    await handleToggle(propertyId, isFavorite)
+    setLoadingPropertyId(null)
   }
 
   const [selectedProperty, setSelectedProperty] = useState(null)
@@ -187,25 +212,32 @@ const PropertyManagement = () => {
   }
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files)
-    setNewProperty((prev) => ({ ...prev, images: files }))
+    const files = Array.from(e.target.files) // Convert FileList to an array
+    setNewProperty((prevState) => ({
+      ...prevState,
+      images: [...prevState.images, ...files], // Append new files to existing images
+    }))
   }
 
   const handleDeleteProperty = async (id) => {
+    setdeletePropertyId(id)
     try {
       console.log(`Deleting property with ID: ${id}`)
       const res = await axios.delete(`http://44.196.64.110:8000/property/delete/${id}`)
 
       toast.success(res.data.message)
       fetchProperties()
+      setdeletePropertyId(null)
       //   setProperties(properties.filter((property) => property._id !== id));
     } catch (error) {
+      setdeletePropertyId(null)
       toast.error('Error deleting property')
     }
   }
 
   const handleEditProperty = (property) => {
-    console.log('printing in edit property', property)
+    console.log('Editing property:', property)
+
     setNewProperty({
       property_nickname: property.propertyNickname || '',
       category: property.category || '',
@@ -214,66 +246,81 @@ const PropertyManagement = () => {
       startDate: property.startDate ? new Date(property.startDate) : '',
       endDate: property.endDate ? new Date(property.endDate) : '',
       priceRange: property.priceRange || { min: '', max: '' },
-      address: property.location.address || '',
-      latitude: property.location.latitude || '',
-      longitude: property.location.longitude || '',
+      address: property.location?.address || '',
+      latitude: property.location?.latitude || '',
+      longitude: property.location?.longitude || '',
       instant_booking: property.instant_booking || false,
-      images: [],
-      acreage: property.details.acreage || '',
-      guided_hunt: property.details.guided_hunt || '',
-      guest_limit: property.details.guestLimitPerDay || '',
-      lodging: property.details.lodging || '',
-      shooting_range: property.details.shootingRange || '',
-      extended_details: property.details.optionalExtendedDetails || '',
-      groupPrice: property.pricePerGroupSize.groupPrice || '',
-      groupSize: property.pricePerGroupSize.groupSize || '',
+      images: property.images || [],
+      acreage: property.details?.acreage || '',
+      guided_hunt: property.details?.guided_hunt || '',
+      guest_limit: property.details?.guestLimitPerDay || '',
+      lodging: property.details?.lodging || '',
+      shooting_range: property.details?.shootingRange || '',
+      extended_details: property.details?.optionalExtendedDetails || '',
+      groupPrice: property.pricePerGroupSize?.groupPrice || '',
+      groupSize: property.pricePerGroupSize?.groupSize || '',
       cancellation_policy: property.cancellation_policy || false,
-      guest_perPrice: property.details.guestPricePerDay || '',
+      guest_perPrice: property.details?.guestPricePerDay || '',
       _id: property._id || '',
     })
+
     setEditMode(true) // Enable edit mode
     setModalVisible(true) // Show the modal
   }
+
   const addOrUpdateProperty = async () => {
     const formData = new FormData()
 
-    // Append shared fields
-    formData.append('vendorId', vendorId)
-    formData.append('property_nickname', newProperty.property_nickname)
-    formData.append('category', newProperty.category)
-    formData.append('property_description', newProperty.property_description)
-    formData.append('instant_booking', newProperty.instant_booking)
-    formData.append('property_name', newProperty.property_name)
-    formData.append('acreage', newProperty.acreage)
-    formData.append('guided_hunt', newProperty.guided_hunt)
-    formData.append('guest_limit', newProperty.guest_limit)
-    formData.append('lodging', newProperty.lodging)
-    formData.append('shooting_range', newProperty.shooting_range)
-    formData.append('extended_details', newProperty.extended_details)
-    formData.append('address', newProperty.address)
-    formData.append('groupPrice', newProperty.groupPrice)
-    formData.append('groupSize', newProperty.groupSize)
-    formData.append('latitude', newProperty.latitude)
-    formData.append('longitude', newProperty.longitude)
-    formData.append('checkIn', newProperty.startDate)
-    formData.append('checkOut', newProperty.endDate)
-    formData.append('priceRange', JSON.stringify(newProperty.priceRange))
-    formData.append('guest_perPrice', newProperty.guest_perPrice)
-
-    // Append images, if any
-    if (newProperty.images && newProperty.images.length > 0) {
-      newProperty.images.forEach((image) => {
-        formData.append('images', image)
-      })
+    // Helper function to append shared fields
+    const appendField = (key, value) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value)
+      }
     }
 
+    // Append basic fields
+    appendField('vendorId', vendorId)
+    appendField('property_nickname', newProperty.property_nickname)
+    appendField('category', newProperty.category)
+    appendField('property_description', newProperty.property_description)
+    appendField('instant_booking', newProperty.instant_booking)
+    appendField('property_name', newProperty.property_name)
+    appendField('acreage', newProperty.acreage)
+    appendField('guided_hunt', newProperty.guided_hunt)
+    appendField('guest_limit', newProperty.guest_limit)
+    appendField('lodging', newProperty.lodging)
+    appendField('shooting_range', newProperty.shooting_range)
+    appendField('extended_details', newProperty.extended_details)
+    appendField('address', newProperty.address)
+    appendField('groupPrice', newProperty.groupPrice)
+    appendField('groupSize', newProperty.groupSize)
+    appendField('latitude', newProperty.latitude)
+    appendField('longitude', newProperty.longitude)
+    appendField('checkIn', newProperty.startDate)
+    appendField('checkOut', newProperty.endDate)
+    appendField('priceRange', JSON.stringify(newProperty.priceRange))
+    appendField('guest_perPrice', newProperty.guest_perPrice)
+
+    newProperty.images.forEach((image) => {
+      if (typeof image === 'string') {
+        formData.append('existingImages', image)
+      } else {
+        formData.append('images', image)
+      }
+    })
+
     try {
-      const url = newProperty._id
+      // Set loading state
+      SetIsLoading(true)
+
+      // Determine API endpoint and HTTP method
+      const isUpdate = Boolean(newProperty._id)
+      const url = isUpdate
         ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
         : `http://44.196.64.110:8000/property/post`
+      const method = isUpdate ? 'put' : 'post'
 
-      const method = newProperty._id ? 'put' : 'post'
-      console.log('urll', newProperty._id)
+      // Send request to the server
       const response = await axios({
         method: method,
         url: url,
@@ -283,10 +330,14 @@ const PropertyManagement = () => {
         },
       })
 
+      console.log('Property added/updated successfully:', response.data)
       setModalVisible(false)
-      fetchProperties() // Refresh the property list
+      fetchProperties()
     } catch (error) {
       console.error('Error adding/updating property:', error)
+      alert('Failed to add/update the property. Please try again.')
+    } finally {
+      SetIsLoading(false)
     }
   }
 
@@ -384,30 +435,34 @@ const PropertyManagement = () => {
                     </CTableDataCell>
 
                     {/* Toggle Button */}
-                    <CTableDataCell className="text-center align-middle">
-                      <CButton
-                        color={property.isFavorite ? 'success' : 'secondary'}
-                        onClick={() => handleToggle(property._id, !property.isFavorite)}
-                        style={{
-                          width: '40px',
-                          borderRadius: '20px',
-                          display: 'flex',
-                          justifyContent: property.isFavorite ? 'flex-end' : 'flex-start',
-                          alignItems: 'center',
-                          padding: '2px',
-                          margin: '0 auto', // Center the button
-                        }}
-                      >
-                        <span
+                    <CTableDataCell className="text-center align-middle" key={property._id}>
+                      {loadingPropertyId === property._id ? (
+                        <CSpinner color="primary" />
+                      ) : (
+                        <CButton
+                          color={property.isFavorite ? 'success' : 'secondary'}
+                          onClick={() => handleToggleClick(property._id, !property.isFavorite)}
                           style={{
-                            height: '20px',
-                            width: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            width: '40px',
+                            borderRadius: '20px',
+                            display: 'flex',
+                            justifyContent: property.isFavorite ? 'flex-end' : 'flex-start',
+                            alignItems: 'center',
+                            padding: '2px',
+                            margin: '0 auto', // Center the button
                           }}
-                        ></span>
-                      </CButton>
+                        >
+                          <span
+                            style={{
+                              height: '20px',
+                              width: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'white',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            }}
+                          ></span>
+                        </CButton>
+                      )}
                     </CTableDataCell>
 
                     {/* Action Buttons */}
@@ -419,9 +474,16 @@ const PropertyManagement = () => {
                         <CButton color="warning" onClick={() => handleEditProperty(property)}>
                           <CiEdit />
                         </CButton>
-                        <CButton color="danger" onClick={() => handleDeleteProperty(property._id)}>
-                          <MdDeleteForever />
-                        </CButton>
+                        {deletePropertyId === property._id ? (
+                          <CSpinner color="primary" />
+                        ) : (
+                          <CButton
+                            color="danger"
+                            onClick={() => handleDeleteProperty(property._id)}
+                          >
+                            <MdDeleteForever />
+                          </CButton>
+                        )}
                       </div>
                     </CTableDataCell>
                   </CTableRow>
@@ -664,6 +726,7 @@ const PropertyManagement = () => {
                 <CFormInput
                   label="Acreage"
                   name="acreage"
+                  type="number"
                   value={newProperty.acreage}
                   onChange={handleChange}
                 />
@@ -687,12 +750,14 @@ const PropertyManagement = () => {
                 <CFormInput
                   label="Guest Limit"
                   name="guest_limit"
+                  type="number"
                   value={newProperty.guest_limit}
                   onChange={handleChange}
                 />
               </div>
               <div className="col-md-6">
                 <CFormInput
+                  type="number"
                   label="Price Per Guest"
                   name="guest_perPrice"
                   value={newProperty.guest_perPrice}
@@ -709,6 +774,7 @@ const PropertyManagement = () => {
               </div>
               <div className="col-md-6">
                 <CFormInput
+                  type="number"
                   label="Shooting Range"
                   name="shooting_range"
                   value={newProperty.shooting_range}
@@ -726,6 +792,7 @@ const PropertyManagement = () => {
               <h5>Price Per Group Size</h5>
               <div className="col-md-6">
                 <CFormInput
+                  type="number"
                   label="groupSize"
                   name="groupSize"
                   value={newProperty.groupSize}
@@ -734,6 +801,7 @@ const PropertyManagement = () => {
               </div>
               <div className="col-md-6">
                 <CFormInput
+                  type="number"
                   label="Price Per Group"
                   name="groupPrice"
                   value={newProperty.groupPrice}
@@ -753,7 +821,27 @@ const PropertyManagement = () => {
             </div>
 
             <CFormLabel>Images</CFormLabel>
-            <CFormInput type="file" multiple onChange={handleFileChange} />
+            <div className="image-preview">
+              {newProperty.images.map((image, index) => (
+                <div key={index} style={{ display: 'inline-block', margin: '5px' }}>
+                  <img
+                    src={image} 
+                    alt={`Image ${index + 1}`}
+                    style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    style={{ marginLeft: '5px', cursor: 'pointer' }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <CFormInput type="file" multiple onChange={handleFileChange} ref={fileInputRef} />
+
             <CRow className="my-3">
               <CCol md={6}>
                 <CFormLabel className="mx-3">Start Date:</CFormLabel>
@@ -822,9 +910,13 @@ const PropertyManagement = () => {
             <CButton color="secondary" onClick={() => setModalVisible(false)}>
               Close
             </CButton>
-            <CButton color="warning" onClick={addOrUpdateProperty}>
-              {editMode ? 'Update Property' : 'Add Property'}
-            </CButton>
+            {IsLoading ? (
+              <CSpinner color="primary" />
+            ) : (
+              <CButton color="warning" onClick={addOrUpdateProperty}>
+                {editMode ? 'Update Property' : 'Add Property'}
+              </CButton>
+            )}
           </CModalFooter>
         </CModal>
       </CCard>
