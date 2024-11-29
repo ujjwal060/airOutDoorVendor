@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
   CCard,
   CCardBody,
@@ -14,15 +14,18 @@ import {
   CPagination,
   CPaginationItem,
   CButton,
-} from '@coreui/react';
-import { cilTrash, cilChevronLeft, cilChevronRight } from '@coreui/icons';
-import CIcon from '@coreui/icons-react';
-import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
-import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for Toastify
-import axios from 'axios';
+  CSpinner,
+} from '@coreui/react'
+import { cilTrash, cilChevronLeft, cilChevronRight } from '@coreui/icons'
+import CIcon from '@coreui/icons-react'
+import { ToastContainer, toast } from 'react-toastify' // Import ToastContainer and toast
+import 'react-toastify/dist/ReactToastify.css' // Import the CSS for Toastify
+import axios from 'axios'
 
 const FavouriteBookingsTable = () => {
-  const [favProperties,setProperties]=useState([])
+  const [favProperties, setProperties] = useState([])
+  
+  const [IsLoading, SetIsLoading] = useState(false)
   const [favorites, setFavorites] = useState(
     favProperties.reduce((acc, property) => {
       acc[property._id] = property.isFavorite || false // assuming you have a `isFavorite` property
@@ -35,8 +38,8 @@ const FavouriteBookingsTable = () => {
   //     const response = await axios.get(`http://44.196.64.110:8000/property/getfavorite`)
 
   // Pagination states
-  const itemsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10
+  const [currentPage, setCurrentPage] = useState(1)
 
   // const handleDelete = (id) => {
   //   // Display toast notification
@@ -52,8 +55,8 @@ const FavouriteBookingsTable = () => {
     }
   }
   const handleToggle = async (propertyId) => {
+    SetIsLoading(true)
     const newFavoriteStatus = !favorites[propertyId] // Toggle the status
-   
 
     try {
       // Make API call to mark as favorite
@@ -66,17 +69,19 @@ const FavouriteBookingsTable = () => {
         [propertyId]: newFavoriteStatus,
       }))
       fetchFavoriteProperties()
+      SetIsLoading(false)
     } catch (error) {
       console.error('Error updating favorite status', error)
+      SetIsLoading(false)
     }
   }
 
   const fetchFavoriteProperties = async () => {
     try {
       const response = await axios.get('http://44.196.64.110:8000/property/getfavorite')
-  
+
       if (response.status === 200) {
-        setProperties(response.data.favProperty || []) 
+        setProperties(response.data.favProperty || [])
         // toast.success('Favorite properties loaded successfully')
       } else {
         toast.error('Failed to load favorite properties')
@@ -86,11 +91,10 @@ const FavouriteBookingsTable = () => {
       toast.error('Error fetching favorite properties')
     }
   }
-  
 
-useEffect(()=>{
-  fetchFavoriteProperties()
-},[])
+  useEffect(() => {
+    fetchFavoriteProperties()
+  }, [])
 
   return (
     <CCard>
@@ -110,9 +114,8 @@ useEffect(()=>{
           <CTableBody>
             {favProperties.map((booking, index) => (
               <CTableRow key={booking._id}>
-               
                 {/* <CTableDataCell>{indexOfFirstBooking + index + 1}</CTableDataCell> */}
-                <CTableDataCell>{index+1}</CTableDataCell>
+                <CTableDataCell>{index + 1}</CTableDataCell>
                 <CTableDataCell>
                   <CImage
                     src={booking.images[0]}
@@ -129,41 +132,49 @@ useEffect(()=>{
                 <CTableDataCell>{booking.location.address}</CTableDataCell>
 
                 <CTableDataCell>
-                      <CButton
-                        color={booking.isFavorite ? 'success' : 'secondary'}
-                        onClick={() => handleToggle(booking._id)}
+                  {IsLoading ? (
+                    <CSpinner color="primary" />
+                  ) : (
+                    <CButton
+                      color={booking.isFavorite ? 'success' : 'secondary'}
+                      onClick={() => handleToggle(booking._id)}
+                      style={{
+                        width: '40px',
+                        borderRadius: '20px',
+                        display: 'flex',
+                        justifyContent: booking.isFavorite ? 'flex-end' : 'flex-start',
+                        alignItems: 'center',
+                        padding: '2px',
+                      }}
+                    >
+                      <span
                         style={{
-                          width: '40px',
-                          borderRadius: '20px',
-                          display: 'flex',
-                          justifyContent: booking.isFavorite ? 'flex-end' : 'flex-start',
-                          alignItems: 'center',
-                          padding: '2px',
+                          height: '20px',
+                          width: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                         }}
-                      >
-                        <span
-                          style={{
-                            height: '20px',
-                            width: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                          }}
-                        ></span>
-                      </CButton>
-                    </CTableDataCell>
-
+                      ></span>
+                    </CButton>
+                  )}
+                </CTableDataCell>
               </CTableRow>
             ))}
           </CTableBody>
         </CTable>
-
-       
       </CCardBody>
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </CCard>
-  );
-};
+  )
+}
 
-export default FavouriteBookingsTable;
+export default FavouriteBookingsTable
