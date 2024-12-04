@@ -31,7 +31,7 @@ const Tables = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const bookingsResponse = await axios.get(`http://localhost:8000/booking/getBook/${vendorId}`);
+        const bookingsResponse = await axios.get(`http://44.196.64.110:8000/booking/getBook/${vendorId}`);
         console.log("booking",bookingsResponse)
         setBookings(bookingsResponse.data || []);
       } catch (error) {
