@@ -27,8 +27,8 @@ const ReviewTable = () => {
 
   const fetchReviews = async (page) => {
     const vendorId = localStorage.getItem('vendorId')
-    console.log(vendorId)
     try {
+      
       const response = await axios.get('http://44.196.64.110:8000/review/getreviews', {
         params: {
           page,
@@ -36,7 +36,6 @@ const ReviewTable = () => {
           vendorId,
         },
       })
-      console.log(response)
       setReviews(response.data.data)
       setTotalReviews(response.data.total)
     } catch (error) {
