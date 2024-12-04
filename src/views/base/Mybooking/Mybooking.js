@@ -31,7 +31,8 @@ const Tables = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const bookingsResponse = await axios.get(`http://44.196.64.110:8000/booking/getBook/${vendorId}`);
+        const bookingsResponse = await axios.get(`http://localhost:8000/booking/getBook/${vendorId}`);
+        console.log("booking",bookingsResponse)
         setBookings(bookingsResponse.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -83,6 +84,7 @@ const Tables = () => {
               <CTableHead color="dark">
                 <CTableRow>
                   <CTableHeaderCell>#</CTableHeaderCell>
+                  <CTableHeaderCell>Name</CTableHeaderCell>
                   <CTableHeaderCell>Check In</CTableHeaderCell>
                   <CTableHeaderCell>Check Out</CTableHeaderCell>
                   <CTableHeaderCell>Guests</CTableHeaderCell>
@@ -95,9 +97,10 @@ const Tables = () => {
                 {currentBookings.length > 0 ? (
                   currentBookings.map((Booking, index) => (
                     <CTableRow key={Booking._id}>
-                      <CTableHeaderCell scope="row">
+                      <CTableHeaderCell  scope="row">
                         {index + 1 + (currentPage - 1) * rowsPerPage}
                       </CTableHeaderCell>
+                      <CTableDataCell>{Booking?.userId?.fullName}</CTableDataCell>
                       <CTableDataCell>{new Date(Booking.checkInDate).toLocaleDateString()}</CTableDataCell>
                       <CTableDataCell>{new Date(Booking.checkOutDate).toLocaleDateString()}</CTableDataCell>
                       <CTableDataCell>{Booking.guests}</CTableDataCell>
@@ -138,6 +141,8 @@ const Tables = () => {
             {Array.from({ length: totalPages }, (_, index) => (
               <CPaginationItem
                 key={index + 1}
+
+                style={{ cursor: 'pointer'}}
                 active={currentPage === index + 1}
                 onClick={() => paginate(index + 1)}
               >
