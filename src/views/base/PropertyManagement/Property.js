@@ -35,7 +35,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { FaCalendarAlt } from 'react-icons/fa'
-import { LoadScript, Autocomplete } from '@react-google-maps/api'
+import { useLoadScript, Autocomplete } from '@react-google-maps/api'
 import './property.css'
 import { faHeartPulse } from '@fortawesome/free-solid-svg-icons'
 
@@ -54,17 +54,15 @@ const PropertyManagement = () => {
   const [IsLoading, SetIsLoading] = useState(false)
   const fileInputRef = useRef()
 
-  const handleSuccess = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: 'AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s',
+    libraries,
+  })
 
   const handleToggle = async (propertyId) => {
-    const newFavoriteStatus = !favorites[propertyId] // Toggle the status
+    const newFavoriteStatus = !favorites[propertyId] 
 
     try {
-      // Make API call to mark as favorite
       const res = await axios.post('http://44.196.64.110:8000/property/favorite', {
         propertyId,
         isFavorite: newFavoriteStatus,
@@ -82,9 +80,9 @@ const PropertyManagement = () => {
     setNewProperty((prevState) => ({
       ...prevState,
       images: prevState.images.filter((_, index) => index !== indexToRemove),
-    }));
-  };
-  
+    }))
+  }
+
   const handleToggleClick = async (propertyId, isFavorite) => {
     setLoadingPropertyId(propertyId)
     await handleToggle(propertyId, isFavorite)
@@ -120,7 +118,7 @@ const PropertyManagement = () => {
   const vendorId = localStorage.getItem('vendorId')
   const [favorites, setFavorites] = useState(
     properties.reduce((acc, property) => {
-      acc[property._id] = property.isFavorite || false // assuming you have a `isFavorite` property
+      acc[property._id] = property.isFavorite || false 
       return acc
     }, {}),
   )
@@ -212,10 +210,10 @@ const PropertyManagement = () => {
   }
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files) // Convert FileList to an array
+    const files = Array.from(e.target.files) 
     setNewProperty((prevState) => ({
       ...prevState,
-      images: [...prevState.images, ...files], // Append new files to existing images
+      images: [...prevState.images, ...files],
     }))
   }
 
@@ -271,14 +269,12 @@ const PropertyManagement = () => {
   const addOrUpdateProperty = async () => {
     const formData = new FormData()
 
-    // Helper function to append shared fields
     const appendField = (key, value) => {
       if (value !== undefined && value !== null) {
         formData.append(key, value)
       }
     }
 
-    // Append basic fields
     appendField('vendorId', vendorId)
     appendField('property_nickname', newProperty.property_nickname)
     appendField('category', newProperty.category)
@@ -310,17 +306,14 @@ const PropertyManagement = () => {
     })
 
     try {
-      // Set loading state
       SetIsLoading(true)
 
-      // Determine API endpoint and HTTP method
       const isUpdate = Boolean(newProperty._id)
       const url = isUpdate
         ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
         : `http://44.196.64.110:8000/property/post`
       const method = isUpdate ? 'put' : 'post'
 
-      // Send request to the server
       const response = await axios({
         method: method,
         url: url,
@@ -342,18 +335,23 @@ const PropertyManagement = () => {
   }
 
   const handlePlaceSelect = () => {
-    const place = autocompleteRef.current.getPlace()
-    const address = place.formatted_address
-    const latitude = place.geometry.location.lat()
-    const longitude = place.geometry.location.lng()
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace()
+      const address = place?.formatted_address || ''
+      const latitude = place?.geometry?.location?.lat()
+      const longitude = place?.geometry?.location?.lng()
 
-    setNewProperty({
-      ...newProperty,
-      address,
-      latitude,
-      longitude,
-    })
+      setNewProperty((prev) => ({
+        ...prev,
+        address,
+        latitude,
+        longitude,
+      }))
+    }
   }
+
+  if (loadError) return <div>Error loading maps</div>
+  if (!isLoaded) return <div>Loading...</div>
 
   return (
     <div>
@@ -825,7 +823,7 @@ const PropertyManagement = () => {
               {newProperty.images.map((image, index) => (
                 <div key={index} style={{ display: 'inline-block', margin: '5px' }}>
                   <img
-                    src={image} 
+                    src={image}
                     alt={`Image ${index + 1}`}
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                   />
@@ -880,7 +878,7 @@ const PropertyManagement = () => {
               </CCol>
             </CRow>
             <h5>Location</h5>
-            <LoadScript
+            <useLoadScript
               googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s"
               libraries={libraries}
             >
@@ -903,7 +901,7 @@ const PropertyManagement = () => {
                   />
                 </Autocomplete>
               </div>
-            </LoadScript>
+            </useLoadScript>
           </CModalBody>
 
           <CModalFooter>
