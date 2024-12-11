@@ -86,7 +86,7 @@ const VendorPayoutTable = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/payouts/cashoutRequest', {
+      const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
         vendorId,
         amountRequested: amountToCashout,
         stripeAccountNo: accountNo,
