@@ -79,16 +79,19 @@ const VendorPayoutTable = () => {
   }
 
   const handleCashoutRequest = async () => {
+    const { swiftCode, BankName, accountNo } = stripeAccountId
     if (amountToCashout <= 0 || amountToCashout > remainingAmount || !stripeAccountId) {
       toast.error('Invalid input! Ensure the amount is correct and Stripe account ID is provided.')
       return
     }
 
     try {
-      const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
+      const response = await axios.post('http://localhost:8000/payouts/cashoutRequest', {
         vendorId,
         amountRequested: amountToCashout,
-        stripeAccountId,
+        stripeAccountNo: accountNo,
+        bankName:BankName,
+        swiftCode,
       })
 
       if (response.data.success) {
@@ -101,6 +104,7 @@ const VendorPayoutTable = () => {
         toast.error('Failed to request cashout!')
       }
     } catch (error) {
+      console.log(error)
       toast.error('Error requesting cashout!')
     }
   }
