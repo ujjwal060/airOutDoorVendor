@@ -179,7 +179,7 @@ const PropertyManagement = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`http://44.196.64.110:8000/property/get/${vendorId}`)
+      const response = await axios.get(`http://localhost:8000/property/get/${vendorId}`)
 
       const result = await response.data
       console.log('result data', result)
@@ -296,6 +296,8 @@ const PropertyManagement = () => {
     appendField('checkOut', newProperty.endDate)
     appendField('priceRange', JSON.stringify(newProperty.priceRange))
     appendField('guest_perPrice', newProperty.guest_perPrice)
+
+
 
     newProperty.images.forEach((image) => {
       if (typeof image === 'string') {
