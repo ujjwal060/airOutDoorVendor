@@ -6,3 +6,8 @@
   .hello {
     z-index: 999;
   }
+  .header.header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 999 !important
+}

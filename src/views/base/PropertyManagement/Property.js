@@ -297,6 +297,8 @@ const PropertyManagement = () => {
     appendField('priceRange', JSON.stringify(newProperty.priceRange))
     appendField('guest_perPrice', newProperty.guest_perPrice)
 
+
+
     newProperty.images.forEach((image) => {
       if (typeof image === 'string') {
         formData.append('existingImages', image)
