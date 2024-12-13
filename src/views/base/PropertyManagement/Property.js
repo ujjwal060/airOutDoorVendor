@@ -114,7 +114,7 @@ const PropertyManagement = () => {
 
   const [selectedProperty, setSelectedProperty] = useState(null)
   const [newProperty, setNewProperty] = useState({
-    selectedDates:[],
+    selectedDates: [],
     property_nickname: '',
     category: '',
     property_name: '',
@@ -715,24 +715,26 @@ const PropertyManagement = () => {
                   <strong>End Date:</strong>{' '}
                   {new Date(selectedProperty.endDate).toLocaleDateString()}
                 </p>
-                <p>
-                  <strong>Disabled Dates:</strong>
-                  {selectedProperty.disabledDates.length > 0 ? (
-                    <ul
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: '10px',
-                      }}
-                    >
-                      {selectedProperty.disabledDates.map((date, index) => (
-                        <li key={index}>{new Date(date).toLocaleDateString()}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span>No disabled dates available.</span>
-                  )}
-                </p>
+                {selectedProperty?.disabledDates && (
+                  <p>
+                    <strong>Disabled Dates:</strong>
+                    {selectedProperty.disabledDates.length > 0 ? (
+                      <ul
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(3, 1fr)',
+                          gap: '10px',
+                        }}
+                      >
+                        {selectedProperty.disabledDates.map((date, index) => (
+                          <li key={index}>{new Date(date).toLocaleDateString()}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>No disabled dates available.</span>
+                    )}
+                  </p>
+                )}
 
                 {/* Approval */}
                 <p>
