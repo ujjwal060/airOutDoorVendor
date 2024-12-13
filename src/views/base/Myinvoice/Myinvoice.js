@@ -86,10 +86,10 @@ const VendorPayoutTable = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/payouts/cashoutRequest', {
+      const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
         vendorId,
         amountRequested: amountToCashout,
-        stripeAccountNo: accountNo,
+        AccountNo: accountNo,
         bankName:BankName,
         swiftCode,
       })
@@ -104,7 +104,7 @@ const VendorPayoutTable = () => {
         toast.error('Failed to request cashout!')
       }
     } catch (error) {
-      console.log(error)
+      console.log(error.response)
       toast.error('Error requesting cashout!')
     }
   }

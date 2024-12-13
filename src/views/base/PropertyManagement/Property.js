@@ -60,7 +60,7 @@ const PropertyManagement = () => {
   })
 
   const handleToggle = async (propertyId) => {
-    const newFavoriteStatus = !favorites[propertyId] 
+    const newFavoriteStatus = !favorites[propertyId]
 
     try {
       const res = await axios.post('http://44.196.64.110:8000/property/favorite', {
@@ -118,7 +118,7 @@ const PropertyManagement = () => {
   const vendorId = localStorage.getItem('vendorId')
   const [favorites, setFavorites] = useState(
     properties.reduce((acc, property) => {
-      acc[property._id] = property.isFavorite || false 
+      acc[property._id] = property.isFavorite || false
       return acc
     }, {}),
   )
@@ -210,7 +210,7 @@ const PropertyManagement = () => {
   }
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files) 
+    const files = Array.from(e.target.files)
     setNewProperty((prevState) => ({
       ...prevState,
       images: [...prevState.images, ...files],
@@ -266,75 +266,147 @@ const PropertyManagement = () => {
     setModalVisible(true) // Show the modal
   }
 
+  // const addOrUpdateProperty = async () => {
+  //   const formData = new FormData()
+
+  //   const appendField = (key, value) => {
+  //     if (value !== undefined && value !== null) {
+  //       formData.append(key, value)
+  //     }
+  //   }
+
+  //   appendField('vendorId', vendorId)
+  //   appendField('property_nickname', newProperty.property_nickname)
+  //   appendField('category', newProperty.category)
+  //   appendField('property_description', newProperty.property_description)
+  //   appendField('instant_booking', newProperty.instant_booking)
+  //   appendField('property_name', newProperty.property_name)
+  //   appendField('acreage', newProperty.acreage)
+  //   appendField('guided_hunt', newProperty.guided_hunt)
+  //   appendField('guest_limit', newProperty.guest_limit)
+  //   appendField('lodging', newProperty.lodging)
+  //   appendField('shooting_range', newProperty.shooting_range)
+  //   appendField('extended_details', newProperty.extended_details)
+  //   appendField('address', newProperty.address)
+  //   appendField('groupPrice', newProperty.groupPrice)
+  //   appendField('groupSize', newProperty.groupSize)
+  //   appendField('latitude', newProperty.latitude)
+  //   appendField('longitude', newProperty.longitude)
+  //   appendField('checkIn', newProperty.startDate)
+  //   appendField('checkOut', newProperty.endDate)
+  //   appendField('priceRange', JSON.stringify(newProperty.priceRange))
+  //   appendField('guest_perPrice', newProperty.guest_perPrice)
+
+  //   newProperty.images.forEach((image) => {
+  //     if (typeof image === 'string') {
+  //       formData.append('existingImages', image)
+  //     } else {
+  //       formData.append('images', image)
+  //     }
+  //   })
+
+  //   try {
+  //     SetIsLoading(true)
+
+  //     const isUpdate = Boolean(newProperty._id)
+  //     const url = isUpdate
+  //       ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
+  //       : `http://44.196.64.110:8000/property/post`
+  //     const method = isUpdate ? 'put' : 'post'
+
+  //     const response = await axios({
+  //       method: method,
+  //       url: url,
+  //       data: formData,
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data',
+  //       },
+  //     })
+
+  //     console.log('Property added/updated successfully:', response.data)
+  //     setModalVisible(false)
+  //     fetchProperties()
+  //   } catch (error) {
+  //     console.error('Error adding/updating property:', error)
+  //     alert('Failed to add/update the property. Please try again.')
+  //   } finally {
+  //     SetIsLoading(false)
+  //   }
+  // }
+
   const addOrUpdateProperty = async () => {
-    const formData = new FormData()
-
-    const appendField = (key, value) => {
+    const propertyData = {
+      vendorId,
+      property_nickname: newProperty.property_nickname,
+      category: newProperty.category,
+      property_description: newProperty.property_description,
+      instant_booking: newProperty.instant_booking,
+      property_name: newProperty.property_name,
+      acreage: newProperty.acreage,
+      guided_hunt: newProperty.guided_hunt,
+      guest_limit: newProperty.guest_limit,
+      lodging: newProperty.lodging,
+      shooting_range: newProperty.shooting_range,
+      extended_details: newProperty.extended_details,
+      address: newProperty.address,
+      groupPrice: newProperty.groupPrice,
+      groupSize: newProperty.groupSize,
+      latitude: newProperty.latitude,
+      longitude: newProperty.longitude,
+      checkIn: newProperty.startDate,
+      checkOut: newProperty.endDate,
+      priceRange: JSON.stringify(newProperty.priceRange), // Assuming this is already in the desired format
+      guest_perPrice: newProperty.guest_perPrice,
+    };
+  
+    const formData = new FormData();
+  
+    Object.entries(propertyData).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        formData.append(key, value)
+        formData.append(key, value);
       }
+    });
+  
+    if (newProperty.images && Array.isArray(newProperty.images)) {
+      newProperty.images.forEach((image) => {
+        if (typeof image === 'string') {
+          formData.append('existingImages', image);
+        } else {
+          formData.append('images', image);
+        }
+      });
     }
-
-    appendField('vendorId', vendorId)
-    appendField('property_nickname', newProperty.property_nickname)
-    appendField('category', newProperty.category)
-    appendField('property_description', newProperty.property_description)
-    appendField('instant_booking', newProperty.instant_booking)
-    appendField('property_name', newProperty.property_name)
-    appendField('acreage', newProperty.acreage)
-    appendField('guided_hunt', newProperty.guided_hunt)
-    appendField('guest_limit', newProperty.guest_limit)
-    appendField('lodging', newProperty.lodging)
-    appendField('shooting_range', newProperty.shooting_range)
-    appendField('extended_details', newProperty.extended_details)
-    appendField('address', newProperty.address)
-    appendField('groupPrice', newProperty.groupPrice)
-    appendField('groupSize', newProperty.groupSize)
-    appendField('latitude', newProperty.latitude)
-    appendField('longitude', newProperty.longitude)
-    appendField('checkIn', newProperty.startDate)
-    appendField('checkOut', newProperty.endDate)
-    appendField('priceRange', JSON.stringify(newProperty.priceRange))
-    appendField('guest_perPrice', newProperty.guest_perPrice)
-
-
-
-    newProperty.images.forEach((image) => {
-      if (typeof image === 'string') {
-        formData.append('existingImages', image)
-      } else {
-        formData.append('images', image)
-      }
-    })
-
+  
     try {
-      SetIsLoading(true)
-
-      const isUpdate = Boolean(newProperty._id)
+      SetIsLoading(true);
+  
+      const isUpdate = Boolean(newProperty._id);
       const url = isUpdate
         ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
-        : `http://44.196.64.110:8000/property/post`
-      const method = isUpdate ? 'put' : 'post'
-
+        : `http://44.196.64.110:8000/property/post`;
+      const method = isUpdate ? 'put' : 'post';
+  
       const response = await axios({
         method: method,
         url: url,
         data: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // 'Content-Type': 'multipart/form-data', 
+          'Content-Type': 'application/json',
         },
-      })
-
-      console.log('Property added/updated successfully:', response.data)
-      setModalVisible(false)
-      fetchProperties()
+      });
+  
+      console.log('Property added/updated successfully:', response.data);
+      setModalVisible(false);
+      fetchProperties();
     } catch (error) {
-      console.error('Error adding/updating property:', error)
-      alert('Failed to add/update the property. Please try again.')
+      console.error('Error adding/updating property:', error);
+      alert('Failed to add/update the property. Please try again.');
     } finally {
-      SetIsLoading(false)
+      SetIsLoading(false);
     }
-  }
+  };
+  
 
   const handlePlaceSelect = () => {
     if (autocompleteRef.current) {
@@ -558,7 +630,6 @@ const PropertyManagement = () => {
                   {selectedProperty.priceRange.max}
                 </p>
 
-                {/* Price Per Group Size */}
                 <p>
                   <strong>Price Per Group Size:</strong>
                   {selectedProperty.pricePerGroupSize.groupPrice
@@ -566,7 +637,6 @@ const PropertyManagement = () => {
                     : `N/A`}
                 </p>
 
-                {/* Instant Booking */}
                 <p>
                   <strong>Instant Booking:</strong>{' '}
                   {selectedProperty.details.instantBooking ? 'Yes' : 'No'}
@@ -577,18 +647,15 @@ const PropertyManagement = () => {
                   <strong>Address:</strong> {selectedProperty.location.address}
                 </p>
 
-                {/* Coordinates */}
                 <p>
                   <strong>Coordinates:</strong> Latitude: {selectedProperty.location.latitude},
                   Longitude: {selectedProperty.location.longitude}
                 </p>
 
-                {/* Vendor ID */}
                 <p>
                   <strong>Vendor ID:</strong> {selectedProperty.vendorId}
                 </p>
 
-                {/* Category */}
                 <p>
                   <strong>Category:</strong> {selectedProperty.category}
                 </p>
@@ -881,7 +948,7 @@ const PropertyManagement = () => {
             </CRow>
             <h5>Location</h5>
             <useLoadScript
-              googleMapsApiKey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s"
+              googlemapsapikey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s"
               libraries={libraries}
             >
               <div className="mb-2">
