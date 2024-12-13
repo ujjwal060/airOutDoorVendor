@@ -53,11 +53,34 @@ const PropertyManagement = () => {
   const [deletePropertyId, setdeletePropertyId] = useState(null)
   const [IsLoading, SetIsLoading] = useState(false)
   const fileInputRef = useRef()
+  const [selectedDates, setSelectedDates] = useState([])
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: 'AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s',
     libraries,
   })
+  const handleDateChange = (date) => {
+    const dateString = date.toISOString() // Convert to ISO format for compatibility
+    const updatedDates = [...selectedDates]
+    const existingIndex = updatedDates.findIndex((d) => d === dateString)
+
+    if (existingIndex !== -1) {
+      // If the date exists, remove it
+      updatedDates.splice(existingIndex, 1)
+    } else {
+      // If the date doesn't exist, add it
+      updatedDates.push(dateString)
+    }
+
+    setSelectedDates(updatedDates)
+  }
+
+  const disabledDates = selectedDates // Use selectedDates as disabledDates for demonstration
+  const isDateDisabled = (date) => {
+    return disabledDates.some(
+      (disabledDate) => new Date(disabledDate).toDateString() === date.toDateString(),
+    )
+  }
 
   const handleToggle = async (propertyId) => {
     const newFavoriteStatus = !favorites[propertyId]
@@ -91,6 +114,7 @@ const PropertyManagement = () => {
 
   const [selectedProperty, setSelectedProperty] = useState(null)
   const [newProperty, setNewProperty] = useState({
+    selectedDates:[],
     property_nickname: '',
     category: '',
     property_name: '',
@@ -355,58 +379,58 @@ const PropertyManagement = () => {
       longitude: newProperty.longitude,
       checkIn: newProperty.startDate,
       checkOut: newProperty.endDate,
-      priceRange: JSON.stringify(newProperty.priceRange), // Assuming this is already in the desired format
+      priceRange: JSON.stringify(newProperty.priceRange),
       guest_perPrice: newProperty.guest_perPrice,
-    };
-  
-    const formData = new FormData();
-  
+      disabledDates: JSON.stringify(selectedDates),
+    }
+
+    const formData = new FormData()
+
     Object.entries(propertyData).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        formData.append(key, value);
+        formData.append(key, value)
       }
-    });
-  
+    })
+
     if (newProperty.images && Array.isArray(newProperty.images)) {
       newProperty.images.forEach((image) => {
         if (typeof image === 'string') {
-          formData.append('existingImages', image);
+          formData.append('existingImages', image)
         } else {
-          formData.append('images', image);
+          formData.append('images', image)
         }
-      });
+      })
     }
-  
+
     try {
-      SetIsLoading(true);
-  
-      const isUpdate = Boolean(newProperty._id);
+      SetIsLoading(true)
+
+      const isUpdate = Boolean(newProperty._id)
       const url = isUpdate
         ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
-        : `http://44.196.64.110:8000/property/post`;
-      const method = isUpdate ? 'put' : 'post';
-  
+        : `http://44.196.64.110:8000/property/post`
+      const method = isUpdate ? 'put' : 'post'
+
       const response = await axios({
         method: method,
         url: url,
         data: formData,
         headers: {
-          // 'Content-Type': 'multipart/form-data', 
+          // 'Content-Type': 'multipart/form-data',
           'Content-Type': 'application/json',
         },
-      });
-  
-      console.log('Property added/updated successfully:', response.data);
-      setModalVisible(false);
-      fetchProperties();
+      })
+
+      console.log('Property added/updated successfully:', response.data)
+      setModalVisible(false)
+      fetchProperties()
     } catch (error) {
-      console.error('Error adding/updating property:', error);
-      alert('Failed to add/update the property. Please try again.');
+      console.error('Error adding/updating property:', error)
+      alert('Failed to add/update the property. Please try again.')
     } finally {
-      SetIsLoading(false);
+      SetIsLoading(false)
     }
-  };
-  
+  }
 
   const handlePlaceSelect = () => {
     if (autocompleteRef.current) {
@@ -691,6 +715,24 @@ const PropertyManagement = () => {
                   <strong>End Date:</strong>{' '}
                   {new Date(selectedProperty.endDate).toLocaleDateString()}
                 </p>
+                <p>
+                  <strong>Disabled Dates:</strong>
+                  {selectedProperty.disabledDates.length > 0 ? (
+                    <ul
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '10px',
+                      }}
+                    >
+                      {selectedProperty.disabledDates.map((date, index) => (
+                        <li key={index}>{new Date(date).toLocaleDateString()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>No disabled dates available.</span>
+                  )}
+                </p>
 
                 {/* Approval */}
                 <p>
@@ -772,6 +814,7 @@ const PropertyManagement = () => {
               </div>
               <div className="col-md-6">
                 <CFormInput
+                  type="number"
                   label="Min Price"
                   name="priceRange.min"
                   value={newProperty.priceRange.min}
@@ -780,6 +823,7 @@ const PropertyManagement = () => {
               </div>
               <div className="col-md-6">
                 <CFormInput
+                  type="number"
                   label="Max Price"
                   name="priceRange.max"
                   value={newProperty.priceRange.max}
@@ -946,6 +990,32 @@ const PropertyManagement = () => {
                 </div>
               </CCol>
             </CRow>
+            <CRow className="mb-3">
+              <h5 className="mx-3">Select Disabled/Unavailable Dates</h5>
+              <CCol>
+                <DatePicker
+                  selected={null}
+                  onChange={handleDateChange}
+                  inline
+                  shouldCloseOnSelect={false}
+                  highlightDates={selectedDates.map((date) => new Date(date))} // Convert ISO strings to Date objects for highlighting
+                  dayClassName={(date) => (isDateDisabled(date) ? 'disabled-date' : '')}
+                />
+              </CCol>
+              <CCol>
+                <h5>Selected Dates:</h5>
+                {selectedDates.length > 0 ? (
+                  <ul>
+                    {selectedDates.map((date, index) => (
+                      <li key={index}>{new Date(date).toLocaleDateString()}</li> // Convert to Date before formatting
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No dates selected</p>
+                )}
+              </CCol>
+            </CRow>
+
             <h5>Location</h5>
             <useLoadScript
               googlemapsapikey="AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s"
