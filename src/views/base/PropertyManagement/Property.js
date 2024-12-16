@@ -358,6 +358,13 @@ const PropertyManagement = () => {
   //   }
   // }
 
+  useEffect(() => {
+    console.log(newProperty.startDate)
+    if (new Date(newProperty.startDate) > new Date(newProperty.endDate)) {
+      toast.warning('Start Date should be earlir than the End Date')
+    }
+  }, [newProperty.startDate, newProperty.endDate])
+
   const addOrUpdateProperty = async () => {
     const propertyData = {
       vendorId,
@@ -455,7 +462,7 @@ const PropertyManagement = () => {
     <div>
       <ToastContainer
         position="top-right"
-        autoClose={5000}
+        autoClose={2000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
@@ -906,7 +913,7 @@ const PropertyManagement = () => {
               <div className="col-md-6">
                 <CFormInput
                   type="number"
-                  label="groupSize"
+                  label="Group Size"
                   name="groupSize"
                   value={newProperty.groupSize}
                   onChange={handleChange}
@@ -923,14 +930,6 @@ const PropertyManagement = () => {
               </div>
 
               {/* Cancellation Policy Checkbox */}
-              <div className="col-md-12">
-                <CFormCheck
-                  label="Cancellation Policy"
-                  name="cancellation_policy"
-                  checked={newProperty.cancellation_policy}
-                  onChange={handleChange}
-                />
-              </div>
             </div>
 
             <CFormLabel>Images</CFormLabel>
@@ -938,7 +937,7 @@ const PropertyManagement = () => {
               {newProperty.images.map((image, index) => (
                 <div key={index} style={{ display: 'inline-block', margin: '5px' }}>
                   <img
-                    src={image}
+                    src={URL.createObjectURL(image) || newProperty.images}
                     alt={`Image ${index + 1}`}
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                   />
@@ -1000,7 +999,7 @@ const PropertyManagement = () => {
                   onChange={handleDateChange}
                   inline
                   shouldCloseOnSelect={false}
-                  highlightDates={selectedDates.map((date) => new Date(date))} // Convert ISO strings to Date objects for highlighting
+                  highlightDates={selectedDates.map((date) => new Date(date))}
                   dayClassName={(date) => (isDateDisabled(date) ? 'disabled-date' : '')}
                 />
               </CCol>
@@ -1009,7 +1008,7 @@ const PropertyManagement = () => {
                 {selectedDates.length > 0 ? (
                   <ul>
                     {selectedDates.map((date, index) => (
-                      <li key={index}>{new Date(date).toLocaleDateString()}</li> // Convert to Date before formatting
+                      <li key={index}>{new Date(date).toLocaleDateString()}</li>
                     ))}
                   </ul>
                 ) : (
@@ -1043,6 +1042,14 @@ const PropertyManagement = () => {
                 </Autocomplete>
               </div>
             </useLoadScript>
+            <div className="col-md-12">
+              <CFormCheck
+                label="Cancellation Policy"
+                name="cancellation_policy"
+                checked={newProperty.cancellation_policy}
+                onChange={handleChange}
+              />
+            </div>
           </CModalBody>
 
           <CModalFooter>
