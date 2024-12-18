@@ -146,7 +146,7 @@ const PropertyManagement = () => {
     property_description: '',
     startDate: '',
     endDate: '',
-    pricePerPersonPerDay:'',
+    pricePerPersonPerDay: '',
     address: '',
     latitude: '',
     longitude: '',
@@ -283,7 +283,7 @@ const PropertyManagement = () => {
       category: property.category || '',
       property_name: property.propertyName || '',
       property_description: property.propertyDescription || '',
-      pricePerPersonPerDay:property?.pricePerPersonPerDay,
+      pricePerPersonPerDay: property?.pricePerPersonPerDay,
       startDate: property.startDate ? new Date(property.startDate) : '',
       endDate: property.endDate ? new Date(property.endDate) : '',
       address: property.location?.address || '',
@@ -361,8 +361,24 @@ const PropertyManagement = () => {
           'Content-Type': 'multipart/form-data',
         },
       })
+      setNewProperty({
+        property_nickname: '',
+        category: '',
+        property_name: '',
+        property_description: '',
+        startDate: '',
+        endDate: '',
+        pricePerPersonPerDay: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        instant_booking: active,
+        images: [],
+        cancellation_policy: false,
+        customFields: [],
+      })
 
-      console.log('Property added/updated successfully:', response.data)
+      toast.success("Property added Successfully")
       setModalVisible(false)
       fetchProperties()
     } catch (error) {
@@ -423,6 +439,7 @@ const PropertyManagement = () => {
                   <CTableHeaderCell>Property Name</CTableHeaderCell>
                   <CTableHeaderCell>Address</CTableHeaderCell>
                   <CTableHeaderCell>Description</CTableHeaderCell>
+                  <CTableHeaderCell className="text-center ">Price Per Person/Day</CTableHeaderCell>
                   <CTableHeaderCell>Favourite</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
@@ -457,6 +474,10 @@ const PropertyManagement = () => {
                     {/* Guest Limit */}
                     <CTableDataCell className="text-start align-middle">
                       {property.propertyDescription}
+                    </CTableDataCell>
+                    {/* price per day per person  */}
+                    <CTableDataCell className="text-center align-middle">
+                      {property.pricePerPersonPerDay}
                     </CTableDataCell>
 
                     {/* Toggle Button */}
@@ -545,8 +566,8 @@ const PropertyManagement = () => {
 
                 {/* Price Range */}
                 <p>
-                  <strong>Price Per Day Per PErson:</strong> ${selectedProperty?.pricePerPersonPerDay} 
-                  
+                  <strong>Price Per Day Per PErson:</strong> $
+                  {selectedProperty?.pricePerPersonPerDay}
                 </p>
 
                 {/* Address */}
