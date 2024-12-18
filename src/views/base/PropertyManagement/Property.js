@@ -358,8 +358,7 @@ const PropertyManagement = () => {
         url: url,
         data: formData,
         headers: {
-          // 'Content-Type': 'multipart/form-data',
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       })
 
