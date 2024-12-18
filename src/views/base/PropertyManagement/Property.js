@@ -146,7 +146,7 @@ const PropertyManagement = () => {
     property_description: '',
     startDate: '',
     endDate: '',
-    priceRange: { min: '', max: '' },
+    pricePerPersonPerDay:'',
     address: '',
     latitude: '',
     longitude: '',
@@ -283,7 +283,7 @@ const PropertyManagement = () => {
       category: property.category || '',
       property_name: property.propertyName || '',
       property_description: property.propertyDescription || '',
-      priceRange: property.priceRange || { min: '', max: '' },
+      pricePerPersonPerDay:'',
       startDate: property.startDate ? new Date(property.startDate) : '',
       endDate: property.endDate ? new Date(property.endDate) : '',
       address: property.location?.address || '',
@@ -319,7 +319,7 @@ const PropertyManagement = () => {
       longitude: newProperty.longitude,
       checkIn: newProperty.startDate,
       checkOut: newProperty.endDate,
-      priceRange: JSON.stringify(newProperty.priceRange),
+      pricePerPersonPerDay: newProperty.pricePerPersonPerDay,
       disabledDates: JSON.stringify(selectedDates),
       customFields: JSON.stringify(newProperty.customFields),
     }
@@ -350,7 +350,7 @@ const PropertyManagement = () => {
       const isUpdate = Boolean(newProperty._id)
       const url = isUpdate
         ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
-        : `http://44.196.64.110:8000/property/post`
+        : `http://localhost:8000/property/post`
       const method = isUpdate ? 'put' : 'post'
 
       const response = await axios({
@@ -545,8 +545,8 @@ const PropertyManagement = () => {
 
                 {/* Price Range */}
                 <p>
-                  <strong>Price Range:</strong> ${selectedProperty?.priceRange?.min} - $
-                  {selectedProperty?.priceRange?.max}
+                  <strong>Price Per Day Per PErson:</strong> ${selectedProperty?.pricePerPersonPerDay} 
+                  
                 </p>
 
                 {/* Address */}
@@ -712,18 +712,9 @@ const PropertyManagement = () => {
               <div className="col-md-6">
                 <CFormInput
                   type="number"
-                  label="Min Price"
-                  name="priceRange.min"
-                  value={newProperty.priceRange.min}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormInput
-                  type="number"
-                  label="Max Price"
-                  name="priceRange.max"
-                  value={newProperty.priceRange.max}
+                  label="Price Per Day Per Person ( in $ )"
+                  name="pricePerPersonPerDay"
+                  value={newProperty.pricePerPersonPerDay}
                   onChange={handleChange}
                 />
               </div>
@@ -779,7 +770,7 @@ const PropertyManagement = () => {
               {newProperty.images.map((image, index) => (
                 <div key={index} style={{ display: 'inline-block', margin: '5px' }}>
                   <img
-                    src={image}
+                    src={typeof image === 'string' ? image : URL.createObjectURL(image)}
                     alt={`Image ${index + 1}`}
                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                   />
