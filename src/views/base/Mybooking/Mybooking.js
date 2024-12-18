@@ -90,7 +90,6 @@ const Tables = () => {
                   <CTableHeaderCell>Guests</CTableHeaderCell>
                   <CTableHeaderCell>Camper</CTableHeaderCell>
                   <CTableHeaderCell>Price</CTableHeaderCell>
-                  <CTableHeaderCell>Action</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
@@ -106,13 +105,6 @@ const Tables = () => {
                       <CTableDataCell>{Booking.guests}</CTableDataCell>
                       <CTableDataCell>{Booking.camper ? 'Yes' : 'No'}</CTableDataCell>
                       <CTableDataCell>{Booking.totalAmount}</CTableDataCell>
-                      <CTableDataCell>
-                        <FontAwesomeIcon
-                          icon={faTrash}
-                          onClick={() => handleDelete(Booking._id)}
-                          style={{ cursor: 'pointer', color: 'red' }}
-                        />
-                      </CTableDataCell>
                     </CTableRow>
                   ))
                 ) : (
