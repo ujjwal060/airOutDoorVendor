@@ -617,6 +617,13 @@ const PropertyManagement = () => {
 
                 {/* Availability */}
                 <p>
+                  <strong>Admin Commission:</strong>{' '}
+                  {selectedProperty?.adminCommission !== undefined
+                    ? `${selectedProperty.adminCommission}%`
+                    : 'Property Not Approved'}
+                </p>
+
+                <p>
                   <strong>Start Date:</strong>{' '}
                   {new Date(selectedProperty.startDate).toLocaleDateString()}
                 </p>
