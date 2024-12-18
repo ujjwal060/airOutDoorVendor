@@ -54,6 +54,8 @@ const PropertyManagement = () => {
   const [IsLoading, SetIsLoading] = useState(false)
   const fileInputRef = useRef()
   const [selectedDates, setSelectedDates] = useState([])
+  const [keyInput, setKeyInput] = useState('')
+  const [valueInput, setValueInput] = useState('')
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: 'AIzaSyDknLyGZRHAWa4s5GuX5bafBsf-WD8wd7s',
@@ -96,7 +98,7 @@ const PropertyManagement = () => {
         [propertyId]: newFavoriteStatus,
       }))
     } catch (error) {
-      console.error('Error updating favorite status', error)
+      console.error('Error updating favorite status', error.response)
     }
   }
   const handleRemoveImage = (indexToRemove) => {
@@ -111,10 +113,33 @@ const PropertyManagement = () => {
     await handleToggle(propertyId, isFavorite)
     setLoadingPropertyId(null)
   }
+  const handleFieldChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prevState) => ({ ...prevState, [name]: value }))
+  }
+
+  // Add custom key-value pair
+  const handleAddCustomField = () => {
+    if (keyInput.trim() && valueInput.trim()) {
+      setNewProperty((prev) => ({
+        ...prev,
+        customFields: [...prev.customFields, { key: keyInput, value: valueInput }],
+      }))
+      setKeyInput('')
+      setValueInput('')
+    }
+  }
+
+  const handleRemoveCustomField = (index) => {
+    setNewProperty((prev) => ({
+      ...prev,
+      customFields: prev.customFields.filter((_, i) => i !== index),
+    }))
+  }
 
   const [selectedProperty, setSelectedProperty] = useState(null)
   const [newProperty, setNewProperty] = useState({
-    selectedDates: [],
+    selectedDates: selectedDates,
     property_nickname: '',
     category: '',
     property_name: '',
@@ -127,16 +152,8 @@ const PropertyManagement = () => {
     longitude: '',
     instant_booking: active,
     images: [],
-    acreage: '',
-    guided_hunt: 'Optional',
-    guest_limit: '',
-    lodging: '',
-    shooting_range: '',
-    extended_details: '',
-    groupPrice: '',
-    groupSize: '',
     cancellation_policy: false,
-    guest_perPrice: '',
+    customFields: [],
   })
 
   const vendorId = localStorage.getItem('vendorId')
@@ -227,6 +244,7 @@ const PropertyManagement = () => {
         }
       })
       setProperties(formattedProperties)
+      console.log(newProperty)
     } catch (error) {
       console.error('Error fetching properties:', error)
       setProperties([])
@@ -265,98 +283,27 @@ const PropertyManagement = () => {
       category: property.category || '',
       property_name: property.propertyName || '',
       property_description: property.propertyDescription || '',
+      priceRange: property.priceRange || { min: '', max: '' },
       startDate: property.startDate ? new Date(property.startDate) : '',
       endDate: property.endDate ? new Date(property.endDate) : '',
-      priceRange: property.priceRange || { min: '', max: '' },
       address: property.location?.address || '',
       latitude: property.location?.latitude || '',
       longitude: property.location?.longitude || '',
       instant_booking: property.instant_booking || false,
       images: property.images || [],
-      acreage: property.details?.acreage || '',
-      guided_hunt: property.details?.guided_hunt || '',
-      guest_limit: property.details?.guestLimitPerDay || '',
-      lodging: property.details?.lodging || '',
-      shooting_range: property.details?.shootingRange || '',
-      extended_details: property.details?.optionalExtendedDetails || '',
-      groupPrice: property.pricePerGroupSize?.groupPrice || '',
-      groupSize: property.pricePerGroupSize?.groupSize || '',
+      customFields: property?.customFields,
+      selectedDates: property?.disabledDates,
       cancellation_policy: property.cancellation_policy || false,
-      guest_perPrice: property.details?.guestPricePerDay || '',
       _id: property._id || '',
     })
 
-    setEditMode(true) // Enable edit mode
-    setModalVisible(true) // Show the modal
+    setEditMode(true)
+    setModalVisible(true)
   }
 
-  // const addOrUpdateProperty = async () => {
-  //   const formData = new FormData()
-
-  //   const appendField = (key, value) => {
-  //     if (value !== undefined && value !== null) {
-  //       formData.append(key, value)
-  //     }
-  //   }
-
-  //   appendField('vendorId', vendorId)
-  //   appendField('property_nickname', newProperty.property_nickname)
-  //   appendField('category', newProperty.category)
-  //   appendField('property_description', newProperty.property_description)
-  //   appendField('instant_booking', newProperty.instant_booking)
-  //   appendField('property_name', newProperty.property_name)
-  //   appendField('acreage', newProperty.acreage)
-  //   appendField('guided_hunt', newProperty.guided_hunt)
-  //   appendField('guest_limit', newProperty.guest_limit)
-  //   appendField('lodging', newProperty.lodging)
-  //   appendField('shooting_range', newProperty.shooting_range)
-  //   appendField('extended_details', newProperty.extended_details)
-  //   appendField('address', newProperty.address)
-  //   appendField('groupPrice', newProperty.groupPrice)
-  //   appendField('groupSize', newProperty.groupSize)
-  //   appendField('latitude', newProperty.latitude)
-  //   appendField('longitude', newProperty.longitude)
-  //   appendField('checkIn', newProperty.startDate)
-  //   appendField('checkOut', newProperty.endDate)
-  //   appendField('priceRange', JSON.stringify(newProperty.priceRange))
-  //   appendField('guest_perPrice', newProperty.guest_perPrice)
-
-  //   newProperty.images.forEach((image) => {
-  //     if (typeof image === 'string') {
-  //       formData.append('existingImages', image)
-  //     } else {
-  //       formData.append('images', image)
-  //     }
-  //   })
-
-  //   try {
-  //     SetIsLoading(true)
-
-  //     const isUpdate = Boolean(newProperty._id)
-  //     const url = isUpdate
-  //       ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
-  //       : `http://44.196.64.110:8000/property/post`
-  //     const method = isUpdate ? 'put' : 'post'
-
-  //     const response = await axios({
-  //       method: method,
-  //       url: url,
-  //       data: formData,
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //     })
-
-  //     console.log('Property added/updated successfully:', response.data)
-  //     setModalVisible(false)
-  //     fetchProperties()
-  //   } catch (error) {
-  //     console.error('Error adding/updating property:', error)
-  //     alert('Failed to add/update the property. Please try again.')
-  //   } finally {
-  //     SetIsLoading(false)
-  //   }
-  // }
+  useEffect(() => {
+    console.log(newProperty)
+  }, [])
 
   const addOrUpdateProperty = async () => {
     const propertyData = {
@@ -366,22 +313,15 @@ const PropertyManagement = () => {
       property_description: newProperty.property_description,
       instant_booking: newProperty.instant_booking,
       property_name: newProperty.property_name,
-      acreage: newProperty.acreage,
-      guided_hunt: newProperty.guided_hunt,
-      guest_limit: newProperty.guest_limit,
-      lodging: newProperty.lodging,
-      shooting_range: newProperty.shooting_range,
       extended_details: newProperty.extended_details,
       address: newProperty.address,
-      groupPrice: newProperty.groupPrice,
-      groupSize: newProperty.groupSize,
       latitude: newProperty.latitude,
       longitude: newProperty.longitude,
       checkIn: newProperty.startDate,
       checkOut: newProperty.endDate,
       priceRange: JSON.stringify(newProperty.priceRange),
-      guest_perPrice: newProperty.guest_perPrice,
       disabledDates: JSON.stringify(selectedDates),
+      customFields: JSON.stringify(newProperty.customFields),
     }
 
     const formData = new FormData()
@@ -395,13 +335,15 @@ const PropertyManagement = () => {
     if (newProperty.images && Array.isArray(newProperty.images)) {
       newProperty.images.forEach((image) => {
         if (typeof image === 'string') {
-          formData.append('existingImages', image)
+          formData.append('existingImages', image) // Existing images as strings
         } else {
-          formData.append('images', image)
+          formData.append('images', image) // New images as file objects
         }
       })
     }
-
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`)
+    }
     try {
       SetIsLoading(true)
 
@@ -416,8 +358,7 @@ const PropertyManagement = () => {
         url: url,
         data: formData,
         headers: {
-          // 'Content-Type': 'multipart/form-data',
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       })
 
@@ -481,9 +422,7 @@ const PropertyManagement = () => {
                   <CTableHeaderCell>Image</CTableHeaderCell>
                   <CTableHeaderCell>Property Name</CTableHeaderCell>
                   <CTableHeaderCell>Address</CTableHeaderCell>
-                  <CTableHeaderCell>Guest Limit/Day</CTableHeaderCell>
-                  <CTableHeaderCell>Guest Price/Day</CTableHeaderCell>
-                  <CTableHeaderCell>Acreage</CTableHeaderCell>
+                  <CTableHeaderCell>Description</CTableHeaderCell>
                   <CTableHeaderCell>Favourite</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
@@ -506,28 +445,18 @@ const PropertyManagement = () => {
                     </CTableDataCell>
 
                     {/* Property Name */}
-                    <CTableDataCell className="text-center align-middle">
+                    <CTableDataCell className="text-center ">
                       {property?.propertyName}
                     </CTableDataCell>
 
                     {/* Address */}
-                    <CTableDataCell className="text-center align-middle">
+                    <CTableDataCell className="text-start align-start">
                       {property.location.address}
                     </CTableDataCell>
 
                     {/* Guest Limit */}
-                    <CTableDataCell className="text-center align-middle">
-                      {property.details.guestLimitPerDay}
-                    </CTableDataCell>
-
-                    {/* Guest Price */}
-                    <CTableDataCell className="text-center align-middle">
-                      {property.details.guestPricePerDay}
-                    </CTableDataCell>
-
-                    {/* Acreage */}
-                    <CTableDataCell className="text-center align-middle">
-                      {property.details.acreage}
+                    <CTableDataCell className="text-start align-middle">
+                      {property.propertyDescription}
                     </CTableDataCell>
 
                     {/* Toggle Button */}
@@ -614,61 +543,15 @@ const PropertyManagement = () => {
                   <strong>Description:</strong> {selectedProperty.propertyDescription}
                 </p>
 
-                {/* Acreage */}
-                <p>
-                  <strong>Acreage:</strong> {selectedProperty.details.acreage}
-                </p>
-
-                {/* Guest Details */}
-                <p>
-                  <strong>Guest Limit Per Day:</strong> {selectedProperty.details.guestLimitPerDay}
-                </p>
-                <p>
-                  <strong>Guest Price Per Day:</strong> ${selectedProperty.details.guestPricePerDay}
-                </p>
-
-                {/* Guided Hunt */}
-                <p>
-                  <strong>Guided Hunt:</strong> {selectedProperty.details.guidedHunt}
-                </p>
-
-                {/* Lodging */}
-                <p>
-                  <strong>Lodging:</strong> {selectedProperty.details.lodging}
-                </p>
-
-                {/* Shooting Range */}
-                <p>
-                  <strong>Shooting Range:</strong> {selectedProperty.details.shootingRange}
-                </p>
-
-                {/* Optional Extended Details */}
-                <p>
-                  <strong>Optional Extended Details:</strong>{' '}
-                  {selectedProperty.details.optionalExtendedDetails}
-                </p>
-
                 {/* Price Range */}
                 <p>
-                  <strong>Price Range:</strong> ${selectedProperty.priceRange.min} - $
-                  {selectedProperty.priceRange.max}
-                </p>
-
-                <p>
-                  <strong>Price Per Group Size:</strong>
-                  {selectedProperty.pricePerGroupSize.groupPrice
-                    ? `$${selectedProperty.pricePerGroupSize.groupPrice} for ${selectedProperty.pricePerGroupSize.groupSize} guests`
-                    : `N/A`}
-                </p>
-
-                <p>
-                  <strong>Instant Booking:</strong>{' '}
-                  {selectedProperty.details.instantBooking ? 'Yes' : 'No'}
+                  <strong>Price Range:</strong> ${selectedProperty?.priceRange?.min} - $
+                  {selectedProperty?.priceRange?.max}
                 </p>
 
                 {/* Address */}
                 <p>
-                  <strong>Address:</strong> {selectedProperty.location.address}
+                  <strong>Address:</strong> {selectedProperty?.location?.address}
                 </p>
 
                 <p>
@@ -680,31 +563,21 @@ const PropertyManagement = () => {
                   <strong>Vendor ID:</strong> {selectedProperty.vendorId}
                 </p>
 
+                {/* Custom Fields */}
                 <p>
-                  <strong>Category:</strong> {selectedProperty.category}
+                  <strong>Custom Fields:</strong>
                 </p>
-
-                {/* Images */}
-                <div>
-                  <strong>Images:</strong>
-                  <div
-                    style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}
-                  >
-                    {selectedProperty.images.map((image, idx) => (
-                      <img
-                        key={idx}
-                        src={image}
-                        alt={`Property image ${idx + 1}`}
-                        style={{
-                          width: '100px',
-                          height: 'auto',
-                          borderRadius: '5px',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        }}
-                      />
+                {selectedProperty.customFields.length > 0 ? (
+                  <ul style={{ listStyleType: 'none', paddingLeft: '0' }}>
+                    {selectedProperty.customFields.map((field, index) => (
+                      <li key={index} style={{ marginBottom: '5px' }}>
+                        <strong>{field.key}:</strong> {field.value}
+                      </li>
                     ))}
-                  </div>
-                </div>
+                  </ul>
+                ) : (
+                  <p>No custom fields available.</p>
+                )}
 
                 {/* Availability */}
                 <p>
@@ -752,6 +625,28 @@ const PropertyManagement = () => {
                   <strong>Created At:</strong>{' '}
                   {new Date(selectedProperty.createdAt).toLocaleString()}
                 </p>
+
+                {/* Images */}
+                <div>
+                  <strong>Images:</strong>
+                  <div
+                    style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}
+                  >
+                    {selectedProperty.images.map((image, idx) => (
+                      <img
+                        key={idx}
+                        src={image}
+                        alt={`Property image ${idx + 1}`}
+                        style={{
+                          width: '100px',
+                          height: 'auto',
+                          borderRadius: '5px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </CModalBody>
 
               <CModalFooter>
@@ -835,102 +730,48 @@ const PropertyManagement = () => {
 
               {/* Additional Fields */}
               <h5>Additional Details</h5>
-              <div className="col-md-6">
-                <CFormInput
-                  label="Acreage"
-                  name="acreage"
-                  type="number"
-                  value={newProperty.acreage}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormLabel htmlFor="guided_hunt">Guided Hunt</CFormLabel>
-                <CFormSelect
-                  id="guided_hunt"
-                  name="guided_hunt"
-                  value={newProperty.guided_hunt}
-                  onChange={handleChange}
-                >
-                  <option value="">Select an option</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Optional">Optional</option>
-                </CFormSelect>
-              </div>
+              {newProperty.customFields.map((field, index) => (
+                <CRow key={index} className="align-items-center mb-2">
+                  <CCol xs="8">
+                    <span>
+                      <strong>{field.key}</strong>: {field.value}
+                    </span>
+                  </CCol>
+                  <CCol xs="4" className="text-right">
+                    <CButton
+                      color="danger"
+                      size="sm"
+                      onClick={() => handleRemoveCustomField(index)}
+                    >
+                      Remove
+                    </CButton>
+                  </CCol>
+                </CRow>
+              ))}
 
-              <div className="col-md-6">
-                <CFormInput
-                  label="Guest Limit"
-                  name="guest_limit"
-                  type="number"
-                  value={newProperty.guest_limit}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormInput
-                  type="number"
-                  label="Price Per Guest"
-                  name="guest_perPrice"
-                  value={newProperty.guest_perPrice}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormInput
-                  label="Lodging"
-                  name="lodging"
-                  value={newProperty.lodging}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormInput
-                  type="number"
-                  label="Shooting Range"
-                  name="shooting_range"
-                  value={newProperty.shooting_range}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormInput
-                  label="Extended Details"
-                  name="extended_details"
-                  value={newProperty.extended_details}
-                  onChange={handleChange}
-                />
-              </div>
-              <h5>Price Per Group Size</h5>
-              <div className="col-md-6">
-                <CFormInput
-                  type="number"
-                  label="groupSize"
-                  name="groupSize"
-                  value={newProperty.groupSize}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="col-md-6">
-                <CFormInput
-                  type="number"
-                  label="Price Per Group"
-                  name="groupPrice"
-                  value={newProperty.groupPrice}
-                  onChange={handleChange}
-                />
-              </div>
-
-              {/* Cancellation Policy Checkbox */}
-              <div className="col-md-12">
-                <CFormCheck
-                  label="Cancellation Policy"
-                  name="cancellation_policy"
-                  checked={newProperty.cancellation_policy}
-                  onChange={handleChange}
-                />
-              </div>
+              <CRow className="mt-4">
+                <CCol xs="5">
+                  <CFormInput
+                    type="text"
+                    placeholder="Field Name"
+                    value={keyInput}
+                    onChange={(e) => setKeyInput(e.target.value)}
+                  />
+                </CCol>
+                <CCol xs="5">
+                  <CFormInput
+                    type="text"
+                    placeholder="Field Value"
+                    value={valueInput}
+                    onChange={(e) => setValueInput(e.target.value)}
+                  />
+                </CCol>
+                <CCol xs="2">
+                  <CButton color="primary" onClick={handleAddCustomField}>
+                    Add
+                  </CButton>
+                </CCol>
+              </CRow>
             </div>
 
             <CFormLabel>Images</CFormLabel>
@@ -966,7 +807,7 @@ const PropertyManagement = () => {
                     dateFormat="dd/MM/yyyy"
                     className="form-control"
                     customInput={<CFormInput />}
-                    // Trigger the calendar on icon click
+                    minDate={new Date()} // Disable past dates
                     onClickOutside={() => {}}
                   />
                   <span className="input-group-text date-picker-icon">
@@ -983,6 +824,7 @@ const PropertyManagement = () => {
                     onChange={handleEndDateChange}
                     placeholderText="dd/MM/yyyy"
                     dateFormat="dd/MM/yyyy"
+                    minDate={newProperty.startDate || new Date()}
                     className="form-control"
                     customInput={<CFormInput />}
                   />
