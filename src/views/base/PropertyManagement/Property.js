@@ -350,7 +350,7 @@ const PropertyManagement = () => {
       const isUpdate = Boolean(newProperty._id)
       const url = isUpdate
         ? `http://44.196.64.110:8000/property/update/${newProperty._id}`
-        : `http://localhost:8000/property/post`
+        : `http://44.196.64.110:8000/property/post`
       const method = isUpdate ? 'put' : 'post'
 
       const response = await axios({
