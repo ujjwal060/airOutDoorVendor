@@ -378,7 +378,7 @@ const PropertyManagement = () => {
         customFields: [],
       })
 
-      toast.success("Property added Successfully")
+      toast.success('Property added Successfully')
       setModalVisible(false)
       fetchProperties()
     } catch (error) {
@@ -589,13 +589,28 @@ const PropertyManagement = () => {
                   <strong>Custom Fields:</strong>
                 </p>
                 {selectedProperty.customFields.length > 0 ? (
-                  <ul style={{ listStyleType: 'none', paddingLeft: '0' }}>
-                    {selectedProperty.customFields.map((field, index) => (
-                      <li key={index} style={{ marginBottom: '5px' }}>
-                        <strong>{field.key}:</strong> {field.value}
-                      </li>
-                    ))}
-                  </ul>
+                  <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>
+                          Field Name
+                        </th>
+                        <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>
+                          Value
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedProperty.customFields.map((field, index) => (
+                        <tr key={index}>
+                          <td style={{ border: '1px solid #ddd', padding: '8px' }}>{field.key}</td>
+                          <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                            {field.value}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 ) : (
                   <p>No custom fields available.</p>
                 )}
