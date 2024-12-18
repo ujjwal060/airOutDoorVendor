@@ -283,7 +283,7 @@ const PropertyManagement = () => {
       category: property.category || '',
       property_name: property.propertyName || '',
       property_description: property.propertyDescription || '',
-      pricePerPersonPerDay:'',
+      pricePerPersonPerDay:property?.pricePerPersonPerDay,
       startDate: property.startDate ? new Date(property.startDate) : '',
       endDate: property.endDate ? new Date(property.endDate) : '',
       address: property.location?.address || '',
@@ -358,7 +358,8 @@ const PropertyManagement = () => {
         url: url,
         data: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // 'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
       })
 
