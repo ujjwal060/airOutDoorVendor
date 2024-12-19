@@ -35,11 +35,13 @@ const Tables = () => {
   const [selectedOption, setSelectedOption] = useState('Select Option');
 
   // Fetch bookings from the API on component mount
+  const propertyId=""
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const bookingsResponse = await axios.get(
-          `http://44.196.64.110:8000/booking/getBook/${vendorId}`,
+        const bookingsResponse = await axios.post(
+          "http://44.196.64.110:8000/booking/getBook",{vendorId,propertyId}
+
         )
         console.log('booking', bookingsResponse)
         setBookings(bookingsResponse.data || [])
@@ -125,6 +127,7 @@ const Tables = () => {
                     <CTableRow>
                       <CTableHeaderCell>#</CTableHeaderCell>
                       <CTableHeaderCell>Name</CTableHeaderCell>
+                      <CTableHeaderCell>Property</CTableHeaderCell>
                       <CTableHeaderCell>Check In</CTableHeaderCell>
                       <CTableHeaderCell>Check Out</CTableHeaderCell>
                       <CTableHeaderCell>Guests</CTableHeaderCell>
@@ -140,7 +143,8 @@ const Tables = () => {
                           <CTableHeaderCell scope="row">
                             {index + 1 + (currentPage - 1) * rowsPerPage}
                           </CTableHeaderCell>
-                          <CTableDataCell>{Booking?.userId?.fullName}</CTableDataCell>
+                          <CTableDataCell>{Booking?.userName}</CTableDataCell>
+                          <CTableDataCell>{Booking?.propertyName}</CTableDataCell>
                           <CTableDataCell>
                             {new Date(Booking.checkInDate).toLocaleDateString()}
                           </CTableDataCell>
