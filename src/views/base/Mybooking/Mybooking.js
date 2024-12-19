@@ -169,38 +169,39 @@ const Tables = () => {
                       </CTableRow>
                     )}
                     {currentBookings.length > 0 && (
-                      <CTableRow>
-                        <CTableDataCell colSpan={5} className="text-end fw-bold">
-                          Total:
-                        </CTableDataCell>
-                        <CTableDataCell>
-                          {'$' +
-                            currentBookings
-                              .reduce(
-                                (total, Booking) => total + (parseFloat(Booking.adminAmount) || 0),
-                                0,
-                              )
-                              .toFixed(2)}
-                        </CTableDataCell>
-                        <CTableDataCell>
-                          {'$' +
-                            currentBookings
-                              .reduce(
-                                (total, Booking) => total + (parseFloat(Booking.vendorAmount) || 0),
-                                0,
-                              )
-                              .toFixed(2)}
-                        </CTableDataCell>
-                        <CTableDataCell>
-                          {'$' +
-                            currentBookings
-                              .reduce(
-                                (total, Booking) => total + (parseFloat(Booking.totalAmount) || 0),
-                                0,
-                              )
-                              .toFixed(2)}
-                        </CTableDataCell>
-                      </CTableRow>
+                     <CTableRow>
+                     <CTableDataCell colSpan={6} className="text-end fw-bold">
+                       Total:
+                     </CTableDataCell>
+                     <CTableDataCell className="fw-bold">
+                       {'$' +
+                         currentBookings
+                           .reduce(
+                             (total, Booking) => total + (parseFloat(Booking.adminAmount) || 0),
+                             0,
+                           )
+                           .toFixed(2)}
+                     </CTableDataCell>
+                     <CTableDataCell className="fw-bold">
+                       {'$' +
+                         currentBookings
+                           .reduce(
+                             (total, Booking) => total + (parseFloat(Booking.vendorAmount) || 0),
+                             0,
+                           )
+                           .toFixed(2)}
+                     </CTableDataCell>
+                     <CTableDataCell className="fw-bold">
+                       {'$' +
+                         currentBookings
+                           .reduce(
+                             (total, Booking) => total + (parseFloat(Booking.totalAmount) || 0),
+                             0,
+                           )
+                           .toFixed(2)}
+                     </CTableDataCell>
+                   </CTableRow>
+                   
                     )}
                   </CTableBody>
                 </CTable>
