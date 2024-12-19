@@ -14,6 +14,11 @@ import {
   CSpinner,
   CPagination,
   CPaginationItem,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownItem,
+  CDropdownMenu,
+  CButton,
 } from '@coreui/react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
@@ -26,6 +31,8 @@ const Tables = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage] = useState(10)
   const vendorId = localStorage.getItem('vendorId')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [selectedOption, setSelectedOption] = useState('Select Option');
 
   // Fetch bookings from the API on component mount
   useEffect(() => {
@@ -46,6 +53,15 @@ const Tables = () => {
 
     fetchData()
   }, [])
+
+  const toggleDropdown = () => {
+    setDropdownOpen((prevState) => !prevState);
+  };
+  const handleDropdownItemClick = (option) => {
+    setSelectedOption(option); // Update the selected option
+    console.log(`Selected: ${option}`);
+    setDropdownOpen(false); // Close the dropdown
+  };
 
   // Delete a booking by ID
   const handleDelete = async (id) => {
@@ -73,9 +89,31 @@ const Tables = () => {
       <CRow>
         <CCol xs={12}>
           <CCard className="mb-4">
-            <CCardHeader>
+            <CCardHeader className="d-flex justify-content-between align-items-center">
               <strong>Bookings</strong>
+              <CDropdown
+                alignment="end"
+                className="ms-2"
+                visible={dropdownOpen}
+                toggle={toggleDropdown}
+              >
+                <CDropdownToggle color="secondary" caret>
+                  {selectedOption} {/* Display the selected option */}
+                </CDropdownToggle>
+                <CDropdownMenu>
+                  <CDropdownItem onClick={() => handleDropdownItemClick('Option 1')}>
+                    Option 1
+                  </CDropdownItem>
+                  <CDropdownItem onClick={() => handleDropdownItemClick('Option 2')}>
+                    Option 2
+                  </CDropdownItem>
+                  <CDropdownItem onClick={() => handleDropdownItemClick('Option 3')}>
+                    Option 3
+                  </CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
             </CCardHeader>
+
             <CCardBody>
               {loading ? (
                 <CSpinner color="primary" />
@@ -90,8 +128,9 @@ const Tables = () => {
                       <CTableHeaderCell>Check In</CTableHeaderCell>
                       <CTableHeaderCell>Check Out</CTableHeaderCell>
                       <CTableHeaderCell>Guests</CTableHeaderCell>
-                      <CTableHeaderCell>Camper</CTableHeaderCell>
-                      <CTableHeaderCell>Price</CTableHeaderCell>
+                      <CTableHeaderCell>Admin Commission</CTableHeaderCell>
+                      <CTableHeaderCell>Your Amount</CTableHeaderCell>
+                      <CTableHeaderCell>Total Price</CTableHeaderCell>
                     </CTableRow>
                   </CTableHead>
                   <CTableBody>
@@ -109,14 +148,53 @@ const Tables = () => {
                             {new Date(Booking.checkOutDate).toLocaleDateString()}
                           </CTableDataCell>
                           <CTableDataCell>{Booking.guests}</CTableDataCell>
-                          <CTableDataCell>{Booking.camper ? 'Yes' : 'No'}</CTableDataCell>
-                          <CTableDataCell>{Booking.totalAmount}</CTableDataCell>
+                          <CTableDataCell>
+                            {Booking?.adminAmount ? '$' + Booking?.adminAmount : ''}
+                          </CTableDataCell>
+                          <CTableDataCell>
+                            {Booking?.vendorAmount ? '$' + Booking?.vendorAmount : ''}
+                          </CTableDataCell>
+                          <CTableDataCell>{'$' + Booking.totalAmount}</CTableDataCell>
                         </CTableRow>
                       ))
                     ) : (
                       <CTableRow>
-                        <CTableDataCell colSpan={7} className="text-center">
+                        <CTableDataCell colSpan={8} className="text-center">
                           No bookings found
+                        </CTableDataCell>
+                      </CTableRow>
+                    )}
+                    {currentBookings.length > 0 && (
+                      <CTableRow>
+                        <CTableDataCell colSpan={5} className="text-end fw-bold">
+                          Total:
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          {'$' +
+                            currentBookings
+                              .reduce(
+                                (total, Booking) => total + (parseFloat(Booking.adminAmount) || 0),
+                                0,
+                              )
+                              .toFixed(2)}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          {'$' +
+                            currentBookings
+                              .reduce(
+                                (total, Booking) => total + (parseFloat(Booking.vendorAmount) || 0),
+                                0,
+                              )
+                              .toFixed(2)}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          {'$' +
+                            currentBookings
+                              .reduce(
+                                (total, Booking) => total + (parseFloat(Booking.totalAmount) || 0),
+                                0,
+                              )
+                              .toFixed(2)}
                         </CTableDataCell>
                       </CTableRow>
                     )}

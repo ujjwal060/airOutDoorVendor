@@ -440,6 +440,7 @@ const PropertyManagement = () => {
                   <CTableHeaderCell>Address</CTableHeaderCell>
                   <CTableHeaderCell>Description</CTableHeaderCell>
                   <CTableHeaderCell className="text-center ">Price Per Person/Day</CTableHeaderCell>
+                  <CTableHeaderCell className="text-center ">Admin Commission</CTableHeaderCell>
                   <CTableHeaderCell>Favourite</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
@@ -477,7 +478,10 @@ const PropertyManagement = () => {
                     </CTableDataCell>
                     {/* price per day per person  */}
                     <CTableDataCell className="text-center align-middle">
-                      {property.pricePerPersonPerDay}
+                      {property.pricePerPersonPerDay+" $"}
+                    </CTableDataCell>
+                    <CTableDataCell className="text-center align-middle">
+                      {property.adminCommission?property.adminCommission+" %/booking":"Not approved"}
                     </CTableDataCell>
 
                     {/* Toggle Button */}
