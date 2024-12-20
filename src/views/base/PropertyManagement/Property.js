@@ -438,8 +438,8 @@ const PropertyManagement = () => {
                   <CTableHeaderCell>Image</CTableHeaderCell>
                   <CTableHeaderCell>Property Name</CTableHeaderCell>
                   <CTableHeaderCell>Address</CTableHeaderCell>
-                  <CTableHeaderCell>Description</CTableHeaderCell>
                   <CTableHeaderCell className="text-center ">Price Per Person/Day</CTableHeaderCell>
+                  <CTableHeaderCell>Cancel Charge</CTableHeaderCell>
                   <CTableHeaderCell className="text-center ">Admin Commission</CTableHeaderCell>
                   <CTableHeaderCell>Favourite</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
@@ -472,16 +472,19 @@ const PropertyManagement = () => {
                       {property.location.address}
                     </CTableDataCell>
 
-                    {/* Guest Limit */}
-                    <CTableDataCell className="text-start align-middle">
-                      {property.propertyDescription}
-                    </CTableDataCell>
                     {/* price per day per person  */}
                     <CTableDataCell className="text-center align-middle">
-                      {property.pricePerPersonPerDay+" $"}
+                      {property.pricePerPersonPerDay + ' $'}
+                    </CTableDataCell>
+                    <CTableDataCell className="text-start align-middle">
+                      {property.cancellationCharge
+                        ? property.cancellationCharge + '%'
+                        : 'Not approved'}
                     </CTableDataCell>
                     <CTableDataCell className="text-center align-middle">
-                      {property.adminCommission?property.adminCommission+" %/booking":"Not approved"}
+                      {property.adminCommission
+                        ? property.adminCommission + ' %/booking'
+                        : 'Not approved'}
                     </CTableDataCell>
 
                     {/* Toggle Button */}
@@ -619,11 +622,16 @@ const PropertyManagement = () => {
                   <p>No custom fields available.</p>
                 )}
 
-                {/* Availability */}
                 <p>
                   <strong>Admin Commission:</strong>{' '}
                   {selectedProperty?.adminCommission !== undefined
                     ? `${selectedProperty.adminCommission}%`
+                    : 'Property Not Approved'}
+                </p>
+                <p>
+                  <strong>Admin Commission:</strong>{' '}
+                  {selectedProperty?.cancellationCharge !== 0
+                    ? `${selectedProperty.cancellationCharge}%`
                     : 'Property Not Approved'}
                 </p>
 
