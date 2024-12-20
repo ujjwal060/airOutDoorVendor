@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import {
   CCard,
   CCardBody,
-  CCardHeader,
   CCol,
   CRow,
   CTable,
@@ -14,39 +13,37 @@ import {
   CSpinner,
   CPagination,
   CPaginationItem,
-  CDropdown,
-  CDropdownToggle,
-  CDropdownItem,
-  CDropdownMenu,
-  CButton,
+  CBreadcrumb,
+  CBreadcrumbItem
 } from '@coreui/react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import axios from 'axios'
 
 const Tables = () => {
-  const [Bookings, setBookings] = useState([])
+  const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage] = useState(10)
+  const [propertyName, setPropertyName] = useState('')
   const vendorId = localStorage.getItem('vendorId')
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedOption, setSelectedOption] = useState('Select Option');
+  const [propertyId, setPropertyId] = useState(null)
 
-  // Fetch bookings from the API on component mount
-  const propertyId=""
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
         const bookingsResponse = await axios.post(
-          "http://44.196.64.110:8000/booking/getBook",{vendorId,propertyId}
-
+          'http://44.196.64.110:8000/booking/getBook',
+          { vendorId, propertyId }
         )
-        console.log('booking', bookingsResponse)
-        setBookings(bookingsResponse.data || [])
+        setBookings(bookingsResponse.data)
+        if (propertyId) {
+          const property = bookingsResponse.data.find(
+            (booking) => booking.propertyId === propertyId
+          )
+          setPropertyName(property?.propertyName)
+        }
       } catch (error) {
-        console.error('Error fetching data:', error)
         setError('Failed to load data')
       } finally {
         setLoading(false)
@@ -54,68 +51,41 @@ const Tables = () => {
     }
 
     fetchData()
-  }, [])
+  }, [propertyId])
 
-  const toggleDropdown = () => {
-    setDropdownOpen((prevState) => !prevState);
-  };
-  const handleDropdownItemClick = (option) => {
-    setSelectedOption(option); // Update the selected option
-    console.log(`Selected: ${option}`);
-    setDropdownOpen(false); // Close the dropdown
-  };
-
-  // Delete a booking by ID
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://44.196.64.110:8000/booking/delete/${id}`)
-      setBookings(Bookings.filter((booking) => booking._id !== id))
-    } catch (error) {
-      console.error('Error deleting booking:', error)
-      setError('Failed to delete booking')
-    }
-  }
-
-  // Calculate current bookings for pagination
   const indexOfLastBooking = currentPage * rowsPerPage
   const indexOfFirstBooking = indexOfLastBooking - rowsPerPage
-  const currentBookings = Bookings.slice(indexOfFirstBooking, indexOfLastBooking)
+  const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking)
 
-  // Pagination logic
-  const totalPages = Math.ceil(Bookings.length / rowsPerPage)
+  const totalPages = Math.ceil(bookings.length / rowsPerPage)
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+  const handlePropertyClick = (id) => {
+    setPropertyId(id)
+    setCurrentPage(1)
+  }
 
   return (
     <>
       <CRow>
         <CCol xs={12}>
-          <CCard className="mb-4">
-            <CCardHeader className="d-flex justify-content-between align-items-center">
-              <strong>Bookings</strong>
-              <CDropdown
-                alignment="end"
-                className="ms-2"
-                visible={dropdownOpen}
-                toggle={toggleDropdown}
-              >
-                <CDropdownToggle color="secondary" caret>
-                  {selectedOption} {/* Display the selected option */}
-                </CDropdownToggle>
-                <CDropdownMenu>
-                  <CDropdownItem onClick={() => handleDropdownItemClick('Option 1')}>
-                    Option 1
-                  </CDropdownItem>
-                  <CDropdownItem onClick={() => handleDropdownItemClick('Option 2')}>
-                    Option 2
-                  </CDropdownItem>
-                  <CDropdownItem onClick={() => handleDropdownItemClick('Option 3')}>
-                    Option 3
-                  </CDropdownItem>
-                </CDropdownMenu>
-              </CDropdown>
-            </CCardHeader>
+          <CBreadcrumb>
+            <CBreadcrumbItem
+              active={!propertyId}
+              onClick={() => setPropertyId(null)}
+              style={{ cursor: 'pointer' }}
+            >
+              All Properties
+            </CBreadcrumbItem>
 
+            {propertyId && (
+              <CBreadcrumbItem active>
+                <span>&gt; {propertyName}</span>
+              </CBreadcrumbItem>
+            )}
+          </CBreadcrumb>
+          <CCard className="mb-4">
             <CCardBody>
               {loading ? (
                 <CSpinner color="primary" />
@@ -125,7 +95,7 @@ const Tables = () => {
                 <CTable>
                   <CTableHead color="dark">
                     <CTableRow>
-                      <CTableHeaderCell>#</CTableHeaderCell>
+                      <CTableHeaderCell>S.No</CTableHeaderCell>
                       <CTableHeaderCell>Name</CTableHeaderCell>
                       <CTableHeaderCell>Property</CTableHeaderCell>
                       <CTableHeaderCell>Check In</CTableHeaderCell>
@@ -138,70 +108,75 @@ const Tables = () => {
                   </CTableHead>
                   <CTableBody>
                     {currentBookings.length > 0 ? (
-                      currentBookings.map((Booking, index) => (
-                        <CTableRow key={Booking._id}>
+                      currentBookings.map((booking, index) => (
+                        <CTableRow key={booking._id}>
                           <CTableHeaderCell scope="row">
                             {index + 1 + (currentPage - 1) * rowsPerPage}
                           </CTableHeaderCell>
-                          <CTableDataCell>{Booking?.userName}</CTableDataCell>
-                          <CTableDataCell>{Booking?.propertyName}</CTableDataCell>
-                          <CTableDataCell>
-                            {new Date(Booking.checkInDate).toLocaleDateString()}
+                          <CTableDataCell>{booking?.userName}</CTableDataCell>
+                          <CTableDataCell
+                            style={{
+                              cursor: 'pointer',
+                              color: 'blue',
+                              textDecoration: 'underline',
+                            }}
+                            onClick={() => handlePropertyClick(booking.propertyId)}
+                          >
+                            {booking?.propertyName}
                           </CTableDataCell>
                           <CTableDataCell>
-                            {new Date(Booking.checkOutDate).toLocaleDateString()}
-                          </CTableDataCell>
-                          <CTableDataCell>{Booking.guests}</CTableDataCell>
-                          <CTableDataCell>
-                            {Booking?.adminAmount ? '$' + Booking?.adminAmount : ''}
+                            {new Date(booking.checkInDate).toLocaleDateString()}
                           </CTableDataCell>
                           <CTableDataCell>
-                            {Booking?.vendorAmount ? '$' + Booking?.vendorAmount : ''}
+                            {new Date(booking.checkOutDate).toLocaleDateString()}
                           </CTableDataCell>
-                          <CTableDataCell>{'$' + Booking.totalAmount}</CTableDataCell>
+                          <CTableDataCell>{booking.guests}</CTableDataCell>
+                          <CTableDataCell>
+                            {booking?.adminAmount ? `$${booking.adminAmount}` : ''}
+                          </CTableDataCell>
+                          <CTableDataCell>
+                            {booking?.vendorAmount ? `$${booking.vendorAmount}` : ''}
+                          </CTableDataCell>
+                          <CTableDataCell>{`$${booking.totalAmount}.00`}</CTableDataCell>
                         </CTableRow>
                       ))
                     ) : (
                       <CTableRow>
-                        <CTableDataCell colSpan={8} className="text-center">
+                        <CTableDataCell colSpan={9} className="text-center">
                           No bookings found
                         </CTableDataCell>
                       </CTableRow>
                     )}
                     {currentBookings.length > 0 && (
-                     <CTableRow>
-                     <CTableDataCell colSpan={6} className="text-end fw-bold">
-                       Total:
-                     </CTableDataCell>
-                     <CTableDataCell className="fw-bold">
-                       {'$' +
-                         currentBookings
-                           .reduce(
-                             (total, Booking) => total + (parseFloat(Booking.adminAmount) || 0),
-                             0,
-                           )
-                           .toFixed(2)}
-                     </CTableDataCell>
-                     <CTableDataCell className="fw-bold">
-                       {'$' +
-                         currentBookings
-                           .reduce(
-                             (total, Booking) => total + (parseFloat(Booking.vendorAmount) || 0),
-                             0,
-                           )
-                           .toFixed(2)}
-                     </CTableDataCell>
-                     <CTableDataCell className="fw-bold">
-                       {'$' +
-                         currentBookings
-                           .reduce(
-                             (total, Booking) => total + (parseFloat(Booking.totalAmount) || 0),
-                             0,
-                           )
-                           .toFixed(2)}
-                     </CTableDataCell>
-                   </CTableRow>
-                   
+                      <CTableRow>
+                        <CTableDataCell colSpan={6} className="text-end fw-bold">
+                          Total:
+                        </CTableDataCell>
+                        <CTableDataCell className="fw-bold">
+                          {`$${currentBookings
+                            .reduce(
+                              (total, booking) => total + (parseFloat(booking.adminAmount) || 0),
+                              0
+                            )
+                            .toFixed(2)}`}
+                        </CTableDataCell>
+                        <CTableDataCell className="fw-bold">
+                          {`$${currentBookings
+                            .reduce(
+                              (total, booking) => total + (parseFloat(booking.vendorAmount) || 0),
+                              0
+                            )
+                            .toFixed(2)}`}
+                        </CTableDataCell>
+                        <CTableDataCell className="fw-bold">
+                          {`$${currentBookings
+                            .reduce(
+                              (total, booking) => total + (parseFloat(booking.totalAmount) || 0),
+                              0
+                            )
+                            .toFixed(2)}`}
+                        </CTableDataCell>
+                      </CTableRow>
                     )}
                   </CTableBody>
                 </CTable>
