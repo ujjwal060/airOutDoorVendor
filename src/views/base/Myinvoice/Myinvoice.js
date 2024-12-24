@@ -1,259 +1,285 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import React, { useState, useEffect } from 'react';
 import {
-  CCard,
-  CCardBody,
-  CCardHeader,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableBody,
-  CTableDataCell,
-  CBadge,
-  CPagination,
-  CPaginationItem,
-  CFormInput,
-  CButton,
-  CModal,
-  CModalBody,
-  CModalFooter,
-  CModalHeader,
-  CModalTitle,
-} from '@coreui/react'
+    CForm,
+    CFormLabel,
+    CFormInput,
+    CButton,
+    CSpinner,
+    CRow,
+    CCol,
+    CTable,
+    CTableHead,
+    CTableRow,
+    CTableHeaderCell,
+    CTableBody,
+    CTableDataCell,
 
-const VendorPayoutTable = () => {
-  const [payouts, setPayouts] = useState([])
-  const [remainingAmount, setRemainingAmount] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [vendorId, setVendorId] = useState(null)
-  const [amountToCashout, setAmountToCashout] = useState()
-  const [stripeAccountId, setStripeAccountId] = useState({
-    BankName: '',
-    accountNo: '',
-    swiftCode: '',
-  })
-  const [cashoutModalVisible, setCashoutModalVisible] = useState(false)
+} from '@coreui/react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import axios from 'axios'
+import { cilBank } from "@coreui/icons";
+import CIcon from '@coreui/icons-react'
 
-  const itemsPerPage = 5
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setStripeAccountId((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }))
-  }
-  useEffect(() => {
-    const storedVendorId = localStorage.getItem('vendorId')
-    if (storedVendorId) {
-      setVendorId(storedVendorId)
-    }
-  }, [])
+const Account = () => {
+    const [loading, setLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
+    const [accountStatus, setAccountStatus] = useState(false);
+    const [bankAccountDetails, setBankAccountDetails] = useState([]);
+    const [paymentDetails, setPaymentDetails] = useState([]);
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        dob: null,
+        addressLine1: '',
+        city: '',
+        state: '',
+        postalCode: '',
+    });
 
-  useEffect(() => {
-    fetchPayoutData()
-  }, [vendorId])
+    const vendorId = localStorage.getItem('vendorId');
 
-  const fetchPayoutData = async () => {
-    if (!vendorId) return
+    useEffect(() => {
+        const fetchAccountStatus = async () => {
+            try {
+                setIsFetching(true);
+                const response = await axios.get(`http://localhost:8000/payouts/getAccountStatus/${vendorId}`);
+                setAccountStatus(response.data.accountStatus);
+                setBankAccountDetails(response.data.bankAccountDetails || []);
+            } catch (error) {
+                console.error('Error fetching account status:', error);
+            } finally {
+                setIsFetching(false);
+            }
+        };
+        fetchAccountStatus();
+        fetchPaymentDetails();
+    }, [vendorId]);
 
-    try {
-      const response = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPay/${vendorId}`)
-      setPayouts(response.data.cashoutRequests)
-      setRemainingAmount(response.data.remainingAmount)
-      toast.success('Payout data fetched successfully!')
-    } catch (error) {
-      toast.error('Error fetching payout data!')
-    }
-  }
-
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentPayouts = payouts.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(payouts.length / itemsPerPage)
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page)
-  }
-
-  const handleCashoutRequest = async () => {
-    const { swiftCode, BankName, accountNo } = stripeAccountId
-    if (amountToCashout <= 0 || amountToCashout > remainingAmount || !stripeAccountId) {
-      toast.error('Invalid input! Ensure the amount is correct and Stripe account ID is provided.')
-      return
+    const fetchPaymentDetails = async () => {
+        try {
+            setIsFetching(true);
+            const response = await axios.get(`http://localhost:8000/payouts/getPaymentDetails/${vendorId}`);
+            setPaymentDetails(response.data.data)
+        } catch (error) {
+            console.error('Error fetching account status:', error);
+        } finally {
+            setIsFetching(false);
+        }
     }
 
-    try {
-      const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
-        vendorId,
-        amountRequested: amountToCashout,
-        AccountNo: accountNo,
-        bankName:BankName,
-        swiftCode,
-      })
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
 
-      if (response.data.success) {
-        toast.success('Cashout request successful!')
-        setAmountToCashout(0)
-        setStripeAccountId('')
-        setCashoutModalVisible(false)
-        fetchPayoutData()
-      } else {
-        toast.error('Failed to request cashout!')
-      }
-    } catch (error) {
-      console.log(error.response)
-      toast.error('Error requesting cashout!')
+    const handleDateChange = (date) => {
+        setFormData({
+            ...formData,
+            dob: date,
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const dobDay = formData.dob?.getDate();
+        const dobMonth = formData.dob?.getMonth() + 1;
+        const dobYear = formData.dob?.getFullYear();
+        try {
+            const response = await axios.post('http://localhost:8000/payouts/addAccount', {
+                vendorId,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                dobDay,
+                dobMonth,
+                dobYear,
+                addressLine1: formData.addressLine1,
+                city: formData.city,
+                state: formData.state,
+                postalCode: formData.postalCode,
+            });
+            if (response.data.accountLink) {
+                setFormData('');
+                window.open(response.data.accountLink, '_blank');
+            } else {
+                console.error('No accountLink received in the response');
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error.response || error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const goToStripe = async() => {
+        try {
+            const response = await axios.get(`http://localhost:8000/payouts/goToStripe/${vendorId}`);
+            window.open(response.data.url, '_blank');
+        } catch (error) {
+            console.error('Error submitting form:', error.response || error.message);
+        }
+    };
+
+    if (isFetching) {
+        return <CSpinner />;
     }
-  }
 
-  return (
-    <>
-      <ToastContainer />
+    return (
+        <div>
+            {!accountStatus ? (
+                <CForm onSubmit={handleSubmit}>
+                    <CRow>
+                        {/* First Name and Last Name Side by Side */}
+                        <CCol md={6}>
+                            <CFormLabel>First Name</CFormLabel>
+                            <CFormInput
+                                type="text"
+                                name="firstName"
+                                value={formData.firstName}
+                                onChange={handleChange}
+                                required
+                            />
+                        </CCol>
+                        <CCol md={6}>
+                            <CFormLabel>Last Name</CFormLabel>
+                            <CFormInput
+                                type="text"
+                                name="lastName"
+                                value={formData.lastName}
+                                onChange={handleChange}
+                                required
+                            />
+                        </CCol>
+                    </CRow>
 
-      <CCard>
-        <CCardHeader>Payout History</CCardHeader>
-        <CCardBody>
-          <div
-            className="mb-2"
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              position: 'relative',
-            }}
-          >
-            <h5>
-              Remaining Amount: <CBadge color="info">${remainingAmount}</CBadge>
-            </h5>
-            <CButton color="primary" onClick={() => setCashoutModalVisible(true)}>
-              Cashout
-            </CButton>
-          </div>
-          <CTable hover responsive>
-            <CTableHead color="light">
-              <CTableRow>
-                <CTableHeaderCell scope="col">S.No</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Amount Requested</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Request Date</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Payment Date</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Status</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {currentPayouts.length > 0 ? (
-                currentPayouts.map((payout, index) => (
-                  <CTableRow key={index}>
-                    <CTableDataCell>{indexOfFirstItem + index + 1}</CTableDataCell>
-                    <CTableDataCell>${payout.amountRequested}</CTableDataCell>
-                    <CTableDataCell>
-                      {new Date(payout.requestDate).toLocaleDateString()}
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      {['paid', 'rejected'].includes(payout.status) && payout.paymentDate
-                        ? new Date(payout.paymentDate).toLocaleDateString()
-                        : 'Pending'}
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      <CBadge
-                        color={
-                          payout.status === 'pending'
-                            ? 'warning'
-                            : payout.status === 'paid'
-                              ? 'success'
-                              : 'danger'
-                        }
-                      >
-                        {payout.status}
-                      </CBadge>
-                    </CTableDataCell>
-                  </CTableRow>
-                ))
-              ) : (
-                <CTableRow>
-                  <CTableDataCell colSpan="5" className="text-center">
-                    No Payout History Found
-                  </CTableDataCell>
-                </CTableRow>
-              )}
-            </CTableBody>
-          </CTable>
+                    {/* Date of Birth with Calendar */}
+                    <div>
+                        <label htmlFor="dob">Date of Birth</label>
+                        <DatePicker
+                            selected={formData.dob}
+                            onChange={handleDateChange}
+                            dateFormat="dd/MM/yyyy"
+                            placeholderText="Select your birthdate"
+                            className="form-control date-picker"
+                            showYearDropdown
+                            scrollableYearDropdown
+                            yearDropdownItemNumber={100}
+                            showMonthDropdown
+                            required
+                        />
+                    </div>
+                    {/* Address Fields */}
+                    <CRow>
+                        <CCol md={6}>
+                            <CFormLabel>Address Line 1</CFormLabel>
+                            <CFormInput
+                                type="text"
+                                name="addressLine1"
+                                value={formData.addressLine1}
+                                onChange={handleChange}
+                                required
+                            />
+                        </CCol>
 
-          <CPagination className="mt-3" align="end">
-            <CPaginationItem
-              disabled={currentPage === 1}
-              onClick={() => handlePageChange(currentPage - 1)}
-            >
-              Previous
-            </CPaginationItem>
-            {[...Array(totalPages).keys()].map((page) => (
-              <CPaginationItem
-                key={page + 1}
-                active={page + 1 === currentPage}
-                onClick={() => handlePageChange(page + 1)}
-              >
-                {page + 1}
-              </CPaginationItem>
-            ))}
-            <CPaginationItem
-              disabled={currentPage === totalPages}
-              onClick={() => handlePageChange(currentPage + 1)}
-            >
-              Next
-            </CPaginationItem>
-          </CPagination>
-        </CCardBody>
-      </CCard>
+                        <CCol md={6}>
+                            <CFormLabel>City</CFormLabel>
+                            <CFormInput
+                                type="text"
+                                name="city"
+                                value={formData.city}
+                                onChange={handleChange}
+                                required
+                            />
+                        </CCol>
+                    </CRow>
 
-      <CModal visible={cashoutModalVisible} onClose={() => setCashoutModalVisible(false)}>
-        <CModalHeader>
-          <CModalTitle>Request Cashout</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CFormInput
-            type="number"
-            value={amountToCashout}
-            onChange={(e) => setAmountToCashout(e.target.value)}
-            placeholder="Enter amount to cash out"
-          />
-          <CFormInput
-            type="text"
-            name="BankName"
-            value={stripeAccountId.BankName}
-            onChange={handleChange}
-            placeholder="Enter Bank Name"
-            className="mt-2"
-          />
-          <CFormInput
-            type="text"
-            name="accountNo"
-            value={stripeAccountId.accountNo}
-            onChange={handleChange}
-            placeholder="Enter Account No"
-            className="mt-2"
-          />
-          <CFormInput
-            type="text"
-            name="swiftCode"
-            value={stripeAccountId.swiftCode}
-            onChange={handleChange}
-            placeholder="Enter Swift Code"
-            className="mt-2"
-          />
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setCashoutModalVisible(false)}>
-            Close
-          </CButton>
-          <CButton color="primary" onClick={handleCashoutRequest}>
-            Cashout Request
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </>
-  )
-}
+                    <CRow>
+                        <CCol md={6}>
+                            <CFormLabel>State</CFormLabel>
+                            <CFormInput
+                                type="text"
+                                name="state"
+                                value={formData.state}
+                                onChange={handleChange}
+                                required
+                            />
+                        </CCol>
 
-export default VendorPayoutTable
+                        <CCol md={6}>
+                            <CFormLabel>Postal Code</CFormLabel>
+                            <CFormInput
+                                type="text"
+                                name="postalCode"
+                                value={formData.postalCode}
+                                onChange={handleChange}
+                                required
+                            />
+                        </CCol>
+                    </CRow>
+
+                    <CButton color="primary" type="submit" disabled={loading}>
+                        {loading ? <CSpinner size="sm" /> : 'Submit'}
+                    </CButton>
+                </CForm>
+            ) : (
+                <div>
+                    <div className='card mb-3'>
+                        <div className='card-body'>
+                            <div className='d-flex flex-row gap-2 justify-content-between align-items-center'>
+                                <div className='d-flex flex-row gap-3 align-items-center'>
+                                    <CIcon icon={cilBank} height={32} width={32} />
+                                    <div className='d-flex flex-column gap-1 align-items-start'>
+                                        <h6 className='mb-0'>{bankAccountDetails[0].bankName}</h6>
+                                        <div className='d-flex flex-row gap-2 align-items-center'>
+                                            <span className='text-muted fs-6'>**** {bankAccountDetails[0].last4}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 onClick={goToStripe} className='mb-0' style={{
+                                    cursor: 'pointer',
+                                    color: 'blue',
+                                    textDecoration: 'underline',
+                                }}>
+                                   Go To Taxidermy Account ID :
+                                    <br />
+                                    {bankAccountDetails[0].StripeAccountId}
+                                </h6>
+                            </div>
+                        </div>
+                    </div>
+                    <CTable striped>
+                        <CTableHead>
+                            <CTableRow>
+                                <CTableHeaderCell>Booking ID</CTableHeaderCell>
+                                <CTableHeaderCell>Total Amount</CTableHeaderCell>
+                                <CTableHeaderCell>Payment Status</CTableHeaderCell>
+                                <CTableHeaderCell>Paid Amount</CTableHeaderCell>
+                                <CTableHeaderCell>Payment ID</CTableHeaderCell>
+                                <CTableHeaderCell>Amount Transferred</CTableHeaderCell>
+                                <CTableHeaderCell>Transfer Date</CTableHeaderCell>
+                            </CTableRow>
+                        </CTableHead>
+                        <CTableBody>
+                            {paymentDetails.map((payment, index) => (
+                                <CTableRow key={index}>
+                                    <CTableDataCell>{payment.bookingId}</CTableDataCell>
+                                    <CTableDataCell>${payment.totalAmount}</CTableDataCell>
+                                    <CTableDataCell>{payment.paymentStatus}</CTableDataCell>
+                                    <CTableDataCell>${payment.paidAmount}</CTableDataCell>
+                                    <CTableDataCell>{payment.transferDetails.paymentId}</CTableDataCell>
+                                    <CTableDataCell>${payment.transferDetails.amountTransferred}</CTableDataCell>
+                                    <CTableDataCell>{new Date(payment.transferDetails.transferDate).toLocaleString()}</CTableDataCell>
+                                </CTableRow>
+                            ))}
+                        </CTableBody>
+                    </CTable>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Account;
