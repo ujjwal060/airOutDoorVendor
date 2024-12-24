@@ -41,7 +41,7 @@ const AccountEvaluation = () => {
                     +1 (348) 655-9867
                   </a>
                 </div>
-                <a href="/login" className="phone border px-4 py-1 login-btn">
+                <a href="/login" className="phone px-4 py-1 ">
                   Login
                 </a>
               </CCardBody>
