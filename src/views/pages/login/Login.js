@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import logo1 from './img/logo1.png';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import logo1 from './img/logo1.png'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 import {
   CButton,
@@ -17,38 +17,45 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilUser } from '@coreui/icons';
+  CSpinner,
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilLockLocked, cilUser } from '@coreui/icons'
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const handleLogin = async (e) => { 
-    e.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
     try {
-      const response = await axios.post('http://44.196.64.110:8000/vendor/login', { email, password });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('vendorId', response.data.vendor.id);
-      toast.success('Login successful!');
+      const response = await axios.post('http://44.196.64.110:8000/vendor/login', {
+        email,
+        password,
+      })
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('vendorId', response.data.vendor.id)
+      toast.success('Login successful!')
       // navigate('/dashboard');
-      navigate('/property');
-      
-
+      navigate('/property')
+      setLoading(false)
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
+      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.'
       if (err.response?.data?.isApproved === false) {
-        toast.error('Vendor is not approved yet. Please wait for approval.');
+        toast.error('Vendor is not approved yet. Please wait for approval.')
         setTimeout(() => {
-          navigate('/approval');
-        }, 2000);
+          navigate('/approval')
+        }, 2000)
+        setLoading(false)
       } else {
-        toast.error(errorMessage);
+        toast.error(errorMessage)
+        setLoading(false)
       }
     }
-  };
+  }
 
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
@@ -59,12 +66,7 @@ const Login = () => {
               <CCard className="p-4">
                 <CCardBody className="d-flex flex-column align-items-center justify-content-center">
                   <CForm onSubmit={handleLogin} className="text-center">
-                    <img
-                      src={logo1}
-                      alt="Logo"
-                      className="mb-4"
-                      style={{ width: '350px' }}
-                    />
+                    <img src={logo1} alt="Logo" className="mb-4" style={{ width: '350px' }} />
                     <h3>Welcome to Air Outdoors</h3>
                     <p className="text-body-secondary">Sign In to your account</p>
 
@@ -96,14 +98,13 @@ const Login = () => {
 
                     {/* Login button with proper action */}
                     <CButton type="submit" color="warning" className="px-4 mb-3">
-                      Login
+                      {loading ? <CSpinner size="sm" /> : 'Login'}
                     </CButton>
 
                     {/* Line and sign-up link */}
                     <div className="my-3">
                       <span>
-                        Don't have an account?{' '}
-                        <Link to="/register">Sign up</Link>
+                        Don't have an account? <Link to="/register">Sign up</Link>
                       </span>
                     </div>
 
@@ -120,7 +121,7 @@ const Login = () => {
       </CContainer>
       <ToastContainer />
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
