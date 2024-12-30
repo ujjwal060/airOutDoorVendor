@@ -1,285 +1,330 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
-    CForm,
-    CFormLabel,
-    CFormInput,
-    CButton,
-    CSpinner,
-    CRow,
-    CCol,
-    CTable,
-    CTableHead,
-    CTableRow,
-    CTableHeaderCell,
-    CTableBody,
-    CTableDataCell,
-
-} from '@coreui/react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+  CForm,
+  CFormLabel,
+  CFormInput,
+  CButton,
+  CSpinner,
+  CRow,
+  CCol,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
+} from '@coreui/react'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 import axios from 'axios'
-import { cilBank } from "@coreui/icons";
+import { cilBank } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 
 const Account = () => {
-    const [loading, setLoading] = useState(false);
-    const [isFetching, setIsFetching] = useState(true);
-    const [accountStatus, setAccountStatus] = useState(false);
-    const [bankAccountDetails, setBankAccountDetails] = useState([]);
-    const [paymentDetails, setPaymentDetails] = useState([]);
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        dob: null,
-        addressLine1: '',
-        city: '',
-        state: '',
-        postalCode: '',
-    });
+  const [loading, setLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true)
+  const [accountStatus, setAccountStatus] = useState(false)
+  const [bankAccountDetails, setBankAccountDetails] = useState([])
+  const [paymentDetails, setPaymentDetails] = useState()
+  const [payoutSummary, setpayoutSummary] = useState(null)
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    dob: null,
+    addressLine1: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  })
 
-    const vendorId = localStorage.getItem('vendorId');
+  const vendorId = localStorage.getItem('vendorId')
 
-    useEffect(() => {
-        const fetchAccountStatus = async () => {
-            try {
-                setIsFetching(true);
-                const response = await axios.get(`http://localhost:8000/payouts/getAccountStatus/${vendorId}`);
-                setAccountStatus(response.data.accountStatus);
-                setBankAccountDetails(response.data.bankAccountDetails || []);
-            } catch (error) {
-                console.error('Error fetching account status:', error);
-            } finally {
-                setIsFetching(false);
-            }
-        };
-        fetchAccountStatus();
-        fetchPaymentDetails();
-    }, [vendorId]);
-
-    const fetchPaymentDetails = async () => {
-        try {
-            setIsFetching(true);
-            const response = await axios.get(`http://localhost:8000/payouts/getPaymentDetails/${vendorId}`);
-            setPaymentDetails(response.data.data)
-        } catch (error) {
-            console.error('Error fetching account status:', error);
-        } finally {
-            setIsFetching(false);
-        }
+  useEffect(() => {
+    const fetchAccountStatus = async () => {
+      try {
+        setIsFetching(true)
+        const response = await axios.get(
+          `http://localhost:8000/payouts/getAccountStatus/${vendorId}`,
+        )
+        setAccountStatus(response.data.accountStatus)
+        console.log(response.data.bankAccountDetails)
+        setBankAccountDetails(response.data.bankAccountDetails || [])
+      } catch (error) {
+        console.error('Error fetching account status:', error)
+      } finally {
+        setIsFetching(false)
+      }
     }
+    fetchAccountStatus()
+    fetchPaymentDetails()
+    fetchPayoutSummary()
+  }, [vendorId])
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    const handleDateChange = (date) => {
-        setFormData({
-            ...formData,
-            dob: date,
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        const dobDay = formData.dob?.getDate();
-        const dobMonth = formData.dob?.getMonth() + 1;
-        const dobYear = formData.dob?.getFullYear();
-        try {
-            const response = await axios.post('http://localhost:8000/payouts/addAccount', {
-                vendorId,
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                dobDay,
-                dobMonth,
-                dobYear,
-                addressLine1: formData.addressLine1,
-                city: formData.city,
-                state: formData.state,
-                postalCode: formData.postalCode,
-            });
-            if (response.data.accountLink) {
-                setFormData('');
-                window.open(response.data.accountLink, '_blank');
-            } else {
-                console.error('No accountLink received in the response');
-            }
-        } catch (error) {
-            console.error('Error submitting form:', error.response || error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const goToStripe = async() => {
-        try {
-            const response = await axios.get(`http://localhost:8000/payouts/goToStripe/${vendorId}`);
-            window.open(response.data.url, '_blank');
-        } catch (error) {
-            console.error('Error submitting form:', error.response || error.message);
-        }
-    };
-
-    if (isFetching) {
-        return <CSpinner />;
+  const fetchPaymentDetails = async () => {
+    try {
+      setIsFetching(true)
+      const response = await axios.get(`http://localhost:8000/payouts/getVendorPay/${vendorId}`)
+      console.log(response.data)
+      setPaymentDetails(response.data)
+    } catch (error) {
+      console.error('Error fetching account status:', error?.response)
+    } finally {
+      setIsFetching(false)
     }
+  }
 
-    return (
+  const fetchPayoutSummary = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/payouts/getVendorPaySummary/${vendorId}`)
+      setpayoutSummary(res.data)
+      console.log(res)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
+  }
+
+  const handleDateChange = (date) => {
+    setFormData({
+      ...formData,
+      dob: date,
+    })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    const dobDay = formData.dob?.getDate()
+    const dobMonth = formData.dob?.getMonth() + 1
+    const dobYear = formData.dob?.getFullYear()
+    try {
+      const response = await axios.post('http://localhost:8000/payouts/addAccount', {
+        vendorId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dobDay,
+        dobMonth,
+        dobYear,
+        addressLine1: formData.addressLine1,
+        city: formData.city,
+        state: formData.state,
+        postalCode: formData.postalCode,
+      })
+      if (response.data.accountLink) {
+        setFormData('')
+        window.open(response.data.accountLink, '_blank')
+      } else {
+        console.error('No accountLink received in the response')
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error.response || error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const goToStripe = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/payouts/goToStripe/${vendorId}`)
+      window.open(response.data.url, '_blank')
+    } catch (error) {
+      console.error('Error submitting form:', error.response || error.message)
+    }
+  }
+
+  if (isFetching) {
+    return <CSpinner />
+  }
+
+  return (
+    <div>
+      {!accountStatus ? (
+        <CForm onSubmit={handleSubmit}>
+          <CRow>
+            {/* First Name and Last Name Side by Side */}
+            <CCol md={6}>
+              <CFormLabel>First Name</CFormLabel>
+              <CFormInput
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
+            </CCol>
+            <CCol md={6}>
+              <CFormLabel>Last Name</CFormLabel>
+              <CFormInput
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </CCol>
+          </CRow>
+
+          {/* Date of Birth with Calendar */}
+          <div>
+            <label htmlFor="dob">Date of Birth</label>
+            <DatePicker
+              selected={formData.dob}
+              onChange={handleDateChange}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="Select your birthdate"
+              className="form-control date-picker"
+              showYearDropdown
+              scrollableYearDropdown
+              yearDropdownItemNumber={100}
+              showMonthDropdown
+              required
+            />
+          </div>
+          {/* Address Fields */}
+          <CRow>
+            <CCol md={6}>
+              <CFormLabel>Address Line 1</CFormLabel>
+              <CFormInput
+                type="text"
+                name="addressLine1"
+                value={formData.addressLine1}
+                onChange={handleChange}
+                required
+              />
+            </CCol>
+
+            <CCol md={6}>
+              <CFormLabel>City</CFormLabel>
+              <CFormInput
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                required
+              />
+            </CCol>
+          </CRow>
+
+          <CRow>
+            <CCol md={6}>
+              <CFormLabel>State</CFormLabel>
+              <CFormInput
+                type="text"
+                name="state"
+                value={formData.state}
+                onChange={handleChange}
+                required
+              />
+            </CCol>
+
+            <CCol md={6}>
+              <CFormLabel>Postal Code</CFormLabel>
+              <CFormInput
+                type="text"
+                name="postalCode"
+                value={formData.postalCode}
+                onChange={handleChange}
+                required
+              />
+            </CCol>
+          </CRow>
+
+          <CButton color="primary" type="submit" disabled={loading}>
+            {loading ? <CSpinner size="sm" /> : 'Submit'}
+          </CButton>
+        </CForm>
+      ) : (
         <div>
-            {!accountStatus ? (
-                <CForm onSubmit={handleSubmit}>
-                    <CRow>
-                        {/* First Name and Last Name Side by Side */}
-                        <CCol md={6}>
-                            <CFormLabel>First Name</CFormLabel>
-                            <CFormInput
-                                type="text"
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                required
-                            />
-                        </CCol>
-                        <CCol md={6}>
-                            <CFormLabel>Last Name</CFormLabel>
-                            <CFormInput
-                                type="text"
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                required
-                            />
-                        </CCol>
-                    </CRow>
-
-                    {/* Date of Birth with Calendar */}
-                    <div>
-                        <label htmlFor="dob">Date of Birth</label>
-                        <DatePicker
-                            selected={formData.dob}
-                            onChange={handleDateChange}
-                            dateFormat="dd/MM/yyyy"
-                            placeholderText="Select your birthdate"
-                            className="form-control date-picker"
-                            showYearDropdown
-                            scrollableYearDropdown
-                            yearDropdownItemNumber={100}
-                            showMonthDropdown
-                            required
-                        />
+          <div className="card mb-3">
+            <div className="card-body">
+              <div className="d-flex flex-row gap-2 justify-content-between align-items-center">
+                <div className="d-flex flex-row gap-3 align-items-center">
+                  <CIcon icon={cilBank} height={32} width={32} />
+                  <div className="d-flex flex-column gap-1 align-items-start">
+                    <h6 className="mb-0">{bankAccountDetails[0]?.bankName}</h6>
+                    <div className="d-flex flex-row gap-2 align-items-center">
+                      <span className="text-muted fs-6">**** {bankAccountDetails[0]?.last4}</span>
                     </div>
-                    {/* Address Fields */}
-                    <CRow>
-                        <CCol md={6}>
-                            <CFormLabel>Address Line 1</CFormLabel>
-                            <CFormInput
-                                type="text"
-                                name="addressLine1"
-                                value={formData.addressLine1}
-                                onChange={handleChange}
-                                required
-                            />
-                        </CCol>
-
-                        <CCol md={6}>
-                            <CFormLabel>City</CFormLabel>
-                            <CFormInput
-                                type="text"
-                                name="city"
-                                value={formData.city}
-                                onChange={handleChange}
-                                required
-                            />
-                        </CCol>
-                    </CRow>
-
-                    <CRow>
-                        <CCol md={6}>
-                            <CFormLabel>State</CFormLabel>
-                            <CFormInput
-                                type="text"
-                                name="state"
-                                value={formData.state}
-                                onChange={handleChange}
-                                required
-                            />
-                        </CCol>
-
-                        <CCol md={6}>
-                            <CFormLabel>Postal Code</CFormLabel>
-                            <CFormInput
-                                type="text"
-                                name="postalCode"
-                                value={formData.postalCode}
-                                onChange={handleChange}
-                                required
-                            />
-                        </CCol>
-                    </CRow>
-
-                    <CButton color="primary" type="submit" disabled={loading}>
-                        {loading ? <CSpinner size="sm" /> : 'Submit'}
-                    </CButton>
-                </CForm>
-            ) : (
-                <div>
-                    <div className='card mb-3'>
-                        <div className='card-body'>
-                            <div className='d-flex flex-row gap-2 justify-content-between align-items-center'>
-                                <div className='d-flex flex-row gap-3 align-items-center'>
-                                    <CIcon icon={cilBank} height={32} width={32} />
-                                    <div className='d-flex flex-column gap-1 align-items-start'>
-                                        <h6 className='mb-0'>{bankAccountDetails[0].bankName}</h6>
-                                        <div className='d-flex flex-row gap-2 align-items-center'>
-                                            <span className='text-muted fs-6'>**** {bankAccountDetails[0].last4}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <h6 onClick={goToStripe} className='mb-0' style={{
-                                    cursor: 'pointer',
-                                    color: 'blue',
-                                    textDecoration: 'underline',
-                                }}>
-                                   Go To Taxidermy Account ID :
-                                    <br />
-                                    {bankAccountDetails[0].StripeAccountId}
-                                </h6>
-                            </div>
-                        </div>
-                    </div>
-                    <CTable striped>
-                        <CTableHead>
-                            <CTableRow>
-                                <CTableHeaderCell>Booking ID</CTableHeaderCell>
-                                <CTableHeaderCell>Total Amount</CTableHeaderCell>
-                                <CTableHeaderCell>Payment Status</CTableHeaderCell>
-                                <CTableHeaderCell>Paid Amount</CTableHeaderCell>
-                                <CTableHeaderCell>Payment ID</CTableHeaderCell>
-                                <CTableHeaderCell>Amount Transferred</CTableHeaderCell>
-                                <CTableHeaderCell>Transfer Date</CTableHeaderCell>
-                            </CTableRow>
-                        </CTableHead>
-                        <CTableBody>
-                            {paymentDetails.map((payment, index) => (
-                                <CTableRow key={index}>
-                                    <CTableDataCell>{payment.bookingId}</CTableDataCell>
-                                    <CTableDataCell>${payment.totalAmount}</CTableDataCell>
-                                    <CTableDataCell>{payment.paymentStatus}</CTableDataCell>
-                                    <CTableDataCell>${payment.paidAmount}</CTableDataCell>
-                                    <CTableDataCell>{payment.transferDetails.paymentId}</CTableDataCell>
-                                    <CTableDataCell>${payment.transferDetails.amountTransferred}</CTableDataCell>
-                                    <CTableDataCell>{new Date(payment.transferDetails.transferDate).toLocaleString()}</CTableDataCell>
-                                </CTableRow>
-                            ))}
-                        </CTableBody>
-                    </CTable>
+                  </div>
                 </div>
-            )}
+                <div>
+                  <h6
+                    onClick={goToStripe}
+                    className="mb-0"
+                    style={{
+                      cursor: 'pointer',
+                      color: 'blue',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Go To Taxidermy Account ID :
+                    <br />
+                    {bankAccountDetails[0].StripeAccountId}
+                  </h6>{' '}
+                </div>
+                <div>
+                  <CTable striped>
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>Total Amt.</CTableHeaderCell>
+                        <CTableHeaderCell>Paid Amt.</CTableHeaderCell>
+                        <CTableHeaderCell>Rem. Amt.</CTableHeaderCell>
+                        <CTableHeaderCell>Admin Commission</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      <CTableRow>
+                        <CTableDataCell style={{ textAlign: 'center' }}>
+                          ${payoutSummary?.totalPaidAmount}
+                        </CTableDataCell>
+                        <CTableDataCell style={{ textAlign: 'center' }}>
+                          ${payoutSummary?.totalPaidAmount}
+                        </CTableDataCell>
+                        <CTableDataCell style={{ textAlign: 'center' }}>k</CTableDataCell>
+                        <CTableDataCell style={{ textAlign: 'center' }}>
+                          ${payoutSummary?.totalAdminAmount}
+                        </CTableDataCell>
+                      </CTableRow>
+                    </CTableBody>
+                  </CTable>
+                </div>
+              </div>
+            </div>
+          </div>
+          <CTable striped>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Booking ID</CTableHeaderCell>
+                <CTableHeaderCell>Total Amount</CTableHeaderCell>
+                <CTableHeaderCell>Payment Status</CTableHeaderCell>
+                <CTableHeaderCell>Paid Amount</CTableHeaderCell>
+                <CTableHeaderCell>Payment ID</CTableHeaderCell>
+                <CTableHeaderCell>Amount Transferred</CTableHeaderCell>
+                <CTableHeaderCell>Transfer Date</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
+              <CTableRow>
+                <CTableDataCell>w</CTableDataCell>
+                <CTableDataCell>$</CTableDataCell>
+                <CTableDataCell>k</CTableDataCell>
+                <CTableDataCell>$s</CTableDataCell>
+                <CTableDataCell>sdsd</CTableDataCell>
+                <CTableDataCell>ert</CTableDataCell>
+                <CTableDataCell>date</CTableDataCell>
+              </CTableRow>
+            </CTableBody>
+          </CTable>
         </div>
-    );
-};
+      )}
+    </div>
+  )
+}
 
-export default Account;
+export default Account
