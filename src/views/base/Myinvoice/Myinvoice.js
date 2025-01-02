@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { CModal, CModalHeader, CModalBody, CModalFooter } from '@coreui/react'
 import {
   CForm,
   CFormLabel,
@@ -36,6 +37,11 @@ const Account = () => {
     state: '',
     postalCode: '',
   })
+  const [modalVisible, setModalVisible] = useState(false)
+
+  const toggleModal = () => {
+    setModalVisible(!modalVisible)
+  }
 
   const vendorId = localStorage.getItem('vendorId')
 
@@ -75,7 +81,9 @@ const Account = () => {
 
   const fetchPayoutSummary = async () => {
     try {
-      const res = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPaySummary/${vendorId}`)
+      const res = await axios.get(
+        `http://44.196.64.110:8000/payouts/getVendorPaySummary/${vendorId}`,
+      )
       setpayoutSummary(res.data)
       console.log(res)
     } catch (error) {
@@ -297,32 +305,73 @@ const Account = () => {
               </div>
             </div>
           </div>
-          <CTable striped>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>Booking ID</CTableHeaderCell>
-                <CTableHeaderCell>Total Amount</CTableHeaderCell>
-                <CTableHeaderCell>Payment Status</CTableHeaderCell>
-                <CTableHeaderCell>Paid Amount</CTableHeaderCell>
-                <CTableHeaderCell>Payment ID</CTableHeaderCell>
-                <CTableHeaderCell>Amount Transferred</CTableHeaderCell>
-                <CTableHeaderCell>Transfer Date</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              <CTableRow>
-                <CTableDataCell>w</CTableDataCell>
-                <CTableDataCell>$</CTableDataCell>
-                <CTableDataCell>k</CTableDataCell>
-                <CTableDataCell>$s</CTableDataCell>
-                <CTableDataCell>sdsd</CTableDataCell>
-                <CTableDataCell>ert</CTableDataCell>
-                <CTableDataCell>date</CTableDataCell>
-              </CTableRow>
-            </CTableBody>
-          </CTable>
+
+          <div>
+            {/* Heading Section */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <h3>Booking Payments</h3>
+              <button
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                }}
+                onClick={toggleModal} // Toggle modal visibility
+              >
+                Cashout
+              </button>
+            </div>
+
+            {/* Table Section */}
+            <CTable striped>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>Booking ID</CTableHeaderCell>
+                  <CTableHeaderCell>Total Amount</CTableHeaderCell>
+                  <CTableHeaderCell>Payment Status</CTableHeaderCell>
+                  <CTableHeaderCell>Paid Amount</CTableHeaderCell>
+                  <CTableHeaderCell>Payment ID</CTableHeaderCell>
+                  <CTableHeaderCell>Amount Transferred</CTableHeaderCell>
+                  <CTableHeaderCell>Transfer Date</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                <CTableRow>
+                  <CTableDataCell>w</CTableDataCell>
+                  <CTableDataCell>$</CTableDataCell>
+                  <CTableDataCell>k</CTableDataCell>
+                  <CTableDataCell>$s</CTableDataCell>
+                  <CTableDataCell>sdsd</CTableDataCell>
+                  <CTableDataCell>ert</CTableDataCell>
+                  <CTableDataCell>date</CTableDataCell>
+                </CTableRow>
+              </CTableBody>
+            </CTable>
+          </div>
         </div>
       )}
+      <CModal visible={modalVisible} onClose={toggleModal}>
+        <CModalHeader>Cashout Confirmation</CModalHeader>
+        <CModalBody>Are you sure you want to proceed with the cashout?</CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={toggleModal}>
+            Cancel
+          </CButton>
+          <CButton color="primary" onClick={() => console.log('Cashout confirmed!')}>
+            Confirm
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </div>
   )
 }
