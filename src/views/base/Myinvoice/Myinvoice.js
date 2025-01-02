@@ -271,7 +271,7 @@ const Account = () => {
                       textDecoration: 'underline',
                     }}
                   >
-                    Go To Taxidermy Account ID :
+                    Go To Stripe :
                     <br />
                     {bankAccountDetails[0].StripeAccountId}
                   </h6>{' '}
@@ -326,7 +326,7 @@ const Account = () => {
                   padding: '0.5rem 1rem',
                   cursor: 'pointer',
                 }}
-                onClick={toggleModal} // Toggle modal visibility
+                onClick={toggleModal}
               >
                 Cashout
               </button>
