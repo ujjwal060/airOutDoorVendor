@@ -39,102 +39,43 @@ const Account = () => {
 
   const vendorId = localStorage.getItem('vendorId')
 
-    useEffect(() => {
-        const fetchAccountStatus = async () => {
-            try {
-                setIsFetching(true);
-                const response = await axios.get(`http://44.196.64.110:8000/payouts/getAccountStatus/${vendorId}`);
-                setAccountStatus(response.data.accountStatus);
-                setBankAccountDetails(response.data.bankAccountDetails || []);
-            } catch (error) {
-                console.error('Error fetching account status:', error);
-            } finally {
-                setIsFetching(false);
-            }
-        };
-        fetchAccountStatus();
-        fetchPaymentDetails();
-    }, [vendorId]);
-
-    const fetchPaymentDetails = async () => {
-        try {
-            setIsFetching(true);
-            const response = await axios.get(`http://44.196.64.110:8000/payouts/getPaymentDetails/${vendorId}`);
-            setPaymentDetails(response.data.data)
-        } catch (error) {
-            console.error('Error fetching account status:', error);
-        } finally {
-            setIsFetching(false);
-        }
+  useEffect(() => {
+    const fetchAccountStatus = async () => {
+      try {
+        setIsFetching(true)
+        const response = await axios.get(
+          `http://44.196.64.110:8000/payouts/getAccountStatus/${vendorId}`,
+        )
+        setAccountStatus(response.data.accountStatus)
+        console.log(response.data.bankAccountDetails)
+        setBankAccountDetails(response.data.bankAccountDetails || [])
+      } catch (error) {
+        console.error('Error fetching account status:', error)
+      } finally {
+        setIsFetching(false)
+      }
     }
     fetchAccountStatus()
     fetchPaymentDetails()
     fetchPayoutSummary()
   }, [vendorId])
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    const handleDateChange = (date) => {
-        setFormData({
-            ...formData,
-            dob: date,
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        const dobDay = formData.dob?.getDate();
-        const dobMonth = formData.dob?.getMonth() + 1;
-        const dobYear = formData.dob?.getFullYear();
-        try {
-            const response = await axios.post('http://44.196.64.110:8000/payouts/addAccount', {
-                vendorId,
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                dobDay,
-                dobMonth,
-                dobYear,
-                addressLine1: formData.addressLine1,
-                city: formData.city,
-                state: formData.state,
-                postalCode: formData.postalCode,
-            });
-            if (response.data.accountLink) {
-                setFormData('');
-                window.open(response.data.accountLink, '_blank');
-            } else {
-                console.error('No accountLink received in the response');
-            }
-        } catch (error) {
-            console.error('Error submitting form:', error.response || error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const goToStripe = async() => {
-        try {
-            const response = await axios.get(`http://44.196.64.110:8000/payouts/goToStripe/${vendorId}`);
-            window.open(response.data.url, '_blank');
-        } catch (error) {
-            console.error('Error submitting form:', error.response || error.message);
-        }
-    };
-
-    if (isFetching) {
-        return <CSpinner />;
+  const fetchPaymentDetails = async () => {
+    try {
+      setIsFetching(true)
+      const response = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPay/${vendorId}`)
+      console.log(response.data)
+      setPaymentDetails(response.data)
+    } catch (error) {
+      console.error('Error fetching account status:', error?.response)
+    } finally {
+      setIsFetching(false)
     }
   }
 
   const fetchPayoutSummary = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/payouts/getVendorPaySummary/${vendorId}`)
+      const res = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPaySummary/${vendorId}`)
       setpayoutSummary(res.data)
       console.log(res)
     } catch (error) {
@@ -163,7 +104,7 @@ const Account = () => {
     const dobMonth = formData.dob?.getMonth() + 1
     const dobYear = formData.dob?.getFullYear()
     try {
-      const response = await axios.post('http://localhost:8000/payouts/addAccount', {
+      const response = await axios.post('http://44.196.64.110:8000/payouts/addAccount', {
         vendorId,
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -190,7 +131,7 @@ const Account = () => {
 
   const goToStripe = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/payouts/goToStripe/${vendorId}`)
+      const response = await axios.get(`http://44.196.64.110:8000/payouts/goToStripe/${vendorId}`)
       window.open(response.data.url, '_blank')
     } catch (error) {
       console.error('Error submitting form:', error.response || error.message)
