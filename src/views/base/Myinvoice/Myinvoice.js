@@ -67,7 +67,7 @@ const Account = () => {
   const handleCashoutClick = () => {
     if(pendingRequests){
         console.log("already requests are pending")
-        alert("Request Already Pending")
+        alert("Request Already Pending,You can request more!")
         return
     }
     const remainingAmount = payoutSummary?.remainingAmount?.toFixed(2)
