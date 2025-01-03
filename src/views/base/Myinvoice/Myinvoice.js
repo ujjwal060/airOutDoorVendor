@@ -181,7 +181,7 @@ const Account = () => {
 
   const goToStripe = async () => {
     try {
-      const response = await axios.get(`http://44.196.64.110:8000/payouts/goToStripe/${vendorId}`)
+      const response = await axios.get(`http://44.196.64.110:8000/payouts/generateLoginLink/${vendorId}`)
       window.open(response.data.url, '_blank')
     } catch (error) {
       console.error('Error submitting form:', error.response || error.message)
