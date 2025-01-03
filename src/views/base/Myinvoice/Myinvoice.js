@@ -20,6 +20,7 @@ import 'react-datepicker/dist/react-datepicker.css'
 import axios from 'axios'
 import { cilBank } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
+import { toast } from 'react-toastify'
 
 const Account = () => {
   const [loading, setLoading] = useState(false)
@@ -38,7 +39,8 @@ const Account = () => {
     postalCode: '',
   })
   const [modalVisible, setModalVisible] = useState(false)
-  const [cashoutDetails, setCashoutDetails] = useState({});
+  const [cashoutDetails, setCashoutDetails] = useState({})
+  const [pendingRequests, setPendingRequests] = useState(null)
 
   const vendorId = localStorage.getItem('vendorId')
 
@@ -63,60 +65,71 @@ const Account = () => {
   }, [vendorId])
 
   const handleCashoutClick = () => {
-    const remainingAmount = payoutSummary?.remainingAmount?.toFixed(2);
-    const commissionAmount = payoutSummary?.adminCommission?.toFixed(2);
-    const requestedAmount = (remainingAmount - commissionAmount).toFixed(2);
+    if(pendingRequests){
+        console.log("already requests are pending")
+        alert("Request Already Pending,You can request more!")
+        return
+    }
+    const remainingAmount = payoutSummary?.remainingAmount?.toFixed(2)
+    const commissionAmount = payoutSummary?.adminCommission?.toFixed(2)
+    const requestedAmount = (remainingAmount - commissionAmount).toFixed(2)
 
     setCashoutDetails({
       remainingAmount: parseFloat(remainingAmount),
       commissionAmount: parseFloat(commissionAmount),
       requestedAmount: parseFloat(requestedAmount),
-    });
+    })
 
-    setModalVisible(true);
-  };
+    setModalVisible(true)
+  }
 
   const handleConfirmCashout = async () => {
     try {
-      setLoading(true);
-      const { remainingAmount, commissionAmount, requestedAmount } = cashoutDetails;
+      setLoading(true)
+      const { remainingAmount, commissionAmount, requestedAmount } = cashoutDetails
       const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
         vendorId,
         remainingAmount,
         requestedAmount,
         commissionAmount,
-      });
-      setLoading(false);
-      setModalVisible(false);
-      fetchPaymentDetails();
+      })
+      setLoading(false)
+      setModalVisible(false)
+      fetchPaymentDetails()
     } catch (error) {
-      setLoading(false);
-      console.log(error.message);
+      setLoading(false)
+      console.log(error.message)
     }
-  };
+  }
 
   const closeModal = () => {
-    setModalVisible(false);
-  };
+    setModalVisible(false)
+  }
 
   const fetchPaymentDetails = async () => {
     try {
       setIsFetching(true)
       const response = await axios.get(`http://44.196.64.110:8000/payouts/getVendorPay/${vendorId}`)
-      const formattedCashoutRequests = response.data.cashoutRequests.map(request => {
-        const formattedRequestDate = new Date(request.requestDate).toLocaleDateString('en-GB');
+      const formattedCashoutRequests = response.data.cashoutRequests.map((request) => {
+        const formattedRequestDate = new Date(request.requestDate).toLocaleDateString('en-GB')
         const formattedPaymentDate = request.paymentDate
           ? new Date(request.paymentDate).toLocaleDateString('en-GB')
-          : '-- -- --';
+          : '-- -- --'
         return {
           ...request,
           requestDate: formattedRequestDate,
-          paymentDate: formattedPaymentDate
-        };
-      });
+          paymentDate: formattedPaymentDate,
+        }
+      })
+      const pendingRequests = formattedCashoutRequests.filter(
+        (request) => request.status === 'pending',
+      )
+
+      console.log('Pending Requests:', pendingRequests.length)
+      setPendingRequests(pendingRequests.length)
       setPaymentDetails(formattedCashoutRequests)
     } catch (error) {
-      console.log(error.message);
+      console.log(error.message)
     } finally {
       setIsFetching(false)
     }
@@ -181,7 +194,9 @@ const Account = () => {
 
   const goToStripe = async () => {
     try {
-      const response = await axios.get(`http://44.196.64.110:8000/payouts/generateLoginLink/${vendorId}`)
+      const response = await axios.get(
+        `http://44.196.64.110:8000/payouts/generateLoginLink/${vendorId}`,
+      )
       window.open(response.data.url, '_blank')
     } catch (error) {
       console.error('Error submitting form:', error.response || error.message)
@@ -319,7 +334,13 @@ const Account = () => {
                   </h6>{' '}
                 </div>
                 <div>
-                  <CTable striped bordered hover responsive style={{ textAlign: 'center', margin: ' auto', maxWidth: '800px' }}>
+                  <CTable
+                    striped
+                    bordered
+                    hover
+                    responsive
+                    style={{ textAlign: 'center', margin: ' auto', maxWidth: '800px' }}
+                  >
                     <CTableHead color="dark">
                       <CTableRow>
                         <CTableHeaderCell>Total Amt.</CTableHeaderCell>
@@ -330,10 +351,18 @@ const Account = () => {
                     </CTableHead>
                     <CTableBody>
                       <CTableRow>
-                        <CTableDataCell>${payoutSummary?.totalAmount?.toFixed(2) || '0.00'}</CTableDataCell>
-                        <CTableDataCell>${payoutSummary?.totalPaidOut?.toFixed(2) || '0.00'}</CTableDataCell>
-                        <CTableDataCell>${payoutSummary?.remainingAmount?.toFixed(2) || '0.00'}</CTableDataCell>
-                        <CTableDataCell>${payoutSummary?.adminCommission?.toFixed(2) || '0.00'}</CTableDataCell>
+                        <CTableDataCell>
+                          ${payoutSummary?.totalAmount?.toFixed(2) || '0.00'}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          ${payoutSummary?.totalPaidOut?.toFixed(2) || '0.00'}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          ${payoutSummary?.remainingAmount?.toFixed(2) || '0.00'}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          ${payoutSummary?.adminCommission?.toFixed(2) || '0.00'}
+                        </CTableDataCell>
                       </CTableRow>
                     </CTableBody>
                   </CTable>
@@ -421,16 +450,8 @@ const Account = () => {
           <CButton color="secondary" onClick={closeModal}>
             Cancel
           </CButton>
-          <CButton
-            color="primary"
-            onClick={handleConfirmCashout}
-            disabled={loading}
-          >
-            {loading ? (
-              <CSpinner component="span" size="sm" aria-hidden="true" />
-            ) : (
-              'Confirm'
-            )}
+          <CButton color="primary" onClick={handleConfirmCashout} disabled={loading}>
+            {loading ? <CSpinner component="span" size="sm" aria-hidden="true" /> : 'Confirm'}
           </CButton>
         </CModalFooter>
       </CModal>
