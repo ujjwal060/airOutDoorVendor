@@ -79,7 +79,7 @@ const Account = () => {
   const handleConfirmCashout = async () => {
     try {
       setLoading(true);
-      const {remainingAmount, commissionAmount, requestedAmount } = cashoutDetails;
+      const { remainingAmount, commissionAmount, requestedAmount } = cashoutDetails;
       const response = await axios.post('http://44.196.64.110:8000/payouts/cashoutRequest', {
         vendorId,
         remainingAmount,
@@ -381,16 +381,24 @@ const Account = () => {
                 </CTableRow>
               </CTableHead>
               <CTableBody>
-                {paymentDetails.map((request, index) => (
-                  <CTableRow key={index}>
-                    <CTableDataCell>{request.remainingAmount}</CTableDataCell>
-                    <CTableDataCell>{request.adminCommissionDeducted}</CTableDataCell>
-                    <CTableDataCell>{request.amountRequested}</CTableDataCell>
-                    <CTableDataCell>{request.status}</CTableDataCell>
-                    <CTableDataCell>{request.requestDate}</CTableDataCell>
-                    <CTableDataCell>{request.paymentDate}</CTableDataCell>
+                {paymentDetails && paymentDetails.length > 0 ? (
+                  paymentDetails.map((request, index) => (
+                    <CTableRow key={index}>
+                      <CTableDataCell>{request.remainingAmount}</CTableDataCell>
+                      <CTableDataCell>{request.adminCommissionDeducted}</CTableDataCell>
+                      <CTableDataCell>{request.amountRequested}</CTableDataCell>
+                      <CTableDataCell>{request.status}</CTableDataCell>
+                      <CTableDataCell>{request.requestDate}</CTableDataCell>
+                      <CTableDataCell>{request.paymentDate}</CTableDataCell>
+                    </CTableRow>
+                  ))
+                ) : (
+                  <CTableRow>
+                    <CTableDataCell colSpan={6} className="text-center">
+                      No payment details available.
+                    </CTableDataCell>
                   </CTableRow>
-                ))}
+                )}
               </CTableBody>
             </CTable>
           </div>
